@@ -1,3 +1,7 @@
 .anElement {
     position: absolute;
 }
+
+.MoveableItem {
+    position: absolute;
+}
