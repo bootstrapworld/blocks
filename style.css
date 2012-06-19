@@ -5,3 +5,12 @@
 .MoveableItem {
     position: absolute;
 }
+
+ul
+{
+    list-style-type: none;
+}
+
+li{
+	width:100px;
+}

@@ -1,25 +1,30 @@
 <html>
-<link rel="stylesheet" type="text/css" href="style.css" />
+<link type="text/css" href="css/ui-lightness/jquery-ui-1.8.21.custom.css" rel="Stylesheet" />
+<link type="text/css" href="style.css" rel="Stylesheet"/>	
+<script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.8.21.custom.min.js"></script>
+<script>
+	$(function() {
+		$( "#sortable" ).sortable();
+		$( "#sortable" ).disableSelection();
+	});
+	</script>
+
 
 <body>
 
 
-<div class="anElement">I am an element.</div>
 
-
-<div class="anElement" style="top: 25 px">I can move as well!</div>
-
-<div class="MoveableList">
-<ul>
-	<div class="MoveableItem" style="top:50px"><li>item1</li></div>
-	<div class="MoveableItem" style="top:75px"><li>item2</li></div>
+<ul id="sortable">
+	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 1</li>
+	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 2</li>
+	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 3</li>
+	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 4</li>
+	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 5</li>
+	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 6</li>
+	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 7</li>
 </ul>
-</div>
 
 </body>
 
-<script src="http://code.jquery.com/jquery-1.7.2.min.js" type="text/javascript">
-</script>
-<script src="blocks.js" type="text/javascript">
-</script>
 </html>
