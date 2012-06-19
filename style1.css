@@ -1,0 +1,58 @@
+body{
+	background-color:#000;
+	font-family:Arial;
+	font-size:11pt;
+	font-color:#fff;
+	position:absolute;
+	left:0px;
+	margin: 0px;
+}
+
+#header{
+	position:fixed;
+	top:0px;
+	width:100%;
+	height:50px;
+	background-color:gray;
+}
+
+#code{
+	overflow: scroll;
+}
+
+
+.bottomNav{
+	float:left;
+	width:100px;
+	margin-top:17px;
+}
+#options{
+	position:fixed;
+	width:100%;
+	bottom:50px;
+	height:50px;
+	overflow: scroll;
+	background-color:purple;
+	word-spacing:10px;
+}
+#options div{
+	visibility: hidden;
+	position: absolute;
+	margin: 3px;
+}
+
+button {
+	float: right;
+	margin: 15px;
+}
+#selectors{
+	position:fixed;
+	background-color:gray;
+	width:100%;
+	bottom:0px;
+	height:50px;
+}
+
+.anElement {
+    position: absolute;
+}
