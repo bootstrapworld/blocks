@@ -1,28 +1,33 @@
 <html>
-<link type="text/css" href="css/ui-lightness/jquery-ui-1.8.21.custom.css" rel="Stylesheet" />
+
 <link type="text/css" href="style.css" rel="Stylesheet"/>	
 <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
 <script type="text/javascript" src="js/jquery-ui-1.8.21.custom.min.js"></script>
+<script type="text/javascript" src="buttonaddition_COLOR.js"></script>
 <script>
 	$(function() {
-		$( "#sortable" ).sortable();
-		$( "#sortable" ).disableSelection();
+		$( ".sortable" ).sortable();
+		$( ".sortable" ).disableSelection();
 	});
 	</script>
 
 
 <body>
 
+<button type="button" onclick="addBox()">Click to add an Item</button><br />
+Please change the color of the item.  Default is FFFFFF : <form name="Color"><input type="Color" id="Color" name="Color"/></form>
+<ul id="Additional" class="sortable">
+</ul>
 
-
-<ul id="sortable">
-	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 1</li>
-	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 2</li>
-	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 3</li>
-	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 4</li>
-	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 5</li>
-	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 6</li>
-	<li class="ui-state-default"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span>Item 7</li>
+<ul class="sortable">
+	<li style="background-color:#AABBCC">Item 1</li>
+	<li>Item 2</li>
+	<li>Item 3</li>
+	<li>Item 4</li>
+	<li>Item 5</li>
+	<li>Item 6</li>
+	<li>Item 7</li>
+	<li>Item 8</li>
 </ul>
 
 </body>
