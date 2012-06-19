@@ -11,38 +11,75 @@
 <div id="code"></div>
 
 <div id="options">
-		<div id="Numbers"> + - * / remainder sqrt sq expt = > < >= <= odd? even?</div>
-		<div id="Strings"> string-append string-length</div>
-		<div id="Images"> rectangle circle triangle  ellipse radial-star scale rotate place-image
+		<div id="Numbers">
+			<span class="num">+</span>
+			<span class="num">-</span>
+			<span class="num">*</span>
+			<span class="num">/</span>
+			<span class="num">remainder</span>
+			<span class="num">sqrt</span>
+			<span class="num">sq</span>
+			<span class="num">expt</span>
+			<span class="bool">=</span>
+			<span class="bool">></span>
+			<span class="bool"><</span>
+			<span class="bool">>=</span>
+			<span class="bool"><=</span>
+			<span class="bool">odd?</span>
+			<span class="bool">even?</span>
+		</div>
+		<div id="Strings">
+			<span class="string">string-append</span>
+			<span class="string">string-length</span>
+			<span class="bool">string=?</span>
+			</div>
+		<div id="Images">
+			<span class="image">rectangle</span>
+			<span class="image">circle</span>
+			<span class="image">triangle</span>
+			<span class="image">ellipse</span>
+			<span class="image">radial-star</span>
+			<span class="image">scale</span>
+			<span class="image">rotate</span>
+			<span class="image">place-image</span>
 		</div>
 		<div id="Booleans">
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;">true</span>
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;">=</span>
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;">></span>
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;"><</span>
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;">string=?</span>
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;">and</span>
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;">or</span>
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;">>=</span>
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;"><=</span>
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;">not</span>
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;">odd?</span>
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;">even?</span>
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;">empty?</span>
-			<span style="width:50px;height:20px;border:1px solid white; border-radius: 5px; background: #33CCFF;">cons?</span>
+			<span class="bool">true</span>
+			<span class="bool">false</span>
+			<span class="bool">=</span>
+			<span class="bool">></span>
+			<span class="bool"><</span>
+			<span class="bool">string=?</span>
+			<span class="bool">and</span>
+			<span class="bool">or</span>
+			<span class="bool">>=</span>
+			<span class="bool"><=</span>
+			<span class="bool">not</span>
+			<span class="bool">odd?</span>
+			<span class="bool">even?</span>
+			<span class="bool">empty?</span>
+			<span class="bool">cons?</span>
  		</div>
-		<div id="Define">(define var) (define func) (define struct)</div>
-		<div id="Expressions">cond if else </div>
+		<div id="Define">
+			<span class="def">(define var)</span>
+			<span class="def">(define func)</span>
+			<span class="def">(define struct)</span>
+		</div>
+		<div id="Expressions">
+			<span class="def">cond</span>
+			<span class="def">if</span>
+			<span class="def">else</span>
+		</div>
 		<div id="Lists">cons empty list empty? cons?</div>
 	</div>
 </div>
 <div id="selectors">
-		<div class="bottomNav" id="Numbers">Numbers</div>
-		<div class="bottomNav" id="Strings">Strings</div>
-		<div class="bottomNav" id="Images">Images</div>
-		<div class="bottomNav" id="Booleans">Booleans</div>
-		<div class="bottomNav" id="Define">Define</div>
-		<div class="bottomNav" id="Expressions">Expressions</div>
+		<div class="num bottomNav" id="Numbers">Numbers</div>
+		<div class="string bottomNav" id="Strings">Strings</div>
+		<div class="image bottomNav" id="Images">Images</div>
+		<div class="bool bottomNav" id="Booleans">Booleans</div>
+		<div class="def bottomNav" id="Define">Define</div>
+		<div class="def bottomNav" id="Expressions">Expressions</div>
 </div>
 
 

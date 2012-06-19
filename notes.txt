@@ -1,0 +1,52 @@
+Functions contained in array formatted like:
+var allfunc={}
+
+var func={
+	input=""
+	output=""
+	name=""
+}
+
+
+var colors=new Object()
+colors.string=orange
+colors.numbers=blue
+Colored by OUTPUT type
+
+document.write(colors.string)
+
+
+function so that colors.USER_NAME=USER_COLOR
+
+
+This allows each function to be placed with both its input and output types, and keep formatting
+Avoids manually writing each function into HTML
+Also allows user function to be easily added
+
+Bottom row of function types will also be contained in changable array (for user structs)
+
+
+*******************************************************
+Contracts:
+Determine number and types of inputs/output from contact
+Auto-color using that
+Contracts stored as an Object (name, ouput, array of inputs)
+drop-down menu for input/output types, only thing typed is name (or drag type names from bottom toolbar)
+
+
+******************************************************
+Blocks:
+Shape
+	(define is square)
+Possible spaces: (objects with limited input)
+Store in tables
+Dragability
+Color-changing
+Init-color saving
+Output checker
+Define allows multiple inputs: store inputs as an array
+Conds allow variable length: store in an array
+
+******************************************************
+Sortability:
+Found on internet, need to apply to each block object

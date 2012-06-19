@@ -23,14 +23,19 @@ body{
 
 .bottomNav{
 	float:left;
+	text-align:center;
 	width:100px;
-	margin-top:17px;
+	margin: 5px;
+	margin-top:7px;
+	border: 1px solid white;
+	padding: 10px;
 }
 #options{
 	position:fixed;
+	visibility: hidden;
 	width:100%;
 	bottom:50px;
-	height:50px;
+	height:60px;
 	overflow: scroll;
 	background-color:purple;
 	word-spacing:10px;
@@ -39,8 +44,28 @@ body{
 	visibility: hidden;
 	position: absolute;
 	margin: 3px;
+	margin-top: 10px;
 }
-
+#options span {
+	padding: 5px;
+	border: 1px solid white;
+	border-radius: 5px;
+}
+.num{
+	background: #33CCFF;
+}
+.bool{
+	background: #CC33FF;
+}
+.def{
+	background: white;
+}
+.string{
+	background: orange;
+}
+.image{
+	background: #66FF33;
+}
 button {
 	float: right;
 	margin: 15px;
