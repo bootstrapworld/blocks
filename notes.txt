@@ -1,22 +1,152 @@
-Functions contained in array formatted like:
-var allfunc={}
+definition :== define-function of name * (list of args) * expression
+			| define-variable of name * expression
+			| define-struct of name * (list of name)
 
-var func={
-	input=""
-	output=""
-	name=""
-}
-
-
-var colors=new Object()
-colors.string=orange
-colors.numbers=blue
-Colored by OUTPUT type
-
-document.write(colors.string)
+expression :== application of operator * (listof expression)
+             | number
+             | string
+             | boolean
+             | image
+             | cond * (list of (boolean * expression))
+             | variable
+operator :== '+' | '-' | 'string-append' | 'rectangle' | etc...
 
 
-function so that colors.USER_NAME=USER_COLOR
+
+
+Built in fumction containers: 
+	Numbers - functions that act on or return numbers
+	Strings - act on or return strings
+	Images - fact on or return images
+	Booleans - act on or return booleans
+	Define - contains defines for variables, functions, and structs
+	Expressions - contains cond
+
+*********************************************************************************************************************
+
+Racket Functions contained in array (nicely stores the contract for functions):
+functions[]
+	functions[i].input= array of types ("Numbers", "Images", etc...)
+	functions[i].output= a string representing a single type (we are planning on not allowing multiple type returns)
+	functions[i].name=  "string"
+
+*********************************************************************************************************************
+
+colors: an object mapping types to colors (hash values or color names)
+	var colors=new Object()
+	colors.Strings=orange
+	colors.Numbers=#33FFCC
+	(Colored by OUTPUT type)
+
+	user defined struct colors assigned and added using addType function
+
+*********************************************************************************************************************
+
+Toolbar:
+	The toolbar at the bottom of the page will be a object with a property for each type (including user defined types if added)
+	Each type will be mapped to a list of functions that either:
+		a) have an output of that type
+		b) have only one type of input, and it is that type (so >, takes in two numbers, returns a boolean, grouped with Numbers
+			and Booleans)
+	EX: types.Numbers = "+", *", ">=", etc..
+		types.Strings = "string-append", "string-length", "string=?"
+	Upon the adding a function (use addFunction(name, array of input types, output type)), it will automatically be added to the
+		object
+	Every time a new function is created, the function lists that are updated will be redrawn, so the bar remains up to date.
+
+*********************************************************************************************************************
+
+Blocks:
+
+The entirety of the the code will be stored as a list, where each item in a list is a block. Blocks are represented as tables. The items of this list are sortable...
+
+*********************************************************************************************************************
+
+Sortability:
+
+Blocks are stored as items within a list and can be moved around on the screen via a drag-and-drop Javascript implementation such that moving a block will rearrange the blocks surrounding it.  Blocks can move into other blocks if there is space and if the type of the block is appropriate.
+
+*********************************************************************************************************************
+
+Structs:
+
+An object with the following properties:
+	Name: name of the struct
+	Color: color that is user-defined and will be associated with this struct type
+	List of tuples: (argument name, type)
+
+When a struct is created, the following are added:
+	1. A make- function (ex: (make-posn 3 4))
+	2. The new type (ex: posn)
+	3. Accessors (ex: posn-x)
+
+*********************************************************************************************************************
+
+Variables:
+
+An object with the following properties:
+	Name: name of the variable
+	Value: String of value (so if the value is more complicated than a literal, we simply store it as a string, and then
+		evaluate it at the time of running)
+
+*********************************************************************************************************************
+
+Literals (5, "birds", etc...):
+	text-field input
+	auto-check for type matching
+
+*********************************************************************************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NOTES
 
 
 This allows each function to be placed with both its input and output types, and keep formatting
@@ -48,5 +178,3 @@ Define allows multiple inputs: store inputs as an array
 Conds allow variable length: store in an array
 
 ******************************************************
-Sortability:
-Found on internet, need to apply to each block object
