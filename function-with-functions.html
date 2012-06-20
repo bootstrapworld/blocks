@@ -1,0 +1,50 @@
+<html>
+<script>
+
+
+var makestruct=function(name,key_array,valType_array){
+	if(key_array.length!=valType_array.length){
+		return undefined
+	}
+	var constructor=function(value_array){
+		if(valType_array.length!=value_array.length){
+			return undefined
+		}
+		else{
+			for(i=0;i<value_array.length;i++){
+				if(value_array[i].type!=valType_array[i]){
+					return undefined
+				}
+				else{
+					this[key_array[i]]=value_array[i];
+				}
+			}
+		}
+	}
+	return constructor
+}
+
+
+
+var makeType = function(name) {
+
+   var f = function(val) {
+      this.type = name;
+      this.val = val;
+   };
+   return f;
+
+};
+
+
+var num = makeType("number");
+
+
+var n1 = new num(5);
+
+
+
+
+</script>
+
+</html>

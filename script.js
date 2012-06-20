@@ -1,3 +1,29 @@
+/*
+* Sets the panels with function names to visible and invisible when hidden
+*
+*/
+var activated = null;
+var currID = null;
+$(".bottomNav").bind('click', function(){
+	if ($(this).attr('id') == currID) {
+		activated.css("visibility","hidden");
+		activated = null;
+		currID = null;
+		$("#options").css("visibility", "hidden");
+	}else if (currID === null){
+		activated = $("#options #" + $(this).attr('id'))
+		currID = $(this).attr('id')
+		activated.css("visibility", "visible");
+		$("#options").css("visibility", "visible");
+	} else {
+		activated.css("visibility","hidden");
+		activated = $("#options #" + $(this).attr('id'))
+		activated.css("visibility", "visible");
+		currID = $(this).attr('id');
+		$("#options").css("visibility", "visible");
+	}
+})
+
 var functions=[];
 functions[0]={};
 functions[0].name="+";
@@ -142,30 +168,73 @@ functions[34].output="Images";
 
 
 var colors={}
-var colors.Numbers="#33CCFF"
-var colors.Strings="orange"
-var colors.Images="#66FF33"
-var colors.Booleans="#CC33FF"
-var colors.Any="white"
-var colors.Define="white"
-var colors.Expressions="white"
+ colors.Numbers="#33CCFF"
+ colors.Strings="orange"
+ colors.Images="#66FF33"
+ colors.Booleans="#CC33FF"
+ colors.Any="white"
+ colors.Define="white"
+ colors.Expressions="white"
 
-function addColor(name, colorValue){
-	var colors[name]=colorValue
+/*Function to make a struct should both add a type and automatically create functions to access that struct*/
+function newStruct(name, colorValue, array_of_names,array_of_types){
+	addType(name,ColorValue)
+	for(i=0;i<array_of_name_values.length-1;i++){
+		addFunction(name+"-"+array_of_names[i],name,array_of_types[i])
+	}
+	
+
+	//return makestruct(name,array_of_names,array_of_types)
 }
+
+/*MAKE A FUNCTION TO MAKE NEW VARIABLES/LITERALS AND CREATE INSTANCES OF EACH TYPE*/
+
+
+//creates the constructor to make a new object of that struct
+//var person = makestruct('person', ['name', 'age'], ['string', 'number'])
+//var me = new person([{type: 'string', val : "Danny"}, {type: 'number', value: '33'}]
+var makestruct=function(name,key_array,valType_array){
+	if(key_array.length!=valType_array.length){
+		return undefined
+	}
+	var constructor=function(value_array){
+		if(valType_array.length!=value_array.length){
+			return undefined
+		}
+		else{
+			for(i=0;i<value_array.length;i++){
+				if(value_array[i].type!=valType_array[i]){
+					return undefined
+				}
+				else{
+					this[key_array[i]]=value_array[i];
+				}
+			}
+		}
+	}
+	return constructor
+}
+
+function addType(name, colorValue){
+	colors[name]=colorValue
+}
+function addFunction(name_of_function,inputs,output_type){
+	functions[functions.length]={name:name_of_function, input:inputs, output:ouput_type}
+}
+
 
 function makeTypesArray(allFunctions){
 	var types={}
-	for(var i=0;i<functions.length;i++){
+	for(var i=0;i<allFunctions.length;i++){
 		//TAKE CARE OF ANY SEPERATELY
 
-		if(functions[i].output=="Any"){
-			if(functions[i].name.indexOf("define")!=-1){
+		if(allFunctions[i].output=="Any"){
+			if(allFunctions[i].name.indexOf("define")!=-1){
 				if(types["Define"]!=undefined){
 					types["Define"][types["Define"].length]=i
 				}
 				else{
-					var types.Define=[i]
+					 types.Define=[i]
 				}
 			}
 			else{
@@ -173,7 +242,7 @@ function makeTypesArray(allFunctions){
 					types["Expressions"][types["Expressions"].length]=i
 				}
 				else{
-					var types.Expressions=[i]
+					 types.Expressions=[i]
 				}
 			}
 			continue;
@@ -181,13 +250,13 @@ function makeTypesArray(allFunctions){
 
 
 		var curOutput=functions[i].output
-		if(types[curOutout]!=undefined){
+		if(types[curOutput]!=undefined){
 			types[curOutput][types.length]=i
 		}
 		else{
-			var types[curOutput]=[i]
+		 types[curOutput]=[i]
 		}
-		var curInput=functions[i].input
+		var curInput=allFunctions[i].input
 		if(unique(curInput) && curInput.length>0){
 			var addition=curInput[0]
 			if( types[addition]!=undefined ){
@@ -196,7 +265,7 @@ function makeTypesArray(allFunctions){
 				}
 			}
 			else{
-				var types[addition]=[i]
+				 types[addition]=[i]
 			}
 		}
 	}
@@ -225,31 +294,7 @@ function unique(array_inputs){
 
 
 
-/*
-* Sets the panels with function names to visible and invisible when hidden
-*
-*/
-var activated = null;
-var currID = null;
-$(".bottomNav").bind('click', function(){
-	if ($(this).attr('id') == currID) {
-		activated.css("visibility","hidden");
-		activated = null;
-		currID = null;
-		$("#options").css("visibility", "hidden");
-	}else if (currID === null){
-		activated = $("#options #" + $(this).attr('id'))
-		currID = $(this).attr('id')
-		activated.css("visibility", "visible");
-		$("#options").css("visibility", "visible");
-	} else {
-		activated.css("visibility","hidden");
-		activated = $("#options #" + $(this).attr('id'))
-		activated.css("visibility", "visible");
-		currID = $(this).attr('id');
-		$("#options").css("visibility", "visible");
-	}
-})
+
 
 function contains(stringElement){
 	var contain=-1
