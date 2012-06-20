@@ -141,44 +141,81 @@ functions[34].input=new Array("Images", "Numbers", "Numbers", "Images");
 functions[34].output="Images";
 
 
+var colors={}
+var colors.Numbers="#33CCFF"
+var colors.Strings="orange"
+var colors.Images="#66FF33"
+var colors.Booleans="#CC33FF"
+var colors.Any="white"
+var colors.Define="white"
+var colors.Expressions="white"
 
-var colors=new Array()
-colors[0]={}
-colors[0].name="Numbers"
-colors[0].color="#33CCFF"
-colors[1]={}
-colors[1].name="Strings"
-colors[1].color="orange"
-colors[2]={}
-colors[2].name="Images"
-colors[2].color="#66FF33"
-colors[3]={}
-colors[3].name="Booleans"
-colors[3].color="#CC33FF"
-colors[4]={}
-colors[4].name="Any"
-colors[4].color="white"
-
+function addColor(name, colorValue){
+	var colors[name]=colorValue
+}
 
 function makeTypesArray(allFunctions){
-	var types=[]
-	for(func in allFunctions){
-		var curOutput=func.output
-		if(types.contains(curOutput)){
+	var types={}
+	for(var i=0;i<functions.length;i++){
+		//TAKE CARE OF ANY SEPERATELY
 
+		if(functions[i].output=="Any"){
+			if(functions[i].name.indexOf("define")!=-1){
+				if(types["Define"]!=undefined){
+					types["Define"][types["Define"].length]=i
+				}
+				else{
+					var types.Define=[i]
+				}
+			}
+			else{
+				if(types["Expressions"]!=undefined){
+					types["Expressions"][types["Expressions"].length]=i
+				}
+				else{
+					var types.Expressions=[i]
+				}
+			}
+			continue;
+		}
+
+
+		var curOutput=functions[i].output
+		if(types[curOutout]!=undefined){
+			types[curOutput][types.length]=i
 		}
 		else{
-
+			var types[curOutput]=[i]
 		}
-		var curInput=func.input
-		if(curOutput!="Images"){
-
+		var curInput=functions[i].input
+		if(unique(curInput) && curInput.length>0){
+			var addition=curInput[0]
+			if( types[addition]!=undefined ){
+				if( types[addition][ types[addition].length-1 ]!=i ){
+					types[addition][ types[addition].length ]=i
+				}
+			}
+			else{
+				var types[addition]=[i]
+			}
 		}
 	}
 
 
 
 	return types
+}
+
+function unique(array_inputs){
+	if(array_inputs.length>0){
+		var first=array_inputs[0];
+		for(var i=1;i<array_inputs.length;i++){
+			if(first!=array_inputs[i]){
+				return false
+			}
+		}
+	}
+	return true
 }
 
 //var types = new Array();
@@ -213,3 +250,11 @@ $(".bottomNav").bind('click', function(){
 		$("#options").css("visibility", "visible");
 	}
 })
+
+function contains(stringElement){
+	var contain=-1
+	for (var i = this.length - 1; i >= 0; i--) {
+		if(this[i].name=stringElement){contain=i; break;}
+	}
+	return contain
+}
