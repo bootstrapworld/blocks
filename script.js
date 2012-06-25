@@ -161,18 +161,18 @@ var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map
 
 var colors={}
  colors.Numbers="#33CCFF"
- colors.Strings="orange"
+ colors.Strings="#FFA500"
  colors.Images="#66FF33"
  colors.Booleans="#CC33FF"
- colors.Define="white"
- colors.Expressions="white"
- colors.Constants="white"
+ colors.Define="#FFFFFF"
+ colors.Expressions="#FFFFFF"
+ colors.Constants="#FFFFFF"
 
 var constants=[]
 
 
 function addConstant(name_of_v,type_of_v){
-	if(colors[name_of_v]!=undefined || containsName(constants,name_of_v)!=-1 || containsName(functions,name_of_v)!=-1 || contains(restricted,name_of_v)!=-1){
+	if(colors[name_of_v]!=undefined || containsName(constants,name_of_v)!=-1 || containsName(functions,name_of_v)!=-1 || restricted.contains(name_of_v)!=-1){
 		alert("I am sorry but that type already exists as either another struct, function, constant or a reserved word")
 		return;
 	}
@@ -194,7 +194,7 @@ function deleteConstant(name_of_v){
 
 /*Function to make a struct should both add a type and automatically create functions to access that struct*/
 function addStruct(name, colorValue, array_of_names, array_of_types){
-	if(colors[name]!=undefined || containsName(constants,name)!=-1 || containsName(functions,name)!=-1 || contains(restricted,name)!=-1){
+	if(colors[name]!=undefined || containsName(constants,name)!=-1 || containsName(functions,name)!=-1 || restricted.contains(name)!=-1){
 		alert("I am sorry but that type already exists as either another struct, function, constant or a reserved word")
 		return;
 	}
@@ -225,7 +225,7 @@ function spliceTypeName(array_of_types,array_of_names){
 }
 
 function addType(name, colorValue){
-	if(colors[name]!=undefined || containsName(constants,name)!=-1 || containsName(functions,name)!=-1 || contains(restricted,name)!=-1){
+	if(colors[name]!=undefined || containsName(constants,name)!=-1 || containsName(functions,name)!=-1 || restricted.contains(name)!=-1){
 		alert("I am sorry but that type already exists as either another struct, function, constant or a reserved word")
 		return;
 	}
@@ -243,7 +243,7 @@ function deleteType(name){
 
 
 function addFunction(name_of_function,inputs,inputsnames,output_type){
-	if(colors[name_of_function]!=undefined || containsName(constants,name_of_function)!=-1 || containsName(functions,name_of_function)!=-1 || contains(restricted,name_of_function)!=-1){
+	if(colors[name_of_function]!=undefined || containsName(constants,name_of_function)!=-1 || containsName(functions,name_of_function)!=-1 || restricted.contains(name_of_function)!=-1){
 		alert("I am sorry but that type already exists as either another struct, function, constant or a reserved word")
 		return;
 	}
@@ -291,7 +291,7 @@ function makeTypesArray(allFunctions,allConstants){
 		types.Constants[types.Constants.length]=i
 	}
 
-	types.Define=new Array("define-var","define-function","define-struct")
+	types.Define=new Array("define-constant","define-function","define-struct")
 	types.Expressions=new Array("cond")
 
 	return types
@@ -321,10 +321,10 @@ function containsName(array_of_obj,stringElement){
 	return contain
 }
 
-function contains(array,stringElement){
+Array.prototype.contains=function(stringElement){
 	var contain=-1
-	for (var i = 0; i < array.length; i++) {
-		if(array[i]==stringElement){
+	for (var i = 0; i <this.length; i++) {
+		if(this[i]==stringElement){
 			contain=i;
 			 break;
 		}
