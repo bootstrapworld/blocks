@@ -229,6 +229,11 @@ function addType(name, colorValue){
 		alert("I am sorry but that type already exists as either another struct, function, constant or a reserved word")
 		return;
 	}
+	for(var type in colors){
+		if (colors[type]==colorValue){
+			alert("I am sorry but that color already exists")
+		}
+	}
 	colors[name]=colorValue
 }
 
