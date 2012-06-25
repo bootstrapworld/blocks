@@ -27,75 +27,75 @@ $(".bottomNav").bind('click', function(){
 var functions=[];
 functions[0]={};
 functions[0].name="+";
-functions[0].input=new Array("Numbers","Numbers");
+functions[0].input=new Array({type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"});
 functions[0].output="Numbers";
 functions[1]={};
 functions[1].name="-";
-functions[1].input=new Array("Numbers","Numbers");
+functions[1].input=new Array({type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"});
 functions[1].output="Numbers";
 functions[2]={};
 functions[2].name="*";
-functions[2].input=new Array("Numbers","Numbers");
+functions[2].input=new Array({type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"});
 functions[2].output="Numbers";
 functions[3]={};
 functions[3].name="/";
-functions[3].input=new Array("Numbers","Numbers");
+functions[3].input=new Array({type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"});
 functions[3].output="Numbers";
 functions[4]={};
 functions[4].name="remainder";
-functions[4].input=new Array("Numbers","Numbers");
+functions[4].input=new Array({type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"});
 functions[4].output="Numbers";
 functions[5]={};
 functions[5].name="sqrt";
-functions[5].input=new Array("Numbers");
+functions[5].input=new Array({type:"Numbers",name:"Exp1"});
 functions[5].output="Numbers";
 functions[6]={};
 functions[6].name="sqr";
-functions[6].input=new Array("Numbers");
+functions[6].input=new Array({type:"Numbers",name:"Exp1"});
 functions[6].output="Numbers";
 functions[7]={};
 functions[7].name="expt";
-functions[7].input=new Array("Numbers","Numbers");
+functions[7].input=new Array({type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"});
 functions[7].output="Numbers";
 functions[8]={};
 functions[8].name="=";
-functions[8].input=new Array("Numbers","Numbers");
+functions[8].input=new Array({type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"});
 functions[8].output="Booleans";
 functions[9]={};
 functions[9].name=">";
-functions[9].input=new Array("Numbers","Numbers");
+functions[9].input=new Array({type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"});
 functions[9].output="Booleans";
 functions[10]={};
 functions[10].name="<";
-functions[10].input=new Array("Numbers","Numbers");
+functions[10].input=new Array({type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"});
 functions[10].output="Booleans";
 functions[11]={};
 functions[11].name="<=";
-functions[11].input=new Array("Numbers","Numbers");
+functions[11].input=new Array({type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"});
 functions[11].output="Booleans";
 functions[12]={};
 functions[12].name=">=";
-functions[12].input=new Array("Numbers","Numbers");
+functions[12].input=new Array({type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"});
 functions[12].output="Booleans";
 functions[13]={};
 functions[13].name="even?";
-functions[13].input=new Array("Numbers");
+functions[13].input=new Array({type:"Numbers",name:"Exp1"});
 functions[13].output="Booleans";
 functions[14]={};
 functions[14].name="odd?";
-functions[14].input=new Array("Numbers");
+functions[14].input=new Array({type:"Numbers",name:"Exp1"});
 functions[14].output="Booleans";
 functions[15]={};
 functions[15].name="string-append";
-functions[15].input=new Array("Strings","Strings");
+functions[15].input=new Array({type:"Strings",name:"String1"},{type:"Strings",name:"String2"});
 functions[15].output="Strings";
 functions[16]={};
 functions[16].name="string-length";
-functions[16].input=new Array("Strings");
+functions[16].input=new Array({type:"Strings",name:"String1"})
 functions[16].output="Numbers";
 functions[17]={};
 functions[17].name="string=?";
-functions[17].input=new Array("Strings","Strings");
+functions[17].input=new Array({type:"Strings",name:"String1"},{type:"Strings",name:"String2"});
 functions[17].output="Booleans";
 functions[18]={};
 functions[18].name="true";
@@ -107,64 +107,48 @@ functions[19].input=new Array();
 functions[19].output="Booleans";
 functions[20]={};
 functions[20].name="and";
-functions[20].input=new Array("Booleans", "Booleans");
+functions[20].input=new Array({type:"Booleans",name:"Boolean Exp1"},{type:"Booleans",name:"Boolean Exp2"});
 functions[20].output="Booleans";
 functions[21]={};
 functions[21].name="or";
-functions[21].input=new Array("Booleans", "Booleans");
+functions[21].input=new Array({type:"Booleans",name:"Boolean Exp1"},{type:"Booleans",name:"Boolean Exp2"});
 functions[21].output="Booleans";
 functions[22]={};
 functions[22].name="not";
-functions[22].input=new Array("Booleans");
+functions[22].input=new Array({type:"Booleans",name:"Boolean Exp1"});
 functions[22].output="Booleans";
-functions[23]={};
-functions[23].name="(define variable)";
-functions[23].input=new Array("Any");
-functions[23].output="Any";
+functions[23]={}
+functions[23].name="rectangle";
+functions[23].input=new Array({type:"Numbers",name:"Width"},{type:"Numbers",name:"Height"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"});
+functions[23].output="Images";
 functions[24]={};
-functions[24].name="(define function)";
-functions[24].input=new Array("Any");
-functions[24].output="Any";
+functions[24].name="circle";
+functions[24].input=new Array({type:"Numbers",name:"Radius"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"});
+functions[24].output="Images";
 functions[25]={};
-functions[25].name="define-struct";
-functions[25].input=new Array("Any");
-functions[25].output="Any";
+functions[25].name="triangle";
+functions[25].input=new Array({type:"Numbers",name:"Length"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"});
+functions[25].output="Images";
 functions[26]={};
-functions[26].name="cond";
-functions[26].input=new Array("Any");
-functions[26].output="Any";
+functions[26].name="ellipse";
+functions[26].input=new Array({type:"Numbers",name:"A"},{type:"Numbers",name:"B"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"});
+functions[26].output="Images";
 functions[27]={};
-functions[27].name="rectangle";
-functions[27].input=new Array("Numbers", "Numbers", "Strings", "Strings");
+functions[27].name="star";
+functions[27].input=new Array({type:"Numbers",name:"Side-Length"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"});
 functions[27].output="Images";
 functions[28]={};
-functions[28].name="circle";
-functions[28].input=new Array("Numbers", "Strings", "Strings");
+functions[28].name="scale";
+functions[28].input=new Array({type:"Numbers",name:"Multiple"},{type:"Images",name:"Image"});
 functions[28].output="Images";
 functions[29]={};
-functions[29].name="triangle";
-functions[29].input=new Array("Numbers", "Strings", "Strings");
+functions[29].name="rotate";
+functions[29].input=new Array({type:"Numbers",name:"Degrees"},{type:"Images",name:"Image"});
 functions[29].output="Images";
 functions[30]={};
-functions[30].name="ellipse";
-functions[30].input=new Array("Numbers", "Numbers", "Strings", "Strings");
+functions[30].name="place-image";
+functions[30].input=new Array({type:"Images",name:"To Place"}, {type:"Numbers",name:"x"},{type:"Numbers",name:"y"},{type:"Images",name:"Background"});
 functions[30].output="Images";
-functions[31]={};
-functions[31].name="star";
-functions[31].input=new Array("Numbers", "Strings", "Strings");
-functions[31].output="Images";
-functions[32]={};
-functions[32].name="scale";
-functions[32].input=new Array("Numbers","Images");
-functions[32].output="Images";
-functions[33]={};
-functions[33].name="rotate";
-functions[33].input=new Array("Numbers", "Images");
-functions[33].output="Images";
-functions[34]={};
-functions[34].name="place-image";
-functions[34].input=new Array("Images", "Numbers", "Numbers", "Images");
-functions[34].output="Images";
 
 
 var colors={}
@@ -172,93 +156,59 @@ var colors={}
  colors.Strings="orange"
  colors.Images="#66FF33"
  colors.Booleans="#CC33FF"
- colors.Any="white"
  colors.Define="white"
  colors.Expressions="white"
 
-/*Function to make a struct should both add a type and automatically create functions to access that struct*/
-function newStruct(name, colorValue, array_of_names,array_of_types){
-	addType(name,ColorValue)
-	for(i=0;i<array_of_name_values.length-1;i++){
-		addFunction(name+"-"+array_of_names[i],name,array_of_types[i])
-	}
-	
+var constant_array=[]
 
-	//return makestruct(name,array_of_names,array_of_types)
+
+function add_constant(name_of_v,type_of_v){
+	constant_array[constant_array.length]={
+		name:name_of_v,
+		type:type_of_v,
+	}
 }
 
-/*MAKE A FUNCTION TO MAKE NEW VARIABLES/LITERALS AND CREATE INSTANCES OF EACH TYPE*/
-
-
-//creates the constructor to make a new object of that struct
-//var person = makestruct('person', ['name', 'age'], ['string', 'number'])
-//var me = new person([{type: 'string', val : "Danny"}, {type: 'number', value: '33'}]
-var makestruct=function(name,key_array,valType_array){
-	if(key_array.length!=valType_array.length){
-		return undefined
+/*Function to make a struct should both add a type and automatically create functions to access that struct*/
+function newStruct(name, colorValue, array_of_names, array_of_types){
+	addType(name,ColorValue)
+	for(i=0;i<array_of_name_values.length-1;i++){
+		addFunction(name+"-"+array_of_names[i],[name],[name],array_of_types[i])
 	}
-	var constructor=function(value_array){
-		if(valType_array.length!=value_array.length){
-			return undefined
-		}
-		else{
-			for(i=0;i<value_array.length;i++){
-				if(value_array[i].type!=valType_array[i]){
-					return undefined
-				}
-				else{
-					this[key_array[i]]=value_array[i];
-				}
-			}
-		}
+	addFunction("make-"+name,array_of_types,array_of_names,name)
+}
+
+function spliceTypeName(array_of_types,array_of_names){
+	var spliced=[]
+	for(i=0;i<array_of_names.length;i++){
+		spliced[spliced.length]={type:array_of_types[i],name:array_of_names[i]}
 	}
-	return constructor
+	return spliced
 }
 
 function addType(name, colorValue){
 	colors[name]=colorValue
 }
-function addFunction(name_of_function,inputs,output_type){
-	functions[functions.length]={name:name_of_function, input:inputs, output:ouput_type}
+function addFunction(name_of_function,inputs,inputsnames,output_type){
+	functions[functions.length]={name:name_of_function, input:spliceTypeName(inputs,inputsnames), output:output_type}
 }
 
 
 function makeTypesArray(allFunctions){
 	var types={}
 	for(var i=0;i<allFunctions.length;i++){
-		//TAKE CARE OF ANY SEPERATELY
-
-		if(allFunctions[i].output=="Any"){
-			if(allFunctions[i].name.indexOf("define")!=-1){
-				if(types["Define"]!=undefined){
-					types["Define"][types["Define"].length]=i
-				}
-				else{
-					 types.Define=[i]
-				}
-			}
-			else{
-				if(types["Expressions"]!=undefined){
-					types["Expressions"][types["Expressions"].length]=i
-				}
-				else{
-					 types.Expressions=[i]
-				}
-			}
-			continue;
-		}
-
-
-		var curOutput=functions[i].output
+		var curOutput=allFunctions[i].output
 		if(types[curOutput]!=undefined){
 			types[curOutput][types.length]=i
 		}
 		else{
-		 types[curOutput]=[i]
+			types[curOutput]=[i]
 		}
+
+
 		var curInput=allFunctions[i].input
 		if(unique(curInput) && curInput.length>0){
-			var addition=curInput[0]
+			var addition=curInput[0].type
 			if( types[addition]!=undefined ){
 				if( types[addition][ types[addition].length-1 ]!=i ){
 					types[addition][ types[addition].length ]=i
@@ -270,30 +220,20 @@ function makeTypesArray(allFunctions){
 		}
 	}
 
-
-
 	return types
 }
 
 function unique(array_inputs){
 	if(array_inputs.length>0){
-		var first=array_inputs[0];
+		var first=array_inputs[0].type;
 		for(var i=1;i<array_inputs.length;i++){
-			if(first!=array_inputs[i]){
+			if(first!=array_inputs[i].type){
 				return false
 			}
 		}
 	}
 	return true
 }
-
-//var types = new Array();
-//types[0]={}()
-//types[0].section="Numbers"
-//types[0].functions=new Array("+","-", "*", "/", "remainder", "sqrt", "sqr", "expt", "=", ">",)
-
-
-
 
 
 function contains(stringElement){
