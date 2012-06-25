@@ -29,7 +29,6 @@ function drawerButton(elt){
 $(".document").ready(function(){makeDrawers(functions,constants);});
 
 $("#options span").live('click',function(){
-	console.log("I got here");
 	var old=document.getElementById("List").innerHTML;
 	document.getElementById("List").innerHTML=old+"<li>"+block($(this).html())+"</li>";
 });
