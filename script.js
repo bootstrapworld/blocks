@@ -169,6 +169,15 @@ function addConstant(name_of_v,type_of_v){
 		name:name_of_v,
 		type:type_of_v,
 	}
+	makeDrawers(functions,constants)
+}
+
+function deleteConstant(name_of_v){
+	var index=constants.contains(name_of_v)
+	if(index!=-1){
+		constants.splice(index,1)
+	}
+	makeDrawers(functions,constants)
 }
 
 /*Function to make a struct should both add a type and automatically create functions to access that struct*/
@@ -178,6 +187,15 @@ function newStruct(name, colorValue, array_of_names, array_of_types){
 		addFunction(name+"-"+array_of_names[i],[name],[name],array_of_types[i])
 	}
 	addFunction("make-"+name,array_of_types,array_of_names,name)
+	makeDrawers(functions,constants)
+}
+
+function deleteStruct(name_of_s){
+	var index=functions.contains("make-"+name)
+	if(index!=-1){
+		functions.splice(index,functions[index].inputs.length)
+	}
+	makeDrawers(functions,constants)
 }
 
 function spliceTypeName(array_of_types,array_of_names){
@@ -191,8 +209,19 @@ function spliceTypeName(array_of_types,array_of_names){
 function addType(name, colorValue){
 	colors[name]=colorValue
 }
+
+
 function addFunction(name_of_function,inputs,inputsnames,output_type){
 	functions[functions.length]={name:name_of_function, input:spliceTypeName(inputs,inputsnames), output:output_type}
+	makeDrawers(functions,constants)
+}
+
+function deleteFunction(name_of_f){
+	var index=functions.contains(name_of_f)
+	if(index!=-1){
+		functions.splice(index,1)
+	}
+	makeDrawers(functions,constants)
 }
 
 
