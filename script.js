@@ -25,11 +25,20 @@ function drawerButton(elt){
 	}
 
 }
-$(".bottomNav").live('click', function(){
-		drawerButton($(this));
-});
 
 $(".document").ready(function(){makeDrawers(functions,constants);});
+
+$("#options span").live('click',function(){
+	console.log("I got here");
+	var old=document.getElementById("List").innerHTML;
+	document.getElementById("List").innerHTML=old+"<li>"+block($(this).html())+"</li>";
+});
+
+
+
+$(".bottomNav").live('click', function(e){
+		drawerButton($(this));
+});
 
 var functions=[];
 functions[0]={};
@@ -368,4 +377,61 @@ function makeDrawers(allFunctions,allConstants){
 	Drawers+="</div>"
 	Selector+="</div>"
 	document.getElementById("Drawer").innerHTML=Drawers+"\n"+Selector
+}
+
+
+ function createFunctionBlock(functionIndex){
+ 	var func = functions[functionIndex]
+ 	var block = "<table style=\"background: " + colors[func.output] +"; border-style: outset; border-radius: 10px;\">"
+ 	block += "<tr><th>" + func.name
+ 	for(var i = 0; i < func.input.length; i++){
+ 		block += "<th style=\"background: " + colors[func.input[i].type] +"; border: gray; border-style: outset; border-radius: 10px;\">" + func.input[i].name
+ 	}
+ 	return block + "</tr></table>"
+ }
+
+function block(str){
+ 	if(str === "define-function"){
+ 		return createDefineBlock();
+ 	} else if (str === "define-var"){
+ 		return createDefineVarBlock();
+ 	} else if (str === "define-struct"){
+ 		return createDefineStructBlock();
+ 	}
+ 	 else if (str === "cond"){
+ 		return createCondBlock();
+ 	}
+ 	else{
+	 	for(var i = 0; i < functions.length; i++){
+	 		if (functions[i].name === str){
+	 			return createFunctionBlock(i);
+	 		}
+	 	}
+ 	}
+ 	
+ }
+
+function createDefineBlock(){
+	var block ="<table style=\"background: " + colors.Define +"; border-style: outset; border-radius: 10px;\"><tr><th>define";
+	block+="<th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\"> name <th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">args <th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">expr";
+	return block + "</tr></table>";
+}
+
+function createDefineVarBlock(){
+	var block = "<table style=\"background: " +colors.Define +"; border-style: outset; border-radius: 10px;\"><tr><th>define";
+	block+="<th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\"> name  <th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">expr";
+	return block + "</tr></table>";
+}
+
+function createDefineStructBlock(){
+	var block ="<table style=\"background: " + colors.Define +"; border-style: outset; border-radius: 10px;\"><tr><th>define-struct";
+	block+="<th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\"> name <th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">properties";
+	return block + "</tr></table>";
+}
+
+function createCondBlock(){
+	var block =  "<table style=\"background: " + colors.Expressions +"; border-style: outset; border-radius: 10px;\"><tr><th>cond</tr>";
+	block+="<tr><th><th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">boolean <th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">expr</tr>";
+	block+="<tr><th><th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">add</th></tr>"
+	return block + "</table>";
 }

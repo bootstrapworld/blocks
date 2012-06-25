@@ -17,7 +17,13 @@ body{
 }
 
 #code{
-	overflow: scroll;
+	width:100%;
+	position:relative;
+	top:50px;
+	left:0px;
+	width:1923px;
+	height:888px;
+	overflow: auto;
 }
 
 
@@ -51,6 +57,7 @@ body{
 	border: 1px solid white;
 	border-radius: 5px;
 }
+/*
 .num{
 	background: #33CCFF;
 }
@@ -60,12 +67,16 @@ body{
 .def{
 	background: white;
 }
+.expr{
+	background: white;
+}
 .string{
 	background: orange;
 }
 .image{
 	background: #66FF33;
 }
+*/
 button {
 	float: right;
 	margin: 15px;
@@ -80,4 +91,12 @@ button {
 
 .anElement {
     position: absolute;
+}
+
+ul
+{
+    list-style-type: none;
+}
+li{
+	width:500px;
 }
