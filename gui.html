@@ -10,78 +10,77 @@
 </div>
 <div id="code"></div>
 
+<div id="Drawer">
 <div id="options">
-		<div id="Numbers">
-			<span class="num">+</span>
-			<span class="num">-</span>
-			<span class="num">*</span>
-			<span class="num">/</span>
-			<span class="num">remainder</span>
-			<span class="num">sqrt</span>
-			<span class="num">sq</span>
-			<span class="num">expt</span>
-			<span class="bool">=</span>
-			<span class="bool">></span>
-			<span class="bool"><</span>
-			<span class="bool">>=</span>
-			<span class="bool"><=</span>
-			<span class="bool">odd?</span>
-			<span class="bool">even?</span>
-		</div>
-		<div id="Strings">
-			<span class="string">string-append</span>
-			<span class="string">string-length</span>
-			<span class="bool">string=?</span>
-			</div>
-		<div id="Images">
-			<span class="image">rectangle</span>
-			<span class="image">circle</span>
-			<span class="image">triangle</span>
-			<span class="image">ellipse</span>
-			<span class="image">radial-star</span>
-			<span class="image">scale</span>
-			<span class="image">rotate</span>
-			<span class="image">place-image</span>
-		</div>
-		<div id="Booleans">
-			<span class="bool">true</span>
-			<span class="bool">false</span>
-			<span class="bool">=</span>
-			<span class="bool">></span>
-			<span class="bool"><</span>
-			<span class="bool">string=?</span>
-			<span class="bool">and</span>
-			<span class="bool">or</span>
-			<span class="bool">>=</span>
-			<span class="bool"><=</span>
-			<span class="bool">not</span>
-			<span class="bool">odd?</span>
-			<span class="bool">even?</span>
-			<span class="bool">empty?</span>
-			<span class="bool">cons?</span>
- 		</div>
-		<div id="Define">
-			<span class="def">(define var)</span>
-			<span class="def">(define func)</span>
-			<span class="def">(define struct)</span>
-		</div>
-		<div id="Expressions">
-			<span class="def">cond</span>
-			<span class="def">if</span>
-			<span class="def">else</span>
-		</div>
-		<div id="Lists">cons empty list empty? cons?</div>
-	</div>
+<div class="Numbers" id="Numbers">
+<span class="Numbers" style="background: #33CCFF">+</span>
+<span class="Numbers" style="background: #33CCFF">-</span>
+<span class="Numbers" style="background: #33CCFF">*</span>
+<span class="Numbers" style="background: #33CCFF">/</span>
+<span class="Numbers" style="background: #33CCFF">remainder</span>
+<span class="Numbers" style="background: #33CCFF">sqrt</span>
+<span class="Numbers" style="background: #33CCFF">sqr</span>
+<span class="Numbers" style="background: #33CCFF">expt</span>
+<span class="Booleans" style="background: #CC33FF">=</span>
+<span class="Booleans" style="background: #CC33FF">&gt;</span>
+<span class="Booleans" style="background: #CC33FF">&lt;</span>
+<span class="Booleans" style="background: #CC33FF">&lt;=</span>
+<span class="Booleans" style="background: #CC33FF">&gt;=</span>
+<span class="Booleans" style="background: #CC33FF">even?</span>
+<span class="Booleans" style="background: #CC33FF">odd?</span>
+<span class="Numbers" style="background: #33CCFF">string-length</span>
+</div>
+<div class="Booleans" id="Booleans">
+<span class="Booleans" style="background: #CC33FF">=</span>
+<span class="Booleans" style="background: #CC33FF">&gt;</span>
+<span class="Booleans" style="background: #CC33FF">&lt;</span>
+<span class="Booleans" style="background: #CC33FF">&lt;=</span>
+<span class="Booleans" style="background: #CC33FF">&gt;=</span>
+<span class="Booleans" style="background: #CC33FF">even?</span>
+<span class="Booleans" style="background: #CC33FF">odd?</span>
+<span class="Booleans" style="background: #CC33FF">string=?</span>
+<span class="Booleans" style="background: #CC33FF">true</span>
+<span class="Booleans" style="background: #CC33FF">false</span>
+<span class="Booleans" style="background: #CC33FF">and</span>
+<span class="Booleans" style="background: #CC33FF">or</span>
+<span class="Booleans" style="background: #CC33FF">not</span>
+</div>
+<div class="Strings" id="Strings">
+<span class="Strings" style="background: orange">string-append</span>
+<span class="Numbers" style="background: #33CCFF">string-length</span>
+<span class="Booleans" style="background: #CC33FF">string=?</span>
+</div>
+<div class="Images" id="Images">
+<span class="Images" style="background: #66FF33">rectangle</span>
+<span class="Images" style="background: #66FF33">circle</span>
+<span class="Images" style="background: #66FF33">triangle</span>
+<span class="Images" style="background: #66FF33">ellipse</span>
+<span class="Images" style="background: #66FF33">star</span>
+<span class="Images" style="background: #66FF33">scale</span>
+<span class="Images" style="background: #66FF33">rotate</span>
+<span class="Images" style="background: #66FF33">place-image</span>
+</div>
+<div class="Constants" id="Constants">
+</div>
+<div class="Define" id="Define">
+<span class="Define" style="background: white">define-var</span>
+<span class="Define" style="background: white">define-function</span>
+<span class="Define" style="background: white">define-struct</span>
+</div>
+<div class="Expressions" id="Expressions">
+<span class="Expressions" style="background: white">cond</span>
+</div>
 </div>
 <div id="selectors">
-		<div class="num bottomNav" id="Numbers">Numbers</div>
-		<div class="string bottomNav" id="Strings">Strings</div>
-		<div class="image bottomNav" id="Images">Images</div>
-		<div class="bool bottomNav" id="Booleans">Booleans</div>
-		<div class="def bottomNav" id="Define">Define</div>
-		<div class="def bottomNav" id="Expressions">Expressions</div>
+<div class="Numbers bottomNav" id="Numbers" style="background: #33CCFF">Numbers</div>
+<div class="Booleans bottomNav" id="Booleans" style="background: #CC33FF">Booleans</div>
+<div class="Strings bottomNav" id="Strings" style="background: orange">Strings</div>
+<div class="Images bottomNav" id="Images" style="background: #66FF33">Images</div>
+<div class="Constants bottomNav" id="Constants" style="background: white">Constants</div>
+<div class="Define bottomNav" id="Define" style="background: white">Define</div>
+<div class="Expressions bottomNav" id="Expressions" style="background: white">Expressions</div>
 </div>
-
+</div>
 
 </body>
 

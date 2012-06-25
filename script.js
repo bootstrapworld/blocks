@@ -2,6 +2,7 @@
 * Sets the panels with function names to visible and invisible when hidden
 *
 */
+"use strict";
 var activated = null;
 var currID = null;
 $(".bottomNav").bind('click', function(){
@@ -158,11 +159,12 @@ var colors={}
  colors.Booleans="#CC33FF"
  colors.Define="white"
  colors.Expressions="white"
+ colors.Constants="white"
 
-var constant_array=[]
+var constants=[]
 
 
-function add_constant(name_of_v,type_of_v){
+function addConstant(name_of_v,type_of_v){
 	constant_array[constant_array.length]={
 		name:name_of_v,
 		type:type_of_v,
@@ -194,12 +196,12 @@ function addFunction(name_of_function,inputs,inputsnames,output_type){
 }
 
 
-function makeTypesArray(allFunctions){
+function makeTypesArray(allFunctions,allConstants){
 	var types={}
 	for(var i=0;i<allFunctions.length;i++){
 		var curOutput=allFunctions[i].output
 		if(types[curOutput]!=undefined){
-			types[curOutput][types.length]=i
+			types[curOutput][types[curOutput].length]=i
 		}
 		else{
 			types[curOutput]=[i]
@@ -219,6 +221,13 @@ function makeTypesArray(allFunctions){
 			}
 		}
 	}
+	types.Constants=[]
+	for(i=0;i<allConstants.length;i++){
+		types.Constants[types.Constants.length]=i
+	}
+
+	types.Define=new Array("define-var","define-function","define-struct")
+	types.Expressions=new Array("cond")
 
 	return types
 }
@@ -242,4 +251,45 @@ function contains(stringElement){
 		if(this[i].name=stringElement){contain=i; break;}
 	}
 	return contain
+}
+
+
+function makeDrawers(allFunctions,allConstants){
+	var typeDrawers=makeTypesArray(allFunctions,allConstants)
+	var Drawers="<div id=\"options\">\n"
+	var Selector="<div id=\"selectors\">\n"
+
+	for(var Type in typeDrawers){
+		Drawers+="<div class=\""+Type+"\" id=\""+Type+"\">\n"
+		if(Type=="Constants"){
+			for(var i=0;i<typeDrawers[Type].length;i++){
+				Drawers+="<span class="+Type+" style=\"background: "+colors[Type]+"\">"+allConstants[typeDrawers[Type][i]].name+"</span>\n"
+			}
+		}
+		else if(Type=="Define"){
+			for(var i=0;i<typeDrawers[Type].length;i++){
+				Drawers+="<span class="+Type+" style=\"background: "+colors[Type]+"\">"+typeDrawers[Type][i]+"</span>\n"
+			}
+		}
+		else if(Type=="Expressions"){
+			for(var i=0;i<typeDrawers[Type].length;i++){
+				Drawers+="<span class="+Type+" style=\"background: "+colors[Type]+"\">"+typeDrawers[Type][i]+"</span>\n"
+			}
+		}
+		else{
+			for(var i=0;i<typeDrawers[Type].length;i++){
+				Drawers+="<span class="+allFunctions[typeDrawers[Type][i]].output+" style=\"background: "+colors[allFunctions[typeDrawers[Type][i]].output]+"\">"+allFunctions[typeDrawers[Type][i]].name+"</span>\n"
+			}
+		}
+
+		Drawers+="</div>\n"
+		Selector+="<div class=\""+Type+" bottomNav\" id=\""+Type+"\" style=\"background: "+colors[Type]+"\">"+Type+"</div>\n"
+	}
+
+	Drawers+="</div>"
+	Selector+="</div>"
+
+	document.getElementById("Drawer").innerHTML=Drawers+"\n"+Selector
+
+	console.log(document.getElementById("Drawer").innerHTML)
 }
