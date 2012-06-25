@@ -5,25 +5,31 @@
 "use strict";
 var activated = null;
 var currID = null;
-$(".bottomNav").bind('click', function(){
-	if ($(this).attr('id') == currID) {
+function drawerButton(elt){
+	if (elt.attr('id') == currID) {
 		activated.css("visibility","hidden");
 		activated = null;
 		currID = null;
 		$("#options").css("visibility", "hidden");
 	}else if (currID === null){
-		activated = $("#options #" + $(this).attr('id'))
-		currID = $(this).attr('id')
+		activated = $("#options #" + elt.attr('id'))
+		currID = elt.attr('id')
 		activated.css("visibility", "visible");
 		$("#options").css("visibility", "visible");
 	} else {
 		activated.css("visibility","hidden");
-		activated = $("#options #" + $(this).attr('id'))
+		activated = $("#options #" + elt.attr('id'))
 		activated.css("visibility", "visible");
-		currID = $(this).attr('id');
+		currID = elt.attr('id');
 		$("#options").css("visibility", "visible");
 	}
-})
+
+}
+$(".bottomNav").live('click', function(){
+		drawerButton($(this));
+});
+
+$(".document").ready(function(){makeDrawers(functions,constants);});
 
 var functions=[];
 functions[0]={};
@@ -151,6 +157,7 @@ functions[30].name="place-image";
 functions[30].input=new Array({type:"Images",name:"To Place"}, {type:"Numbers",name:"x"},{type:"Numbers",name:"y"},{type:"Images",name:"Background"});
 functions[30].output="Images";
 
+var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map","let","local"]
 
 var colors={}
  colors.Numbers="#33CCFF"
@@ -165,7 +172,11 @@ var constants=[]
 
 
 function addConstant(name_of_v,type_of_v){
-	constant_array[constant_array.length]={
+	if(colors[name_of_v]!=undefined || containsName(constants,name_of_v)!=-1 || containsName(functions,name_of_v)!=-1 || contains(restricted,name_of_v)!=-1){
+		alert("I am sorry but that type already exists as either another struct, function, constant or a reserved word")
+		return;
+	}
+	constants[constants.length]={
 		name:name_of_v,
 		type:type_of_v,
 	}
@@ -173,55 +184,75 @@ function addConstant(name_of_v,type_of_v){
 }
 
 function deleteConstant(name_of_v){
-	var index=constants.contains(name_of_v)
+	var index=containsName(constants,name_of_v)
 	if(index!=-1){
 		constants.splice(index,1)
+		makeDrawers(functions,constants)
 	}
-	makeDrawers(functions,constants)
+
 }
 
 /*Function to make a struct should both add a type and automatically create functions to access that struct*/
-function newStruct(name, colorValue, array_of_names, array_of_types){
-	addType(name,ColorValue)
-	for(i=0;i<array_of_name_values.length-1;i++){
+function addStruct(name, colorValue, array_of_names, array_of_types){
+	if(colors[name]!=undefined || containsName(constants,name)!=-1 || containsName(functions,name)!=-1 || contains(restricted,name)!=-1){
+		alert("I am sorry but that type already exists as either another struct, function, constant or a reserved word")
+		return;
+	}
+	addType(name,colorValue)
+	addFunction("make-"+name,array_of_types,array_of_names,name)
+	for(var i=0;i<array_of_names.length;i++){
 		addFunction(name+"-"+array_of_names[i],[name],[name],array_of_types[i])
 	}
-	addFunction("make-"+name,array_of_types,array_of_names,name)
 	makeDrawers(functions,constants)
 }
 
 function deleteStruct(name_of_s){
-	var index=functions.contains("make-"+name)
+	var index=containsName(functions,"make-"+name_of_s)
 	if(index!=-1){
-		functions.splice(index,functions[index].inputs.length)
+		functions.splice(index,functions[index].input.length+1)
+		deleteType (name_of_s)
+		makeDrawers(functions,constants)
 	}
-	makeDrawers(functions,constants)
+
 }
 
 function spliceTypeName(array_of_types,array_of_names){
 	var spliced=[]
-	for(i=0;i<array_of_names.length;i++){
+	for(var i=0;i<array_of_names.length;i++){
 		spliced[spliced.length]={type:array_of_types[i],name:array_of_names[i]}
 	}
 	return spliced
 }
 
 function addType(name, colorValue){
+	if(colors[name]!=undefined || containsName(constants,name)!=-1 || containsName(functions,name)!=-1 || contains(restricted,name)!=-1){
+		alert("I am sorry but that type already exists as either another struct, function, constant or a reserved word")
+		return;
+	}
 	colors[name]=colorValue
+}
+
+function deleteType(name){
+	delete colors[name]
 }
 
 
 function addFunction(name_of_function,inputs,inputsnames,output_type){
+	if(colors[name_of_function]!=undefined || containsName(constants,name_of_function)!=-1 || containsName(functions,name_of_function)!=-1 || contains(restricted,name_of_function)!=-1){
+		alert("I am sorry but that type already exists as either another struct, function, constant or a reserved word")
+		return;
+	}
 	functions[functions.length]={name:name_of_function, input:spliceTypeName(inputs,inputsnames), output:output_type}
 	makeDrawers(functions,constants)
 }
 
 function deleteFunction(name_of_f){
-	var index=functions.contains(name_of_f)
+	var index=containsName(functions,name_of_f)
 	if(index!=-1){
 		functions.splice(index,1)
+		makeDrawers(functions,constants)
 	}
-	makeDrawers(functions,constants)
+	
 }
 
 
@@ -274,10 +305,24 @@ function unique(array_inputs){
 }
 
 
-function contains(stringElement){
+function containsName(array_of_obj,stringElement){
 	var contain=-1
-	for (var i = this.length - 1; i >= 0; i--) {
-		if(this[i].name=stringElement){contain=i; break;}
+	for (var i = 0; i < array_of_obj.length; i++) {
+		if(array_of_obj[i].name==stringElement){
+			contain=i;
+			 break;
+		}
+	}
+	return contain
+}
+
+function contains(array,stringElement){
+	var contain=-1
+	for (var i = 0; i < array.length; i++) {
+		if(array[i]==stringElement){
+			contain=i;
+			 break;
+		}
 	}
 	return contain
 }
@@ -292,7 +337,7 @@ function makeDrawers(allFunctions,allConstants){
 		Drawers+="<div class=\""+Type+"\" id=\""+Type+"\">\n"
 		if(Type=="Constants"){
 			for(var i=0;i<typeDrawers[Type].length;i++){
-				Drawers+="<span class="+Type+" style=\"background: "+colors[Type]+"\">"+allConstants[typeDrawers[Type][i]].name+"</span>\n"
+				Drawers+="<span class="+Type+" style=\"background: "+colors[allConstants[typeDrawers[Type][i]].type]+"\">"+allConstants[typeDrawers[Type][i]].name+"</span>\n"
 			}
 		}
 		else if(Type=="Define"){
@@ -317,8 +362,5 @@ function makeDrawers(allFunctions,allConstants){
 
 	Drawers+="</div>"
 	Selector+="</div>"
-
 	document.getElementById("Drawer").innerHTML=Drawers+"\n"+Selector
-
-	console.log(document.getElementById("Drawer").innerHTML)
 }
