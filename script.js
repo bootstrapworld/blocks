@@ -392,7 +392,7 @@ function makeDrawers(allFunctions,allConstants){
 function block(str){
  	if(str === "define-function"){
  		return createDefineBlock();
- 	} else if (str === "define-var"){
+ 	} else if (str === "define-constant"){
  		return createDefineVarBlock();
  	} else if (str === "define-struct"){
  		return createDefineStructBlock();
@@ -402,7 +402,7 @@ function block(str){
  	}
  	else{
 	 	for(var i = 0; i < functions.length; i++){
-	 		if (functions[i].name === str){
+	 		if (decode(functions[i].name) === str){
 	 			return createFunctionBlock(i);
 	 		}
 	 	}
@@ -433,4 +433,8 @@ function createCondBlock(){
 	block+="<tr><th><th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">boolean <th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">expr</tr>";
 	block+="<tr><th><th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">add</th></tr>"
 	return block + "</table>";
+}
+
+function decode(mystring){
+	return mystring.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 }
