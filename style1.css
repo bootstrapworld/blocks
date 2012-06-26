@@ -105,11 +105,12 @@ table{
 	 border-style: outset; 
 	 border-radius: 10px;
 }
-th{
+.expr{
 	border: gray; 
 	border-style: outset; 
 	border-radius: 10px;
 }
-.operator{
-	border:none;
+#Name{
+	margin-top:15px;
+	width:100px;
 }

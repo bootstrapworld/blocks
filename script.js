@@ -405,9 +405,9 @@ function makeDrawers(allFunctions,allConstants){
  function createFunctionBlock(functionIndex){
  	var func = functions[functionIndex]
  	var block = "<table style=\"background: " + colors[func.output] +";\">"
- 	block += "<tr><th class=\"operator\">" + func.name
+ 	block += "<tr><th>" + func.name
  	for(var i = 0; i < func.input.length; i++){
- 		block += "<th style=\"background: " + colors[func.input[i].type] +";\">" + func.input[i].name
+ 		block += "<th class=\"expr\" style=\"background: " + colors[func.input[i].type] +";\">" + func.input[i].name
  	}
  	return block + "</tr></table>"
  }
@@ -436,30 +436,30 @@ function block(str){
 
 //createDefineBlock outputs the block corresponding to defining a function
 function createDefineBlock(){
-	var block ="<table style=\"background: " + colors.Define +";\"><tr><th class=\"operator\">define";
-	block+="<th style=\"background: " + colors.Define +"; \"> name <th style=\"background: " + colors.Define +";\">args <th style=\"background: " + colors.Define +";\">expr";
+	var block ="<table style=\"background: " + colors.Define +";\"><tr><th>define";
+	block+="<th style=\"background: " + colors.Define +"; \"> <form name=\"Name\"><input type=\"Name\" id=\"Name\" name=\"Name\"/></form><th  class=\"expr\" style=\"background: " + colors.Define +";\">args <th  class=\"expr\" style=\"background: " + colors.Define +";\">expr";
 	return block + "</tr></table>";
 }
 
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(){
-	var block = "<table style=\"background: " +colors.Define +"; b\"><tr><th class=\"operator\">define";
-	block+="<th style=\"background: " + colors.Define +";\"> name  <th style=\"background: " + colors.Define +";\">expr";
+	var block = "<table style=\"background: " +colors.Define +"; b\"><tr><th>define";
+	block+="<th style=\"background: " + colors.Define +";\"> <form name=\"Name\"><input type=\"Name\" id=\"Name\" name=\"Name\"/></form>  <th  class=\"expr\" style=\"background: " + colors.Define +";\">expr";
 	return block + "</tr></table>";
 }
 
 //createDefineStructBlock outputs the block corresponding to creating a structure
 function createDefineStructBlock(){
-	var block ="<table style=\"background: " + colors.Define +"; \"><tr><th class=\"operator\">define-struct";
-	block+="<th style=\"background: " + colors.Define +"; \"> name <th style=\"background: " + colors.Define +"; \">properties";
+	var block ="<table style=\"background: " + colors.Define +"; \"><tr><th>define-struct";
+	block+="<th style=\"background: " + colors.Define +"; \"> <form name=\"Name\"><input type=\"Name\" id=\"Name\" name=\"Name\"/></form> <th class=\"expr\"  style=\"background: " + colors.Define +"; \">properties";
 	return block + "</tr></table>";
 }
 
 //createCondBlock outputs the block corresponding to creating a conditional
 function createCondBlock(){
-	var block =  "<table style=\"background: " + colors.Expressions +";\"><tr><th class=\"operator\">cond</tr>";
-	block+="<tr><th><th style=\"background: " + colors.Booleans +"\">boolean <th style=\"background: " + colors.Expressions +"\">expr</tr>";
-	block+="<tr><th><th style=\"background: " + colors.Expressions +"\">add</th></tr>"
+	var block =  "<table style=\"background: " + colors.Expressions +";\"><tr><th>cond</tr>";
+	block+="<tr><th><th  class=\"expr\" style=\"background: " + colors.Booleans +"\">boolean <th class=\"expr\"  style=\"background: " + colors.Expressions +"\">expr</tr>";
+	block+="<tr><th><th  class=\"expr\" style=\"background: " + colors.Expressions +"\">add</th></tr>"
 	return block + "</table>";
 }
 
