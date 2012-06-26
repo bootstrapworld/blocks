@@ -3,6 +3,8 @@
 *
 */
 "use strict";
+
+//DrawerButton takes in an element and either activates (shows) or deactivates (hides) the current element to show the new one
 var activated = null;
 var currID = null;
 function drawerButton(elt){
@@ -26,19 +28,22 @@ function drawerButton(elt){
 
 }
 
+//Upon loading the webpage, the drawers are formed
 $(".document").ready(function(){makeDrawers(functions,constants);});
 
+//During the course of the whole session, buttons on the drawer can be clicked in order to add them to the program (the draggable list)
 $("#options span").live('click',function(){
 	var old=document.getElementById("List").innerHTML;
 	document.getElementById("List").innerHTML=old+"<li>"+block($(this).html())+"</li>";
 });
 
 
-
+//During the course of the whole session, drawers can be opened and closed to reveal all of the buttons (functions) that they contain
 $(".bottomNav").live('click', function(e){
 		drawerButton($(this));
 });
 
+//Functions is an array of objects containing a name, tuples of type and name corresponding to their inputs and an output type
 var functions=[];
 functions[0]={};
 functions[0].name="+";
@@ -165,8 +170,10 @@ functions[30].name="place-image";
 functions[30].input=new Array({type:"Images",name:"To Place"}, {type:"Numbers",name:"x"},{type:"Numbers",name:"y"},{type:"Images",name:"Background"});
 functions[30].output="Images";
 
+//restricted contains a list of key words in racket that we aren't allowing the user to redefine
 var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map","let","local"]
 
+//Colors is an object containing kv pairs of type to color
 var colors={}
  colors.Numbers="#33CCFF"
  colors.Strings="#FFA500"
@@ -176,11 +183,17 @@ var colors={}
  colors.Expressions="#FFFFFF"
  colors.Constants="#FFFFFF"
 
+//constants is an array of user defined variables containing their name and type
 var constants=[]
 
+//isDuplicate takes in a name of a function/constant/struct and checks if that name already exists or is restricted
+function isDuplicate(name){
+	return (colors[name]!=undefined || containsName(constants,name)!=-1 || containsName(functions,name)!=-1 || restricted.contains(name)!=-1)
+}
 
+//addConstant will first check if the name is already taken and if not, adds it to the constants array and remakes the drawers
 function addConstant(name_of_v,type_of_v){
-	if(colors[name_of_v]!=undefined || containsName(constants,name_of_v)!=-1 || containsName(functions,name_of_v)!=-1 || restricted.contains(name_of_v)!=-1){
+	if(isDuplicate(name_of_v)){
 		alert("I am sorry but that type already exists as either another struct, function, constant or a reserved word")
 		return;
 	}
@@ -191,6 +204,7 @@ function addConstant(name_of_v,type_of_v){
 	makeDrawers(functions,constants)
 }
 
+//deleteConstant will remove teh given constant if it exists and remake the drawers
 function deleteConstant(name_of_v){
 	var index=containsName(constants,name_of_v)
 	if(index!=-1){
@@ -200,9 +214,9 @@ function deleteConstant(name_of_v){
 
 }
 
-/*Function to make a struct should both add a type and automatically create functions to access that struct*/
+//addStruct will add the new type,color pair, the constructor function and the accessor functions to the functions array if it doesn't already exist.  Also, the drawers will be remade
 function addStruct(name, colorValue, array_of_names, array_of_types){
-	if(colors[name]!=undefined || containsName(constants,name)!=-1 || containsName(functions,name)!=-1 || restricted.contains(name)!=-1){
+	if(isDuplicate(name)){
 		alert("I am sorry but that type already exists as either another struct, function, constant or a reserved word")
 		return;
 	}
@@ -214,6 +228,7 @@ function addStruct(name, colorValue, array_of_names, array_of_types){
 	makeDrawers(functions,constants)
 }
 
+//deleteStruct will remove the constructor, type and the accessor functions from their respective arrays if they exist and the drawers will be remade
 function deleteStruct(name_of_s){
 	var index=containsName(functions,"make-"+name_of_s)
 	if(index!=-1){
@@ -224,6 +239,7 @@ function deleteStruct(name_of_s){
 
 }
 
+//spliceTypeName takes in an array of types and names and stitches them together.
 function spliceTypeName(array_of_types,array_of_names){
 	var spliced=[]
 	for(var i=0;i<array_of_names.length;i++){
@@ -232,26 +248,29 @@ function spliceTypeName(array_of_types,array_of_names){
 	return spliced
 }
 
+//addType will add the new name,color pair only if both are unique
 function addType(name, colorValue){
-	if(colors[name]!=undefined || containsName(constants,name)!=-1 || containsName(functions,name)!=-1 || restricted.contains(name)!=-1){
+	if(isDuplicate(name)){
 		alert("I am sorry but that type already exists as either another struct, function, constant or a reserved word")
 		return;
 	}
 	for(var type in colors){
 		if (colors[type]==colorValue){
 			alert("I am sorry but that color already exists")
+			return;
 		}
 	}
 	colors[name]=colorValue
 }
 
+//deleteType will remove the kv pair from the colors object
 function deleteType(name){
 	delete colors[name]
 }
 
-
+//addFunction will add the given function to the functions array if it doesn't already exist and the drawers will be remade
 function addFunction(name_of_function,inputs,inputsnames,output_type){
-	if(colors[name_of_function]!=undefined || containsName(constants,name_of_function)!=-1 || containsName(functions,name_of_function)!=-1 || restricted.contains(name_of_function)!=-1){
+	if(isDuplicate(name_of_function)){
 		alert("I am sorry but that type already exists as either another struct, function, constant or a reserved word")
 		return;
 	}
@@ -259,6 +278,7 @@ function addFunction(name_of_function,inputs,inputsnames,output_type){
 	makeDrawers(functions,constants)
 }
 
+//deleteFunction will remove the given function if it exists and the drawers will be remade
 function deleteFunction(name_of_f){
 	var index=containsName(functions,name_of_f)
 	if(index!=-1){
@@ -268,7 +288,7 @@ function deleteFunction(name_of_f){
 	
 }
 
-
+//makeTypesArray will construct an object of kv pairs such that each type's value is an array of all indices to which that type is the output or the exclusive input
 function makeTypesArray(allFunctions,allConstants){
 	var types={}
 	for(var i=0;i<allFunctions.length;i++){
@@ -305,6 +325,7 @@ function makeTypesArray(allFunctions,allConstants){
 	return types
 }
 
+//unique takes as input an array and outputs if there is only one type in the whole array
 function unique(array_inputs){
 	if(array_inputs.length>0){
 		var first=array_inputs[0].type;
@@ -317,7 +338,7 @@ function unique(array_inputs){
 	return true
 }
 
-
+//containsName takes in an array of objects and a string and returns the index at which that string is the name property of any of the objects
 function containsName(array_of_obj,stringElement){
 	var contain=-1
 	for (var i = 0; i < array_of_obj.length; i++) {
@@ -329,6 +350,7 @@ function containsName(array_of_obj,stringElement){
 	return contain
 }
 
+//contains takes in a string and returns if any object of the array is equal to the given string
 Array.prototype.contains=function(stringElement){
 	var contain=-1
 	for (var i = 0; i <this.length; i++) {
@@ -340,7 +362,8 @@ Array.prototype.contains=function(stringElement){
 	return contain
 }
 
-
+//makeDrawers takes in all of the functions and all of the constants and will change the HTML so that each of the types is an openable drawer and when that drawer is opened
+//all of the functions corresponding to that type are displayed
 function makeDrawers(allFunctions,allConstants){
 	var typeDrawers=makeTypesArray(allFunctions,allConstants)
 	var Drawers="<div id=\"options\">\n"
@@ -378,17 +401,18 @@ function makeDrawers(allFunctions,allConstants){
 	document.getElementById("Drawer").innerHTML=Drawers+"\n"+Selector
 }
 
-
+//createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to that function with name, color, and spaces for input blocks
  function createFunctionBlock(functionIndex){
  	var func = functions[functionIndex]
- 	var block = "<table style=\"background: " + colors[func.output] +"; border-style: outset; border-radius: 10px;\">"
- 	block += "<tr><th>" + func.name
+ 	var block = "<table style=\"background: " + colors[func.output] +";\">"
+ 	block += "<tr><th class=\"operator\">" + func.name
  	for(var i = 0; i < func.input.length; i++){
- 		block += "<th style=\"background: " + colors[func.input[i].type] +"; border: gray; border-style: outset; border-radius: 10px;\">" + func.input[i].name
+ 		block += "<th style=\"background: " + colors[func.input[i].type] +";\">" + func.input[i].name
  	}
  	return block + "</tr></table>"
  }
 
+//block takes in a string and outputs the corresponding block to that function
 function block(str){
  	if(str === "define-function"){
  		return createDefineBlock();
@@ -410,31 +434,36 @@ function block(str){
  	
  }
 
+//createDefineBlock outputs the block corresponding to defining a function
 function createDefineBlock(){
-	var block ="<table style=\"background: " + colors.Define +"; border-style: outset; border-radius: 10px;\"><tr><th>define";
-	block+="<th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\"> name <th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">args <th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">expr";
+	var block ="<table style=\"background: " + colors.Define +";\"><tr><th class=\"operator\">define";
+	block+="<th style=\"background: " + colors.Define +"; \"> name <th style=\"background: " + colors.Define +";\">args <th style=\"background: " + colors.Define +";\">expr";
 	return block + "</tr></table>";
 }
 
+//createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(){
-	var block = "<table style=\"background: " +colors.Define +"; border-style: outset; border-radius: 10px;\"><tr><th>define";
-	block+="<th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\"> name  <th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">expr";
+	var block = "<table style=\"background: " +colors.Define +"; b\"><tr><th class=\"operator\">define";
+	block+="<th style=\"background: " + colors.Define +";\"> name  <th style=\"background: " + colors.Define +";\">expr";
 	return block + "</tr></table>";
 }
 
+//createDefineStructBlock outputs the block corresponding to creating a structure
 function createDefineStructBlock(){
-	var block ="<table style=\"background: " + colors.Define +"; border-style: outset; border-radius: 10px;\"><tr><th>define-struct";
-	block+="<th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\"> name <th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">properties";
+	var block ="<table style=\"background: " + colors.Define +"; \"><tr><th class=\"operator\">define-struct";
+	block+="<th style=\"background: " + colors.Define +"; \"> name <th style=\"background: " + colors.Define +"; \">properties";
 	return block + "</tr></table>";
 }
 
+//createCondBlock outputs the block corresponding to creating a conditional
 function createCondBlock(){
-	var block =  "<table style=\"background: " + colors.Expressions +"; border-style: outset; border-radius: 10px;\"><tr><th>cond</tr>";
-	block+="<tr><th><th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">boolean <th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">expr</tr>";
-	block+="<tr><th><th style=\"background: " + colors.Define +"; border: gray; border-style: outset; border-radius: 10px;\">add</th></tr>"
+	var block =  "<table style=\"background: " + colors.Expressions +";\"><tr><th class=\"operator\">cond</tr>";
+	block+="<tr><th><th style=\"background: " + colors.Booleans +"; border: gray;\">boolean <th style=\"background: " + colors.Expressions +"; border: gray;\">expr</tr>";
+	block+="<tr><th><th style=\"background: " + colors.Expressions +"; border: gray;\">add</th></tr>"
 	return block + "</table>";
 }
 
+//decode takes in a string and outputs the html decoded equivilent
 function decode(mystring){
 	return mystring.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 }

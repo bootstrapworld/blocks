@@ -101,3 +101,15 @@ ul
 li{
 	width:500px;
 }
+table{
+	 border-style: outset; 
+	 border-radius: 10px;
+}
+th{
+	border: gray; 
+	border-style: outset; 
+	border-radius: 10px;
+}
+.operator{
+	border:none;
+}
