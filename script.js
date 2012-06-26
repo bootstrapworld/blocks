@@ -458,8 +458,8 @@ function createDefineStructBlock(){
 //createCondBlock outputs the block corresponding to creating a conditional
 function createCondBlock(){
 	var block =  "<table style=\"background: " + colors.Expressions +";\"><tr><th class=\"operator\">cond</tr>";
-	block+="<tr><th><th style=\"background: " + colors.Booleans +"; border: gray;\">boolean <th style=\"background: " + colors.Expressions +"; border: gray;\">expr</tr>";
-	block+="<tr><th><th style=\"background: " + colors.Expressions +"; border: gray;\">add</th></tr>"
+	block+="<tr><th><th style=\"background: " + colors.Booleans +"\">boolean <th style=\"background: " + colors.Expressions +"\">expr</tr>";
+	block+="<tr><th><th style=\"background: " + colors.Expressions +"\">add</th></tr>"
 	return block + "</table>";
 }
 
