@@ -14,7 +14,10 @@ body{
 	width:100%;
 	height:50px;
 	background-color:gray;
-	z-index: 1;
+}
+
+.draggable{
+	z-index:1;
 }
 
 #code{
@@ -22,11 +25,10 @@ body{
 	position:relative;
 	top:50px;
 	left:0px;
-
 	overflow: auto;
 }
 
-button {
+.header {
 	float: right;
 	margin: 15px;
 }
@@ -50,10 +52,13 @@ table{
 	border: gray; 
 	border-style: outset; 
 	border-radius: 10px;
+	padding: 2px;
 }
 #Name{
-	margin-top:15px;
-	width:100px;
+	width: 100px;
+}
+form{
+	height: 10px;
 }
 
 /******
@@ -104,4 +109,11 @@ FOOTER
 	width:100%;
 	bottom:0px;
 	height:50px;
+}
+#trash{
+	position: fixed;
+	bottom: 105px;
+	right: 17px;
+	color: green;
+
 }
