@@ -22,72 +22,13 @@ body{
 	position:relative;
 	top:50px;
 	left:0px;
-	width:1923px;
-	height:888px;
+
 	overflow: auto;
 }
 
-
-.bottomNav{
-	float:left;
-	text-align:center;
-	width:100px;
-	margin: 5px;
-	margin-top:7px;
-	border: 1px solid white;
-	padding: 10px;
-}
-#options{
-	position:fixed;
-	visibility: hidden;
-	width:100%;
-	bottom:50px;
-	height:60px;
-	overflow: scroll;
-	background-color:purple;
-	word-spacing:10px;
-}
-#options div{
-	visibility: hidden;
-	position: absolute;
-	margin: 3px;
-	margin-top: 10px;
-}
-#options span {
-	padding: 5px;
-	border: 1px solid white;
-	border-radius: 5px;
-}
-/*
-.num{
-	background: #33CCFF;
-}
-.bool{
-	background: #CC33FF;
-}
-.def{
-	background: white;
-}
-.expr{
-	background: white;
-}
-.string{
-	background: orange;
-}
-.image{
-	background: #66FF33;
-}
-*/
 button {
 	float: right;
 	margin: 15px;
-}
-#selectors{
-	position:fixed;
-	background-color:gray;
-	width:100%;
-	bottom:0px;
-	height:50px;
 }
 
 .anElement {
@@ -113,4 +54,54 @@ table{
 #Name{
 	margin-top:15px;
 	width:100px;
+}
+
+/******
+FOOTER
+******/
+
+.bottomNav{
+	float:left;
+	text-align:center;
+	width:100px;
+	margin: 5px;
+	margin-top:7px;
+	border: 1px solid white;
+	padding: 10px;
+}
+#options{
+	position:fixed;
+	width:100%;
+	bottom:50px;
+	height:50px;
+	overflow: auto;
+	background-color:purple;
+	word-spacing:10px;
+}
+#options div{
+	visibility: hidden;
+	position: absolute;
+	margin: 3px;
+	margin-top: 10px;
+}
+#options span {
+	padding: 5px;
+	border: 1px solid white;
+	border-radius: 5px;
+}
+
+#Drawer{
+	position: fixed;
+	bottom: 0px;
+	background: green;
+	height: 100px;
+	width: 100%;
+}
+
+#selectors{
+	position:fixed;
+	background-color:gray;
+	width:100%;
+	bottom:0px;
+	height:50px;
 }
