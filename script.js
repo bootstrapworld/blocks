@@ -5,43 +5,45 @@
 "use strict";
 
 //These variables store what the height and width of the code div should be
-var codeHeight = $(document).height() - $("#header").height() - $("#Drawer").height();
-var codeWidth = $(document).width();
+var codeHeight;
+var codeWidth;
 
-//Sets the width and height of the code div
-function sizeCodeDiv(){
-	$("#code").height(codeHeight);
-	$("#code").width(codeWidth);
-}
 
-//When the window is resized, the height of the width of the code div changes
-$(window).resize(function(){
+function onResize(){
 	codeHeight = $(document).height() - $("#header").height() - $("#Drawer").height();
 	codeWidth = $(document).width();
-	sizeCodeDiv();
-});
+	$("#code").height(codeHeight);
+	$("#code").width(codeWidth);
+};
+
+
+
 
 //DrawerButton takes in an element and either activates (shows) or deactivates (hides) the current element to show the new one
-var activated = null;
+var activated;
 function drawerButton(elt){
 		activated.css("visibility","hidden");
 		activated = $("#options #" + elt.attr('id'))
 		activated.css("visibility", "visible");
 }
 
+
 //Upon loading the webpage, the drawers are formed
 $(document).ready(function(){
+	//When the window is resized, the height of the width of the code div changes
+	$(window).resize(onResize);
+	onResize();
 	makeDrawers(functions,constants);
-	sizeCodeDiv();
 	activated = $("#options #Numbers")
 	activated.css("visibility", "visible");
+
+    //During the course of the whole session, drawers can be opened and closed to reveal all of the buttons (functions) that they contain
+    $(".bottomNav").live('click', function(e){
+        drawerButton($(this));
+    });
 });
 
 
-//During the course of the whole session, drawers can be opened and closed to reveal all of the buttons (functions) that they contain
-$(".bottomNav").live('click', function(e){
-		drawerButton($(this));
-});
 
 
 
@@ -54,10 +56,10 @@ $("#options span").live('click',function(){
 */
 
 
-var carrying=null
+var carrying=null;
 
 $("#options span").live("mousedown",function(e){
-	carrying=stringToElement(block($(this).html()))
+	carrying=createBlock($(this).text());
 	carrying.style.position="absolute";
 	carrying.style.left = e.pageX +"px";
 	carrying.style.top = (e.pageY-50) +"px";
@@ -223,21 +225,21 @@ functions[29].input=new Array({type:"Numbers",name:"Degrees"},{type:"Images",nam
 functions[29].output="Images";
 functions[30]={};
 functions[30].name="place-image";
-functions[30].input=new Array({type:"Images",name:"To Place"}, {type:"Numbers",name:"x"},{type:"Numbers",name:"y"},{type:"Images",name:"Background"});
+functions[30].input=new Array({type:"Images",name:"Image"}, {type:"Numbers",name:"x"},{type:"Numbers",name:"y"},{type:"Images",name:"Background"});
 functions[30].output="Images";
 
 //restricted contains a list of key words in racket that we aren't allowing the user to redefine
-var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map","let","local"]
+var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map","let","local"];
 
 //Colors is an object containing kv pairs of type to color
-var colors={}
- colors.Numbers="#33CCFF"
- colors.Strings="#FFA500"
- colors.Images="#66FF33"
- colors.Booleans="#CC33FF"
- colors.Define="#FFFFFF"
- colors.Expressions="#FFFFFF"
- colors.Constants="#FFFFFF"
+var colors={};
+ colors.Numbers="#33CCFF";
+ colors.Strings="#FFA500";
+ colors.Images="#66FF33";
+ colors.Booleans="#CC33FF";
+ colors.Define="#FFFFFF";
+ colors.Expressions="#FFFFFF";
+ colors.Constants="#FFFFFF";
 
 //constants is an array of user defined variables containing their name and type
 var constants=[]
@@ -255,7 +257,7 @@ function addConstant(name_of_v,type_of_v){
 	}
 	constants[constants.length]={
 		name:name_of_v,
-		type:type_of_v,
+		type:type_of_v
 	}
 	makeDrawers(functions,constants)
 }
@@ -267,7 +269,6 @@ function deleteConstant(name_of_v){
 		constants.splice(index,1)
 		makeDrawers(functions,constants)
 	}
-
 }
 
 //addStruct will add the new type,color pair, the constructor function and the accessor functions to the functions array if it doesn't already exist.  Also, the drawers will be remade
@@ -311,7 +312,7 @@ function addType(name, colorValue){
 		return;
 	}
 	for(var type in colors){
-		if (colors[type]==colorValue){
+		if (colors[type]===colorValue){
 			alert("I am sorry but that color already exists")
 			return;
 		}
@@ -382,6 +383,7 @@ function makeTypesArray(allFunctions,allConstants){
 }
 
 //unique takes as input an array and outputs if there is only one type in the whole array
+// (arrayof input-tuple) -> boolean
 function unique(array_inputs){
 	if(array_inputs.length>0){
 		var first=array_inputs[0].type;
@@ -420,6 +422,7 @@ Array.prototype.contains=function(stringElement){
 
 //makeDrawers takes in all of the functions and all of the constants and will change the HTML so that each of the types is an openable drawer and when that drawer is opened
 //all of the functions corresponding to that type are displayed
+// INJECTION ATTACK FIXME
 function makeDrawers(allFunctions,allConstants){
 	var typeDrawers=makeTypesArray(allFunctions,allConstants)
 	var Drawers="<div id=\"options\">\n"
@@ -458,8 +461,9 @@ function makeDrawers(allFunctions,allConstants){
 }
 
 //createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to that function with name, color, and spaces for input blocks
+ // createFunctionBlock: number -> string
  function createFunctionBlock(functionIndex){
- 	var func = functions[functionIndex]
+ 	var func = functions[functionIndex];
  	var block = "<table style=\"background: " + colors[func.output] +";\">"
  	block += "<tr><th>" + func.name
  	for(var i = 0; i < func.input.length; i++){
@@ -469,23 +473,25 @@ function makeDrawers(allFunctions,allConstants){
  }
 
 //block takes in a string and outputs the corresponding block to that function
-function block(str){
+
+// createBlock: string -> element
+function createBlock(str){
+	var block
  	if(str === "define-function"){
- 		return createDefineBlock();
+ 		return stringToElement(createDefineBlock());
  	} else if (str === "define-constant"){
- 		return createDefineVarBlock();
+ 		return stringToElement(createDefineVarBlock());
  	} else if (str === "define-struct"){
- 		return createDefineStructBlock();
- 	}
- 	 else if (str === "cond"){
- 		return createCondBlock();
- 	}
- 	else{
+ 		return stringToElement(createDefineStructBlock());
+ 	} else if (str === "cond"){
+ 		return stringToElement(createCondBlock());
+ 	} else{
 	 	for(var i = 0; i < functions.length; i++){
-	 		if (decode(functions[i].name) === str){
-	 			return createFunctionBlock(i);
+	 		if (functions[i].name === str){
+	 			return stringToElement(createFunctionBlock(i));
 	 		}
 	 	}
+	 	throw new Error("createBlock: internal error");
  	}
  	
  }
@@ -519,10 +525,6 @@ function createCondBlock(){
 	return block + "</table>";
 }
 
-//decode takes in a string and outputs the html decoded equivilent
-function decode(mystring){
-	return mystring.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-}
 
 //given a wellformed HTML string, this function creates an element from it
 function stringToElement(string){
