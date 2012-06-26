@@ -4,37 +4,37 @@
 */
 "use strict";
 
+//These variables store what the height and width of the code div should be
+var codeHeight = $(document).height() - $("#header").height() - $("#Drawer").height();
+var codeWidth = $(document).width();
+
+//Sets the width and height of the code div
+function sizeCodeDiv(){
+	$("#code").height(codeHeight);
+	$("#code").width(codeWidth);
+}
+
+//When the window is resized, the height of the width of the code div changes
+$(window).resize(function(){
+	codeHeight = $(document).height() - $("#header").height() - $("#Drawer").height();
+	codeWidth = $(document).width();
+	sizeCodeDiv();
+});
+
 //DrawerButton takes in an element and either activates (shows) or deactivates (hides) the current element to show the new one
 var activated = null;
-var currID = null;
 function drawerButton(elt){
-	if (elt.attr('id') == currID) {
-		activated.css("visibility","hidden");
-		activated = null;
-		currID = null;
-		$("#options").css("visibility", "hidden");
-	}else if (currID === null){
-		activated = $("#options #" + elt.attr('id'))
-		currID = elt.attr('id')
-		activated.css("visibility", "visible");
-		$("#options").css("visibility", "visible");
-	} else {
 		activated.css("visibility","hidden");
 		activated = $("#options #" + elt.attr('id'))
 		activated.css("visibility", "visible");
-		currID = elt.attr('id');
-		$("#options").css("visibility", "visible");
-	}
-
 }
 
 //Upon loading the webpage, the drawers are formed
-$(".document").ready(function(){makeDrawers(functions,constants);});
-
-//During the course of the whole session, buttons on the drawer can be clicked in order to add them to the program (the draggable list)
-$("#options span").live('click',function(){
-	var old=document.getElementById("List").innerHTML;
-	document.getElementById("List").innerHTML=old+"<li>"+block($(this).html())+"</li>";
+$(document).ready(function(){
+	makeDrawers(functions,constants);
+	sizeCodeDiv();
+	activated = $("#options #Numbers")
+	activated.css("visibility", "visible");
 });
 
 
@@ -42,6 +42,62 @@ $("#options span").live('click',function(){
 $(".bottomNav").live('click', function(e){
 		drawerButton($(this));
 });
+
+
+
+/*
+//During the course of the whole session, buttons on the drawer can be clicked in order to add them to the program (the draggable list)
+$("#options span").live('click',function(){
+	var old=document.getElementById("List").innerHTML;
+	document.getElementById("List").innerHTML=old+"<li>"+block($(this).html())+"</li>";
+});
+*/
+
+
+var carrying=null
+
+$("#options span").live("mousedown",function(e){
+	carrying=stringToElement(block($(this).html()))
+	carrying.style.position="absolute";
+	carrying.style.left = e.pageX +"px";
+	carrying.style.top = (e.pageY-50) +"px";
+	document.getElementById("code").appendChild(carrying)
+})
+
+$(document.body).live("mousedown",function(e){
+	e.preventDefault();})
+
+$(document.body).live("mousemove",function(e) {
+				e.preventDefault();
+		      	if(carrying!=null){
+			  		carrying.style.left = e.pageX +"px";
+			  		carrying.style.top = (e.pageY-50) +"px";
+				}
+})
+
+$(document.body).live("mouseup",function(e){
+	e.preventDefault();
+
+	/*
+	if(carrying!=null && e.pageY>50 && e.pageY<screen.height-100){
+		var fullList=document.getElementById("List").getElementsByTagName("li")
+		for(var i=0;i<=fullList.length;i++){
+			if(i==fullList.length){
+				console.log(i)
+				addElementBefore(carrying,i)
+				break;
+			}
+			if(fullList[i].style.top>carrying.style.top){
+				console.log(i)
+				addElementBefore(carrying,i)
+				break;
+			}
+		}
+	}
+	console.log(document.getElementById("List")) */
+		carrying=null
+})
+
 
 //Functions is an array of objects containing a name, tuples of type and name corresponding to their inputs and an output type
 var functions=[];
@@ -451,7 +507,7 @@ function createDefineVarBlock(){
 //createDefineStructBlock outputs the block corresponding to creating a structure
 function createDefineStructBlock(){
 	var block ="<table style=\"background: " + colors.Define +"; \"><tr><th>define-struct";
-	block+="<th style=\"background: " + colors.Define +"; \"> <form name=\"Name\"><input type=\"Name\" id=\"Name\" name=\"Name\"/></form> <th class=\"expr\"  style=\"background: " + colors.Define +"; \">properties";
+	block+="<th style=\"background: " + colors.Define +"; \"><form name=\"Name\"><input type=\"Name\" id=\"Name\" name=\"Name\"/></form> <th class=\"expr\"  style=\"background: " + colors.Define +"; \">properties";
 	return block + "</tr></table>";
 }
 
@@ -467,3 +523,33 @@ function createCondBlock(){
 function decode(mystring){
 	return mystring.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 }
+
+//given a wellformed HTML string, this function creates an element from it
+function stringToElement(string){
+	var wrapper= document.createElement('div');
+	wrapper.innerHTML="<li>"+string+"</li>";
+	return wrapper.firstChild;
+}
+
+
+/*
+function addElementBefore(element,index){
+	var container = document.getElementById('List');
+	var before=container.firstChild
+	element.style.position="relative"
+	element.style.top="0px"
+	element.style.left="0px"
+	for(var i=0;i<=index;i++){
+		if(before==undefined){
+			container.appendChild(element)
+			break;
+		}
+		before=before.nextSibling
+		console.log(element.style.top)
+		element.style.top=(9*i)+"px"
+		console.log(element.style.top)
+		if(i==index){
+			container.insertBefore(element,before)
+		}
+	}
+}*/
