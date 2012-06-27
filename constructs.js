@@ -327,12 +327,15 @@ $(document).ready(function(){
 	    			alert("Please only enter a number into this text field");
 	    			return;
 	    		} else{
-	    			console.log(focused);
 	    			var codeObject = getCodeObject(focused.attr("id"));
 	    			codeObject.value = inputtext;
 	    		}
 	    	}
-	    	focused.blur();
+	    	else if(focused.find($("input")).attr("name")==="String"){
+	    		var codeObject = getCodeObject(focused.attr("id"));
+	    			codeObject.value = inputtext;
+	    	}
+	    	focused.find($("input")).blur();
 	    	//TODO saving values
 	    }
     	focused=null;
@@ -344,7 +347,7 @@ $(document).ready(function(){
 
 function getCodeObject(id){
 	for(var i = 0; i < program.length ; i++){
-		if (program[i].id === id){
+		if (program[i].id == id){
 			return program[i];
 		}
 	}
@@ -566,9 +569,9 @@ function makeCodeFromOptions(optionsText){
 
 //createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to that function with name, color, and spaces for input blocks
  // createFunctionBlock: number -> string
- function createFunctionBlock(functionIndex){
+ function createFunctionBlock(functionIndex, codeObject){
  	var func = functions[functionIndex];
- 	var block = "<table style=\"background: " + colors[func.output] +";\">"
+ 	var block = "<table style=\"background: " + colors[func.output]  +";\"" + "id=\""+codeObject.id+"\">"
  	block += "<tr><th>" + func.name
  	for(var i = 0; i < func.input.length; i++){
  		block += "<th class=\"expr\" style=\"background: " + colors[func.input[i].type] +";\">" + func.input[i].name
@@ -581,81 +584,81 @@ function makeCodeFromOptions(optionsText){
 // createBlock: string -> element
 function createBlock(codeObject){
  	if(codeObject instanceof makeDefineFunc){
- 		return stringToElement(createDefineBlock());
+ 		return stringToElement(createDefineBlock(codeObject));
  	} else if (codeObject instanceof makeDefineConst){
- 		return stringToElement(createDefineVarBlock());
+ 		return stringToElement(createDefineVarBlock(codeObject));
  	}/* else if (codeObject instanceof makeDefineStruct){
  		return stringToElement(createDefineStructBlock());
  	}*/ else if (codeObject instanceof makeCond){
- 		return stringToElement(createCondBlock());
+ 		return stringToElement(createCondBlock(codeObject));
  	} else if (codeObject instanceof makeConst){
  		for(var i = 0; i < constants.length; i++){
 	 		if (constants[i].name === codeObject.constName){
-	 			return stringToElement(createConstantBlock(constants[i]));
+	 			return stringToElement(createConstantBlock(constants[i], codeObject));
 	 		}
 	 	}
 	 	throw new Error("createBlock: internal error");
  	} else if (codeObject instanceof makeApp){
 	 	for(var i = 0; i < functions.length; i++){
 	 		if (functions[i].name === codeObject.funcName){
-	 			return stringToElement(createFunctionBlock(i));
+	 			return stringToElement(createFunctionBlock(i, codeObject));
 	 		}
 	 	}
 	 	throw new Error("createBlock: internal error");
  	} else if (codeObject instanceof makeNumber){
  		return stringToElement(createNumBlock(codeObject));
  	} else if (codeObject instanceof makeString){
- 		return stringToElement(createStringBlock());
+ 		return stringToElement(createStringBlock(codeObject));
  	} else if (codeObject instanceof makeBoolean){
- 		return stringToElement(createBooleanBlock(codeObject.value));
+ 		return stringToElement(createBooleanBlock(codeObject));
  	}
  	
  }
 
 //createDefineBlock outputs the block corresponding to defining a function
-function createDefineBlock(){
-	var block ="<table style=\"background: " + colors.Define +";\"><tr><th>define";
+function createDefineBlock(codeObject){
+	var block ="<table style=\"background: " + colors.Define +";\"" + "id=\""+codeObject.id+"\"><tr><th>define";
 	block+="<th style=\"background: " + colors.Define +"; \"> <input type=\"Name\" id=\"Name\" name=\"Name\"/><th  class=\"expr\" style=\"background: " + colors.Define +";\">args <th  class=\"expr\" style=\"background: " + colors.Define +";\">expr";
 	return block + "</tr></table>";
 }
 
 //createDefineVarBlock outputs the block corresponding to creating a variable
-function createDefineVarBlock(){
-	var block = "<table style=\"background: " +colors.Define +"; b\"><tr><th>define";
+function createDefineVarBlock(codeObject){
+	var block = "<table style=\"background: " +colors.Define +";\"" + "id=\""+codeObject.id+"\"><tr><th>define";
 	block+="<th style=\"background: " + colors.Define +";\"> <input type=\"Name\" id=\"Name\" name=\"Name\"/> <th  class=\"expr\" style=\"background: " + colors.Define +";\">expr";
 	return block + "</tr></table>";
 }
 
 //createDefineStructBlock outputs the block corresponding to creating a structure
-function createDefineStructBlock(){
-	var block ="<table style=\"background: " + colors.Define +"; \"><tr><th>define-struct";
+function createDefineStructBlock(codeObject){
+	var block ="<table style=\"background: " + colors.Define +";\"" + "id=\""+codeObject.id+"\"><tr><th>define-struct";
 	block+="<th style=\"background: " + colors.Define +"; \"><input type=\"Name\" id=\"Name\" name=\"Name\"/><th class=\"expr\"  style=\"background: " + colors.Define +"; \">properties";
 	return block + "</tr></table>";
 }
 
 //createCondBlock outputs the block corresponding to creating a conditional
-function createCondBlock(){
-	var block =  "<table style=\"background: " + colors.Expressions +";\"><tr><th>cond</tr>";
+function createCondBlock(codeObject){
+	var block =  "<table style=\"background: " + colors.Expressions +";\"" + "id=\""+codeObject.id+"\"><tr><th>cond</tr>";
 	block+="<tr><th><th  class=\"expr\" style=\"background: " + colors.Booleans +"\">boolean <th class=\"expr\"  style=\"background: " + colors.Expressions +"\">expr</tr>";
 	block+="<tr><th><th  class=\"expr\" style=\"background: " + colors.Expressions +"\">add</th></tr>"
 	return block + "</table>";
 }
 
-function createConstantBlock(constantelement){
-	var block =  "<table style=\"background: " + colors[constantelement.type] +";\"><tr><th>"+constantelement.name+"</tr>";
+function createConstantBlock(constantelement, codeObject){
+	var block =  "<table style=\"background: " + colors[constantelement.type]+";\"" + "id=\""+codeObject.id+"\"><tr><th>"+constantelement.name+"</tr>";
 	return block + "</table>";
 }
 
-function createBooleanBlock(value){
-	var block =  "<table style=\"background: " + colors.Booleans +";\"><tr><th>"+value+"</tr>";
+function createBooleanBlock(codeObject){
+	var block =  "<table style=\"background: " + colors.Booleans +";\"" + "id=\""+codeObject.id+"\"><tr><th>"+codeObject.value+"</tr>";
 	return block + "</table>";
 }
 function createNumBlock(codeObject){
 	var block =  "<table style=\"background: " + colors.Numbers +";\"" + "id=\""+codeObject.id+"\"><tr><th><input type=\"Name\" id=\"Name\" name=\"Number\"/></tr>";
 	return block + "</table>";
 }
-function createStringBlock(){
-	var block =  "<table style=\"background: " + colors.Strings +";\"><tr><th>\"<input type=\"Name\" id=\"Name\" name=\"String\"/>\"</tr>";
+function createStringBlock(codeObject){
+	var block =  "<table style=\"background: " + colors.Strings +";\"" + "id=\""+codeObject.id+"\"><tr><th>\"<input type=\"Name\" id=\"Name\" name=\"String\"/>\"</tr>";
 	return block + "</table>";
 }
 
