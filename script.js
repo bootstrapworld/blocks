@@ -1,105 +1,8 @@
-/*
-* Sets the panels with function names to visible and invisible when hidden
+
+/* Sets the panels with function names to visible and invisible when hidden
 *
 */
 "use strict";
-
-//These variables store what the height and width of the code div should be
-var codeHeight;
-var codeWidth;
-
-
-function onResize(){
-	codeHeight = $(document).height() - $("#header").height() - $("#Drawer").height();
-	codeWidth = $(document).width();
-	$("#code").height(codeHeight);
-	$("#code").width(codeWidth);
-};
-
-
-
-
-//DrawerButton takes in an element and either activates (shows) or deactivates (hides) the current element to show the new one
-var activated;
-function drawerButton(elt){
-		activated.css("visibility","hidden");
-		activated = $("#options #" + elt.attr('id'))
-		activated.css("visibility", "visible");
-}
-
-
-//Upon loading the webpage, the drawers are formed
-$(document).ready(function(){
-	//When the window is resized, the height of the width of the code div changes
-	$(window).resize(onResize);
-	onResize();
-	makeDrawers(functions,constants);
-	activated = $("#options #Numbers")
-	activated.css("visibility", "visible");
-
-    //During the course of the whole session, drawers can be opened and closed to reveal all of the buttons (functions) that they contain
-    $(".bottomNav").live('click', function(e){
-        drawerButton($(this));
-    });
-});
-
-
-
-
-
-/*
-//During the course of the whole session, buttons on the drawer can be clicked in order to add them to the program (the draggable list)
-$("#options span").live('click',function(){
-	var old=document.getElementById("List").innerHTML;
-	document.getElementById("List").innerHTML=old+"<li>"+block($(this).html())+"</li>";
-});
-*/
-
-
-var carrying=null;
-
-$("#options span").live("mousedown",function(e){
-	carrying=createBlock($(this).text());
-	carrying.style.position="absolute";
-	carrying.style.left = e.pageX +"px";
-	carrying.style.top = (e.pageY-50) +"px";
-	document.getElementById("code").appendChild(carrying)
-})
-
-$(document.body).live("mousedown",function(e){
-	e.preventDefault();})
-
-$(document.body).live("mousemove",function(e) {
-				e.preventDefault();
-		      	if(carrying!=null){
-			  		carrying.style.left = e.pageX +"px";
-			  		carrying.style.top = (e.pageY-50) +"px";
-				}
-})
-
-$(document.body).live("mouseup",function(e){
-	e.preventDefault();
-
-	/*
-	if(carrying!=null && e.pageY>50 && e.pageY<screen.height-100){
-		var fullList=document.getElementById("List").getElementsByTagName("li")
-		for(var i=0;i<=fullList.length;i++){
-			if(i==fullList.length){
-				console.log(i)
-				addElementBefore(carrying,i)
-				break;
-			}
-			if(fullList[i].style.top>carrying.style.top){
-				console.log(i)
-				addElementBefore(carrying,i)
-				break;
-			}
-		}
-	}
-	console.log(document.getElementById("List")) */
-		carrying=null
-})
-
 
 //Functions is an array of objects containing a name, tuples of type and name corresponding to their inputs and an output type
 var functions=[];
@@ -228,6 +131,13 @@ functions[30].name="place-image";
 functions[30].input=new Array({type:"Images",name:"Image"}, {type:"Numbers",name:"x"},{type:"Numbers",name:"y"},{type:"Images",name:"Background"});
 functions[30].output="Images";
 
+
+//These variables store what the height and width of the code div should be
+var codeHeight;
+var codeWidth;
+var carrying=null;
+var activated;
+
 //restricted contains a list of key words in racket that we aren't allowing the user to redefine
 var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map","let","local"];
 
@@ -243,6 +153,104 @@ var colors={};
 
 //constants is an array of user defined variables containing their name and type
 var constants=[]
+
+
+//WINDOW RESIZING COMPATABILITY
+//****************************************************************************************************************
+function onResize(){
+	codeHeight = $(document).height() - $("#header").height() - $("#Drawer").height();
+	codeWidth = $(document).width();
+	$("#code").height(codeHeight);
+	$("#code").width(codeWidth);
+};
+
+//DRAWER SETUP AND ACTIONS
+//*****************************************************************************************************************
+//DrawerButton takes in an element and either activates (shows) or deactivates (hides) the current element to show the new one
+
+function drawerButton(elt){
+		activated.css("visibility","hidden");
+		activated = $("#options #" + elt.attr('id'))
+		activated.css("visibility", "visible");
+}
+
+//During the course of the whole session, buttons on the drawer can be clicked in order to add them to the program (the draggable list)
+$("#options span").live('click',function(){
+	var old=document.getElementById("List").innerHTML;
+	document.getElementById("List").innerHTML=old+"<li>"+createBlock($(this).text()).innerHTML+"</li>";
+});
+
+$(document.body).live('click',function(e){e.preventDefault();});
+$(document.body).live('mousedown',function(e){e.preventDefault();});
+$(document.body).live('mousemove',function(e){e.preventDefault();});
+$(document.body).live('mouseup',function(e){e.preventDefault();});
+
+// $("#options span").live("mousedown",function(e){
+// 	carrying=createBlock($(this).text());
+// 	carrying.style.position="absolute";
+// 	carrying.style.left = e.pageX +"px";
+// 	carrying.style.top = (e.pageY-50) +"px";
+// 	document.getElementById("code").appendChild(carrying)
+// })
+
+
+
+//Upon loading the webpage, the drawers are formed
+$(document).ready(function(){
+	//When the window is resized, the height of the width of the code div changes
+	$(window).resize(onResize);
+	onResize();
+	makeDrawers(functions,constants);
+	activated = $("#options #Numbers")
+	activated.css("visibility", "visible");
+
+    //During the course of the whole session, drawers can be opened and closed to reveal all of the buttons (functions) that they contain
+    $(".bottomNav").live('click', function(e){
+        drawerButton($(this));
+    });
+});
+
+
+
+
+
+
+// $(document.body).live("mousedown",function(e){
+// 	e.preventDefault();})
+
+// $(document.body).live("mousemove",function(e) {
+// 				e.preventDefault();
+// 		      	if(carrying!=null){
+// 			  		carrying.style.left = e.pageX +"px";
+// 			  		carrying.style.top = (e.pageY-50) +"px";
+// 				}
+// })
+
+// $(document.body).live("mouseup",function(e){
+// 	e.preventDefault();
+
+// 	/*
+// 	if(carrying!=null && e.pageY>50 && e.pageY<screen.height-100){
+// 		var fullList=document.getElementById("List").getElementsByTagName("li")
+// 		for(var i=0;i<=fullList.length;i++){
+// 			if(i==fullList.length){
+// 				console.log(i)
+// 				addElementBefore(carrying,i)
+// 				break;
+// 			}
+// 			if(fullList[i].style.top>carrying.style.top){
+// 				console.log(i)
+// 				addElementBefore(carrying,i)
+// 				break;
+// 			}
+// 		}
+// 	}
+// 	console.log(document.getElementById("List")) */
+// 		carrying=null
+// })
+
+
+
 
 //isDuplicate takes in a name of a function/constant/struct and checks if that name already exists or is restricted
 function isDuplicate(name){
@@ -476,7 +484,6 @@ function makeDrawers(allFunctions,allConstants){
 
 // createBlock: string -> element
 function createBlock(str){
-	var block
  	if(str === "define-function"){
  		return stringToElement(createDefineBlock());
  	} else if (str === "define-constant"){
