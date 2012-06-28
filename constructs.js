@@ -269,6 +269,8 @@ var constants=[]
 //restricted contains a list of key words in racket that we aren't allowing the user to redefine
 var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map","let","local"];
 
+
+var types=["Numbers","Strings","Booleans","Images"]
 //Colors is an object containing kv pairs of type to color
 var colors={};
  colors.Numbers="#33CCFF";
@@ -305,46 +307,68 @@ $(document).ready(function(){
 	activated = $("#options #Numbers")
 	activated.css("visibility", "visible");
 
-    //During the course of the whole session, drawers can be opened and closed to reveal all of the buttons (functions) that they contain
-    $(".bottomNav").live('click', function(e){
-        drawerButton($(this));
-    });
-
-
+    renderTypeColors();
     
     //Prevents highlighting
-    $("#List table").live('click',function(){
-    	$(this).find($("input")).focus();
+    $("#List input").live('click',function(){
     	focused=$(this)
     });
+    $(document.body).live('click',function(e){
+			//e.preventDefault();
+		    if(focused !=null){
+		    	var inputtext=focused.val();
+		    	if(focused.closest($("table")).attr("class")==="Numbers"){
+		    		if(isNaN(Number(inputtext))){
+		    			e.stopPropagation();
+		    			alert("Please only enter a number into this text field");
+		    			focused.focus();
+		    			return;
+		    		} else{
+		    			var codeObject = getCodeObject(focused.closest($("table")).attr("id"));
+		    			codeObject.value = inputtext;
+		    		}
+		    	}
+		    	else if(focused.closest($("table")).attr("class")==="Strings"){
+		    		var codeObject = getCodeObject(focused.closest($("table")).attr("id"));
+		    			codeObject.value = inputtext;
+		    	}
+				focused.blur();
+				console.log(program);
+		    	//TODO saving values
+		    }
+	    	focused=null;
+		});
 
-	$(document.body).live('click',function(e){
-		e.preventDefault();
-	    if(focused !=null){
-	    	var inputtext=focused.find($("input")).val()
-	    	if(focused.find($("input")).attr("name")==="Number"){
-	    		if(isNaN(Number(inputtext))){
-	    			alert("Please only enter a number into this text field");
-	    			return;
-	    		} else{
-	    			var codeObject = getCodeObject(focused.attr("id"));
-	    			codeObject.value = inputtext;
-	    		}
-	    	}
-	    	else if(focused.find($("input")).attr("name")==="String"){
-	    		var codeObject = getCodeObject(focused.attr("id"));
-	    			codeObject.value = inputtext;
-	    	}
-	    	focused.find($("input")).blur();
-	    	//TODO saving values
-	    }
-    	focused=null;
-	});
 
-	$(document.body).live('mousedown',function(e){e.preventDefault();});
+
+	//$(document.body).live('mousedown',function(e){e.preventDefault();});
 
 });
 
+var types=["Numbers","Strings","Booleans","Images"]
+//Colors is an object containing kv pairs of type to color
+var colors={};
+ colors.Numbers="#33CCFF";
+ colors.Strings="#FFA500";
+ colors.Images="#66FF33";
+ colors.Booleans="#CC33FF";
+ colors.Define="#FFFFFF";
+ colors.Expressions="#FFFFFF";
+ colors.Constants="#FFFFFF";
+
+function renderTypeColors(){
+	var styleCSS = "<style type='text/css'>";
+	for (var type in colors){
+		styleCSS+="."+type+"{background-color:"+colors[type]+";}"
+	}
+	styleCSS += "</style>"
+	$(styleCSS).appendTo("head");
+}
+
+/*
+Given an id from an HTML element, getCodeObject returns the corresponding code Object
+within the programs array.
+*/
 function getCodeObject(id){
 	for(var i = 0; i < program.length ; i++){
 		if (program[i].id == id){
@@ -385,6 +409,11 @@ function containsName(array_of_obj,stringElement){
  |___/|_| \__,_|\_/\_/\___|_|   |_| \_,_|_||_\__|\__|_\___/_||_/__/
                        
 =====================================================================================*/
+
+//During the course of the whole session, drawers can be opened and closed to reveal all of the buttons (functions) that they contain
+$(".bottomNav").live('click', function(e){
+    drawerButton($(this));
+});
 
 //DrawerButton takes in an element and either activates (shows) or deactivates (hides) the current element to show the new one
 function drawerButton(elt){
@@ -456,44 +485,44 @@ function makeDrawers(allFunctions,allConstants){
 	var Selector="<div id=\"selectors\">\n"
 
 	for(var Type in typeDrawers){
-		Drawers+="<div class=\""+Type+"\" id=\""+Type+"\">\n"
+		Drawers+="<div id=\""+Type+"\">\n"
 		if(Type=="Constants"){
 			for(var i=0;i<typeDrawers[Type].length;i++){
-				Drawers+="<span class="+Type+" style=\"background: "+colors[allConstants[typeDrawers[Type][i]].type]+"\">"+allConstants[typeDrawers[Type][i]].name+"</span>\n"
+				Drawers+="<span class=\"draggable "+Type+"\">"+allConstants[typeDrawers[Type][i]].name+"</span>\n"
 			}
 		}
 		else if(Type=="Define"){
 			for(var i=0;i<typeDrawers[Type].length;i++){
-				Drawers+="<span class="+Type+" style=\"background: "+colors[Type]+"\">"+typeDrawers[Type][i]+"</span>\n"
+				Drawers+="<span class=\"draggable "+Type+"\">"+typeDrawers[Type][i]+"</span>\n"
 			}
 		}
 		else if(Type=="Expressions"){
 			for(var i=0;i<typeDrawers[Type].length;i++){
-				Drawers+="<span class="+Type+" style=\"background: "+colors[Type]+"\">"+typeDrawers[Type][i]+"</span>\n"
+				Drawers+="<span class=\"draggable "+Type+"\">"+typeDrawers[Type][i]+"</span>\n"
 			}
 		}
 		else{
 			for(var i=0;i<typeDrawers[Type].length;i++){
 				if(typeDrawers[Type][i]==="true"){
-					Drawers+="<span class=\"Booleans\" style=\"background: "+colors.Booleans+"\">true</span>\n"
+					Drawers+="<span class=\"Booleans draggable\">true</span>\n"
 				}
 				else if(typeDrawers[Type][i]==="false"){
-					Drawers+="<span class=\"Booleans\" style=\"background: "+colors.Booleans+"\">false</span>\n"
+					Drawers+="<span class=\"Booleans draggable\">false</span>\n"
 				}
 				else if(typeDrawers[Type][i]==="Text"){
-					Drawers+="<span class=\"Strings\" style=\"background: "+colors.Strings+"\">Text</span>\n"
+					Drawers+="<span class=\"Strings draggable\">Text</span>\n"
 				}
 				else if(typeDrawers[Type][i]==="Number"){
-					Drawers+="<span class=\"Numbers\" style=\"background: "+colors.Numbers+"\">Number</span>\n"
+					Drawers+="<span class=\"Numbers draggable\">Number</span>\n"
 				}
 				else{
-				Drawers+="<span class="+allFunctions[typeDrawers[Type][i]].output+" style=\"background: "+colors[allFunctions[typeDrawers[Type][i]].output]+"\">"+allFunctions[typeDrawers[Type][i]].name+"</span>\n"
+				Drawers+="<span class=\"draggable "+allFunctions[typeDrawers[Type][i]].output+"\">"+allFunctions[typeDrawers[Type][i]].name+"</span>\n"
 			}
 			}
 		}
 
 		Drawers+="</div>\n"
-		Selector+="<div class=\""+Type+" bottomNav\" id=\""+Type+"\" style=\"background: "+colors[Type]+"\">"+Type+"</div>\n"
+		Selector+="<div class=\""+Type+" bottomNav\" id=\""+Type+"\">"+Type+"</div>\n"
 	}
 
 	Drawers+="</div>"
@@ -512,10 +541,18 @@ function makeDrawers(allFunctions,allConstants){
 
 
     //changes the program array when a draggable element is clicked
-	$("#options span").live('click',function(){
-		program[program.length] = makeCodeFromOptions($(this).text());
-		renderBlocktoProgram(createBlock(program[program.length-1]));
-	});
+	// $("#options span").live('click',function(){
+	// 	program[program.length] = makeCodeFromOptions($(this).text());
+	// 	//renderBlocktoProgram(createBlock(program[program.length-1]));
+	// });
+
+//TODO, change where in the program the block is added
+function createDraggableBlock(){
+	console.log("hi")
+	console.log(this)
+	program[program.length] = makeCodeFromOptions($(this).text());
+	return createBlock(program[program.length-1]);
+}
 
 function renderBlocktoProgram(block){
 		document.getElementById("List").appendChild(block);
@@ -571,12 +608,12 @@ function makeCodeFromOptions(optionsText){
  // createFunctionBlock: number -> string
  function createFunctionBlock(functionIndex, codeObject){
  	var func = functions[functionIndex];
- 	var block = "<table style=\"background: " + colors[func.output]  +";\"" + "id=\""+codeObject.id+"\">"
- 	block += "<tr><th>" + func.name
+ 	var block = "<table class=\"" + func.output  +"\"" + "id=\""+codeObject.id+"\">";
+ 	block += "<tr><th>" + func.name + "</th>";
  	for(var i = 0; i < func.input.length; i++){
- 		block += "<th class=\"expr\" style=\"background: " + colors[func.input[i].type] +";\">" + func.input[i].name
+ 		block += "<th class=\"" + func.input[i].type +" expr\">" + func.input[i].name + "</th>";
  	}
- 	return block + "</tr></table>"
+ 	return block + "</tr></table>";
  }
 
 //block takes in a string and outputs the corresponding block to that function
@@ -615,55 +652,127 @@ function createBlock(codeObject){
  	
  }
 
+
 //createDefineBlock outputs the block corresponding to defining a function
 function createDefineBlock(codeObject){
-	var block ="<table style=\"background: " + colors.Define +";\"" + "id=\""+codeObject.id+"\"><tr><th>define";
-	block+="<th style=\"background: " + colors.Define +"; \"> <input type=\"Name\" id=\"Name\" name=\"Name\"/><th  class=\"expr\" style=\"background: " + colors.Define +";\">args <th  class=\"expr\" style=\"background: " + colors.Define +";\">expr";
+	var block ="<table style=\"background: " + colors.Define +";\"" + "id=\""+codeObject.id+"\">";
+	//contract
+	block+="<tr><th><input id=\"name\"></th><th> : </th><th>"+generateTypeDrop()+"</th><th> <button class=\"buttonPlus\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></th></tr>"
+	//define block
+	block+="<tr><th>define</th>";
+	block+="<th class=\"expr\"> <input type=\"Name\" id=\"Name\" name=\"Name\"/><th class=\"expr\">args <th  class=\"expr\">expr";
 	return block + "</tr></table>";
 }
 
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject){
-	var block = "<table style=\"background: " +colors.Define +";\"" + "id=\""+codeObject.id+"\"><tr><th>define";
-	block+="<th style=\"background: " + colors.Define +";\"> <input type=\"Name\" id=\"Name\" name=\"Name\"/> <th  class=\"expr\" style=\"background: " + colors.Define +";\">expr";
+	var block = "<table class=\"Define\"" + "id=\""+codeObject.id+"\"><tr><th>define</th>";
+	block+="<th class=\"expr\"> <input type=\"Name\" id=\"Name\" name=\"Name\"/> <th  class=\"expr\">expr</th>";
 	return block + "</tr></table>";
 }
 
 //createDefineStructBlock outputs the block corresponding to creating a structure
 function createDefineStructBlock(codeObject){
-	var block ="<table style=\"background: " + colors.Define +";\"" + "id=\""+codeObject.id+"\"><tr><th>define-struct";
-	block+="<th style=\"background: " + colors.Define +"; \"><input type=\"Name\" id=\"Name\" name=\"Name\"/><th class=\"expr\"  style=\"background: " + colors.Define +"; \">properties";
+	var block ="<table class=\"Define\"" + "id=\""+codeObject.id+"\"><tr><th>define-struct</th>";
+	block+="<th class=\"expr\"><input type=\"Name\" id=\"Name\" name=\"Name\"/><th class=\"expr\">properties";
 	return block + "</tr></table>";
 }
 
 //createCondBlock outputs the block corresponding to creating a conditional
 function createCondBlock(codeObject){
-	var block =  "<table style=\"background: " + colors.Expressions +";\"" + "id=\""+codeObject.id+"\"><tr><th>cond</tr>";
-	block+="<tr><th><th  class=\"expr\" style=\"background: " + colors.Booleans +"\">boolean <th class=\"expr\"  style=\"background: " + colors.Expressions +"\">expr</tr>";
-	block+="<tr><th><th  class=\"expr\" style=\"background: " + colors.Expressions +"\">add</th></tr>"
+	var block =  "<table class=\"Expressions\"" + "id=\""+codeObject.id+"\"><tr><th>cond</tr>";
+	block+="<tr><th><th class=\"Booleans expr\">boolean <th class=\"expr\">expr</tr>";
+	block+="<tr><th><th><button class=\"buttonCond\"></th></tr>";
 	return block + "</table>";
 }
 
 function createConstantBlock(constantelement, codeObject){
-	var block =  "<table style=\"background: " + colors[constantelement.type]+";\"" + "id=\""+codeObject.id+"\"><tr><th>"+constantelement.name+"</tr>";
+	var block =  "<table class=\"" + constantelement.type+"\"" + "id=\""+codeObject.id+"\"><tr><th>"+constantelement.name+"</tr>";
 	return block + "</table>";
 }
 
 function createBooleanBlock(codeObject){
-	var block =  "<table style=\"background: " + colors.Booleans +";\"" + "id=\""+codeObject.id+"\"><tr><th>"+codeObject.value+"</tr>";
+	var block =  "<table class=\"Booleans\"" + "id=\""+codeObject.id+"\"><tr><th>"+codeObject.value+"</tr>";
 	return block + "</table>";
 }
 function createNumBlock(codeObject){
-	var block =  "<table style=\"background: " + colors.Numbers +";\"" + "id=\""+codeObject.id+"\"><tr><th><input type=\"Name\" id=\"Name\" name=\"Number\"/></tr>";
+	var block =  "<table class=\"Numbers\"" + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input></tr>";
 	return block + "</table>";
 }
 function createStringBlock(codeObject){
-	var block =  "<table style=\"background: " + colors.Strings +";\"" + "id=\""+codeObject.id+"\"><tr><th>\"<input type=\"Name\" id=\"Name\" name=\"String\"/>\"</tr>";
+	var block =  "<table class=\"Strings\"" + "id=\""+codeObject.id+"\"><tr><th>\"<input>\"</tr>";
 	return block + "</table>";
 }
 
 function stringToElement(string){
 	var wrapper= document.createElement('div');
-	wrapper.innerHTML="<li>"+string+"</li>";
+	wrapper.innerHTML=string;
 	return wrapper.firstChild;
+}
+
+/*
+Creates a drop down menu for use in the contract in order to select types.
+*/
+function generateTypeDrop(){
+	var HTML = "<select name=\"TypeDrop\"><option value=\"select\">select</option>"
+	for(var i=0;i<types.length;i++){
+		HTML+="<option value=\""+ types[i] +"\" class=\""+ types[i]+"\">"+ types[i] +"</option>"
+	}
+	return HTML+"<option value=\"delete\">delete</option></select>"
+}
+
+
+/*====================================================================================
+  ___     _                        _           
+ |_ _|_ _| |_ ___ _ _ _ __ _ _ ___| |_ ___ _ _ 
+  | || ' \  _/ -_) '_| '_ \ '_/ -_)  _/ -_) '_|
+ |___|_||_\__\___|_| | .__/_| \___|\__\___|_|  
+                     |_|                       
+=====================================================================================*/
+
+function parseProgram(){
+	var racketCode="";
+	for(var i=0;i<program.length;i++){
+		racketCode+=interpreter(program[i])+"\n";
+	}
+	return racketCode;
+}
+
+function interpreter(obj){
+    var toReturn = "";
+    if(obj instanceof makeDefineConst){
+        toReturn += "(define " + obj.constName + " \n" + interpreter(obj.expr) + ")";
+    }else if(obj instanceof makeDefineFunc){
+        toReturn += ";" + obj.contract.funcName + ":";
+        for(type in obj.contract.argumentTypes){
+            toReturn += " " + type;
+        }
+        toReturn += "-> " + obj.contract.outputType + "\n";
+        toReturn += "(define (" + obj.contract.funcName;
+        for(arg in obj.argumentNames){
+            toReturn += " " + arg;
+        }
+        toReturn += ") \n" + interpreter(obj.expr);
+        alert(toReturn)
+    }else if(obj instanceof makeApp){
+        toReturn += "(" + obj.funcName;
+        for(ex in obj.expr){
+            toReturn += " " + interpreter(ex);
+        }
+        toReturn += ")";
+    }else if(obj instanceof makeNumber || obj instanceof makeBoolean){
+        toReturn += obj.value;
+    }else if(obj instanceof makeString){
+        toReturn += "\"" + obj.value + "\"";
+    }else if(obj instanceof makeConst){
+        toReturn += obj.constName;
+    }else if(obj instanceof makeCond){
+        toReturn += "(cond\n";
+        for(ans in obj.listOfBooleanAnswer()){
+            toReturn += "[" + interpreter(ans.bool) + " " + interpreter(ans.answer) + "]\n";
+        }
+        toReturn+= ")";
+    }
+    console.log(toReturn);
+    return toReturn;
 }

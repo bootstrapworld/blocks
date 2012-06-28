@@ -41,16 +41,13 @@ ul
 {
     list-style-type: none;
 }
-li{
-	width:500px;
-}
 table{
 	 border-style: outset; 
 	 border-radius: 10px;
 }
 .expr{
 	border: gray; 
-	border-style: outset; 
+	border-style: solid; 
 	border-radius: 10px;
 	padding: 2px;
 }
