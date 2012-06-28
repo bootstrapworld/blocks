@@ -294,7 +294,7 @@ var colors={};
 //These variables store what the height and width of the code div should be
 var codeHeight;
 var codeWidth;
-var carrying=null;
+var carrying;
 var activated;
 var focused=null;
 var ID =0
@@ -324,12 +324,12 @@ $(document).ready(function(){
 		    			focused.focus();
 		    			return;
 		    		} else{
-		    			var codeObject = getCodeObject(focused.closest($("table")).attr("id"));
+		    			var codeObject = program[getProgramIndex(focused.closest($("table")).attr("id"))];
 		    			codeObject.value = inputtext;
 		    		}
 		    	}
 		    	else if(focused.closest($("table")).attr("class")==="Strings"){
-		    		var codeObject = getCodeObject(focused.closest($("table")).attr("id"));
+		    		var codeObject = program[getProgramIndex(focused.closest($("table")).attr("id"))];
 		    			codeObject.value = inputtext;
 		    	}
 				focused.blur();
@@ -345,17 +345,6 @@ $(document).ready(function(){
 
 });
 
-var types=["Numbers","Strings","Booleans","Images"]
-//Colors is an object containing kv pairs of type to color
-var colors={};
- colors.Numbers="#33CCFF";
- colors.Strings="#FFA500";
- colors.Images="#66FF33";
- colors.Booleans="#CC33FF";
- colors.Define="#FFFFFF";
- colors.Expressions="#FFFFFF";
- colors.Constants="#FFFFFF";
-
 function renderTypeColors(){
 	var styleCSS = "<style type='text/css'>";
 	for (var type in colors){
@@ -369,10 +358,19 @@ function renderTypeColors(){
 Given an id from an HTML element, getCodeObject returns the corresponding code Object
 within the programs array.
 */
-function getCodeObject(id){
+// function getCodeObject(id){
+// 	for(var i = 0; i < program.length ; i++){
+// 		if (program[i].id == id){
+// 			return program[i];
+// 		}
+// 	}
+// 	throw new Error("Can't find code object");
+// }
+
+function getProgramIndex(id){
 	for(var i = 0; i < program.length ; i++){
 		if (program[i].id == id){
-			return program[i];
+			return i;
 		}
 	}
 	throw new Error("Can't find code object");
@@ -540,24 +538,24 @@ function makeDrawers(allFunctions,allConstants){
 =====================================================================================*/
 
 
-    //changes the program array when a draggable element is clicked
-	// $("#options span").live('click',function(){
-	// 	program[program.length] = makeCodeFromOptions($(this).text());
-	// 	//renderBlocktoProgram(createBlock(program[program.length-1]));
-	// });
-
-//TODO, change where in the program the block is added
-function createDraggableBlock(){
-	console.log("hi")
-	console.log(this)
+//changes the program array when a draggable element is clicked
+$("#options span").live('click',function(){
+	//TODO, change where in the program the block is adde
 	program[program.length] = makeCodeFromOptions($(this).text());
-	return createBlock(program[program.length-1]);
-}
+	renderBlocktoProgram(createBlock(program[program.length-1]));
+});
 
+
+/*
+Adds a block to the end of the list given the HTML of the block.
+*/
 function renderBlocktoProgram(block){
 		document.getElementById("List").appendChild(block);
 }
 
+/*
+Gets the output type of a function
+*/
 function getOutput(funcname){
 	var index=containsName(functions,funcname);
 	if(index!=-1){
@@ -565,6 +563,9 @@ function getOutput(funcname){
 	}
 }
 
+/*
+Given the text within the options span, returns the html object associated with it in table form.
+*/
 function makeCodeFromOptions(optionsText){
 	if(optionsText === "define-function"){
 	 		return new makeDefineFunc();
@@ -776,3 +777,74 @@ function interpreter(obj){
     console.log(toReturn);
     return toReturn;
 }
+
+
+/*====================================================================================
+ __      __       _   _                      
+ \ \    / /__ _ _| |_(_)_ _  __ _   ___ _ _  
+  \ \/\/ / _ \ '_| / / | ' \/ _` | / _ \ ' \ 
+   \_/\_/\___/_| |_\_\_|_||_\__, | \___/_||_| trash
+                            |___/                       
+=====================================================================================*/
+
+var ontrash=false;
+
+
+$("#trash").hover(function(){ontrash=true;console.log(ontrash);}, 
+	function(){ontrash=false;console.log(ontrash);
+});
+
+$("#code table").live("mousedown", function(e){
+	carrying = $(this);
+});
+
+
+$(document.body).live("mouseup", function(e){
+	if (carrying != null){
+		if ((e.pageY > $(document).height() - 250)&& (e.pageY < $(document).height() - 100) && (e.pageX > $(document).width() - 150)){
+			console.log(e.pageX,e.pageY)
+			carrying.remove();
+			program.splice(getProgramIndex(carrying.attr("id")),1);
+			carrying = null;
+			console.log(program);
+		}
+	}
+});
+
+
+// $("#trash").live("mousemove", function(e){
+// 	console.log('over trash!');
+// 	$(this).live("mouseup", function(e){
+// 	if (carrying != null){
+// 		carrying.remove();
+// 	}
+// 	});
+// });
+
+// $(document.body).live("mouseup", function(){
+// 	carrying = null;
+// })
+
+
+/*====================================================================================
+  _____           _     
+ |_   _|__ ___ __| |___ 
+   | |/ _ \___/ _` / _ \
+   |_|\___/   \__,_\___/
+                         
+=====================================================================================*/
+
+/*
+
+- Draggable from drawers to program
+- Draggable from program to trash
+- Draggable blocks into blocks
+- type checking
+- user defined (function, constant) appearing in new drawer
+- Contracts in define full functionality (design check off by Shriram)
+- run, stop
+- save program
+- Structs
+- Clean up appearance
+
+*/
