@@ -432,7 +432,8 @@ Array.prototype.contains=function(stringElement){
 //all of the functions corresponding to that type are displayed
 // INJECTION ATTACK FIXME
 function makeDrawers(allFunctions,allConstants){
-	var typeDrawers=makeTypesArray(allFunctions,allConstants)
+	var typeDrawers=makeTypesArray(allFunctions,allConstants);
+	conole.log(typeDrawers);
 	var Drawers="<div id=\"options\">\n"
 	var Selector="<div id=\"selectors\">\n"
 

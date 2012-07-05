@@ -1,12 +1,18 @@
 body{
-	background-color:#000;
+	background-color:#fff;
 	font-family:Arial;
 	font-size:11pt;
 	font-color:#fff;
 	position:absolute;
 	left:0px;
 	margin: 0px;
+	overflow:hidden;
 }
+
+
+/*****************************
+GENERAL
+*****************************/
 
 #header{
 	position:fixed;
@@ -16,35 +22,45 @@ body{
 	background-color:gray;
 }
 
-.draggable{
-	z-index:1;
+#Drawer{
+	position: fixed;
+	bottom: 0px;
+	background: green;
+	height: 100px;
+	width: 100%;
 }
 
 #code{
 	width:100%;
 	position:relative;
+	float:top;
 	top:50px;
 	left:0px;
-	overflow: auto;
+	overflow: hidden;
 }
+
+/*****************************
+CODE / HEADER
+*****************************/
+
 
 .header {
 	float: right;
 	margin: 15px;
 }
 
-.anElement {
-    position: absolute;
+#trash{
+	position: fixed;
+	bottom: 105px;
+	right: 17px;
+
 }
 
-ul
-{
-    list-style-type: none;
-}
 table{
-	 border-style: outset; 
-	 border-radius: 10px;
+	 border-style: solid; 
+	 border-radius: 5px;
 }
+
 .expr{
 	border: gray; 
 	border-style: solid; 
@@ -57,10 +73,20 @@ table{
 form{
 	height: 10px;
 }
-
-/******
-FOOTER
-******/
+.droppable{
+	border: solid 1px gray;
+}
+.highlight {
+    background-color:yellow;
+}
+.placeholder{
+	width:100%;
+	height:50px;
+	background-color:yellow;
+}
+/*****************************
+DRAWER
+*****************************/
 
 .bottomNav{
 	float:left;
@@ -76,7 +102,7 @@ FOOTER
 	width:100%;
 	bottom:50px;
 	height:50px;
-	overflow: auto;
+	overflow: none;
 	background-color:purple;
 	word-spacing:10px;
 }
@@ -88,16 +114,8 @@ FOOTER
 }
 #options span {
 	padding: 5px;
-	border: 1px solid white;
+	border: 1px solid black;
 	border-radius: 5px;
-}
-
-#Drawer{
-	position: fixed;
-	bottom: 0px;
-	background: green;
-	height: 100px;
-	width: 100%;
 }
 
 #selectors{
@@ -106,11 +124,4 @@ FOOTER
 	width:100%;
 	bottom:0px;
 	height:50px;
-}
-#trash{
-	position: fixed;
-	bottom: 105px;
-	right: 17px;
-	color: green;
-
 }
