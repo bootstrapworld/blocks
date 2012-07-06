@@ -24,10 +24,13 @@ and an expression which is an expression object
 makeDefineFunc(contract1, ["x"], makeApp("+", [makeVariable("x"), 2]))
 
 contract1 = makeContract("add2", ["Numbers"], "Numbers")
+
+expr = the expr, not a list, an object
 */
 var makeDefineFunc = function(){
 	this.contract = makeContract();
 	this.argumentNames;
+	this.funcIDList = makeIDList(expr.length)
 	this.expr;
 	this.id = makeID();
 }
@@ -69,9 +72,11 @@ function isExpression (obj){
 /*
 Constructs an application of an operator given the name, arguments, and output type. The arguments 
 is an array of expressions. Value is initially initialized to null.
+expr is a list of objects (one for each argument)
 */
 var makeApp = function(funcName, expr){
 	this.funcName = funcName;
+	this.funcIDList = makeIDList(expr.length)
 	this.expr = expr;
 	this.outputType = getOutput(funcName);
 	this.id = makeID();
@@ -320,19 +325,20 @@ $(document).ready(function(){
 			//if focused is not null and if you are clicking something else besides the focused object
 		    if(focused !=null && $(e.target).attr("id") != focused.attr("id")){
 		    	var inputtext=focused.val();
-
 		    	//NUMBERS
-		    	if(focused.closest($("table")).attr("class")==="Numbers"){
-		    		if(isNaN(Number(inputtext)) || inputtext == ""){
-		    			e.stopPropagation();
+		    	if(focused.closest($("table")).hasClass("Numbers")){
+		    		if(isNaN(Number(inputtext))){
 		    			focused.css("background-color", colors.Expressions);
+		    			e.stopPropagation();
 		    			alert("Please only enter a number into this text field");
 		    			focused.focus();
 		    			return;
 		    		} else{
+		    			console.log(focused.closest($("table")));
+		    			console.log(program);
 		    			var codeObject = program[getProgramIndex(focused.closest($("table")).attr("id"))];
 		    			codeObject.value = inputtext;
-						console.log(program);
+
 						focused.css("background-color", colors.Numbers);
 	    				focused=null;
 		    		}
@@ -343,7 +349,6 @@ $(document).ready(function(){
 		    		var codeObject = program[getProgramIndex(focused.closest($("table")).attr("id"))];
 		    		codeObject.value = inputtext;
 					focused=null;
-					console.log(program);
 		    	}
 		    	//TODO saving values
 		    }
@@ -387,6 +392,13 @@ function getProgramIndex(id){
 function makeID(){
 	return ID++;
 }
+function makeIDList(num){
+	var toReturn = [];
+	for(var i = 0; i<num; i++){
+		toReturn[i] = makeID();
+	}
+	return toReturn;
+}
 
 //resizes code div when the window is resized
 function onResize(){
@@ -394,8 +406,8 @@ function onResize(){
 	codeWidth = $(document).width();
 	$("#code").height(codeHeight);
 	$("#code").width(codeWidth);
-	$("#List").height(codeHeight);
-	$("#List").width(codeWidth);
+	$("#List").height(codeHeight - 150);
+	$("#List").width(codeWidth - 150);
 };
 
 //containsName takes in an array of objects and a string and returns the index at which that string is the name property of any of the objects
@@ -626,14 +638,14 @@ function createBlock(codeObject){
  		return createCondBlock(codeObject);
  	} else if (codeObject instanceof makeConst){
  		for(var i = 0; i < constants.length; i++){
-	 		if (constants[i].name === codeObject.constName){
+	 		if (encode(constants[i].name) === encode(codeObject.constName)){
 	 			return createConstantBlock(constants[i], codeObject);
 	 		}
 	 	}
 	 	throw new Error("createBlock: internal error");
  	} else if (codeObject instanceof makeApp){
 	 	for(var i = 0; i < functions.length; i++){
-	 		if (functions[i].name === codeObject.funcName){
+	 		if (encode(functions[i].name) === encode(codeObject.funcName)){
 	 			return createFunctionBlock(i, codeObject);
 	 		}
 	 	}
@@ -649,14 +661,31 @@ function createBlock(codeObject){
  }
 
 
+function encode(string){
+	    return String(string)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+}
+function decode(string){
+	return String(string)
+	        .replace('&amp;', '&')
+            .replace('&quot;','\"')
+            .replace('&#39;','\'')
+            .replace('&lt;',"<")
+            .replace('&gt;',">")
+}
+
 //createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to that function with name, color, and spaces for input blocks
  // createFunctionBlock: number -> string
  function createFunctionBlock(functionIndex, codeObject){
  	var func = functions[functionIndex];
  	var block = "<table class=\"expr " + func.output  +"\"" + "id=\""+codeObject.id+"\">";
- 	block += "<tr><th>" + func.name + "</th>";
+ 	block += "<tr><th>" + encode(func.name) + "</th>";
  	for(var i = 0; i < func.input.length; i++){
- 		block += "<th class=\"" + func.input[i].type +" droppable\">" + func.input[i].name + "</th>";
+ 		block += "<th class=\"" + encode(func.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">" + func.input[i].name + "</th>";
  	}
  	return block + "</tr></table>";
  }
@@ -674,41 +703,41 @@ function createDefineBlock(codeObject){
 
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject){
-	var block = "<table class=\"Define\"" + "id=\""+codeObject.id+"\"><tr><th>define</th>";
+	var block = "<table class=\"Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
 	block+="<th class=\"expr\"> <input type=\"Name\" id=\"Name\" name=\"Name\"/> <th  class=\"expr\">expr</th>";
 	return block + "</tr></table>";
 }
 
 //createDefineStructBlock outputs the block corresponding to creating a structure
 function createDefineStructBlock(codeObject){
-	var block ="<table class=\"Define\"" + "id=\""+codeObject.id+"\"><tr><th>define-struct</th>";
+	var block ="<table class=\"Define\" " + "id=\""+codeObject.id+"\"><tr><th>define-struct</th>";
 	block+="<th class=\"expr\"><input type=\"Name\" id=\"Name\" name=\"Name\"/><th class=\"expr\">properties";
 	return block + "</tr></table>";
 }
 
 //createCondBlock outputs the block corresponding to creating a conditional
 function createCondBlock(codeObject){
-	var block =  "<table class=\"expr Expressions\"" + "id=\""+codeObject.id+"\"><tr><th>cond</tr>";
+	var block =  "<table class=\"expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th>cond</tr>";
 	block+="<tr><th><th class=\"Booleans expr\">boolean <th class=\"expr\">expr</tr>";
 	block+="<tr><th><th><button class=\"buttonCond\">+</button></th></tr>";
 	return block + "</table>";
 }
 
 function createConstantBlock(constantelement, codeObject){
-	var block =  "<table class=\"expr " + constantelement.type+"\"" + "id=\""+codeObject.id+"\"><tr><th>"+constantelement.name+"</tr>";
+	var block =  "<table class=\"expr " + encode(constantelement.type)+"\" " + "id=\""+codeObject.id+"\"><tr><th>"+encode(constantelement.name)+"</tr>";
 	return block + "</table>";
 }
 
 function createBooleanBlock(codeObject){
-	var block =  "<table class=\"Booleans\" expr" + "id=\""+codeObject.id+"\"><tr><th>"+codeObject.value+"</tr>";
+	var block =  "<table class=\"Booleans expr\" " + "id=\""+codeObject.id+"\"><tr><th>"+codeObject.value+"</tr>";
 	return block + "</table>";
 }
 function createNumBlock(codeObject){
-	var block =  "<table class=\"Numbers\" expr" + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input style=\"width:50px;\"></tr>";
+	var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input style=\"width:50px;\"></tr>";
 	return block + "</table>";
 }
 function createStringBlock(codeObject){
-	var block =  "<table class=\"Strings\" expr" + "id=\""+codeObject.id+"\"><tr><th>\"<input class=\"Strings\">\"</tr>";
+	var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"<input class=\"Strings\">\"</tr>";
 	return block + "</table>";
 }
 
@@ -763,7 +792,7 @@ function interpreter(obj){
         toReturn += ") \n" + interpreter(obj.expr);
         alert(toReturn);
     }else if(obj instanceof makeApp){
-        toReturn += "(" + obj.funcName;
+        toReturn += "(" + decode(obj.funcName);
         for(ex in obj.expr){
             toReturn += " " + interpreter(ex);
         }
@@ -773,7 +802,7 @@ function interpreter(obj){
     }else if(obj instanceof makeString){
         toReturn += "\"" + obj.value + "\"";
     }else if(obj instanceof makeConst){
-        toReturn += obj.constName;
+        toReturn += decode(obj.constName);
     }else if(obj instanceof makeCond){
         toReturn += "(cond\n";
         for(ans in obj.listOfBooleanAnswer()){
@@ -781,7 +810,6 @@ function interpreter(obj){
         }
         toReturn+= ")";
     }
-    console.log(toReturn);
     return toReturn;
 }
 
@@ -798,7 +826,8 @@ function interpreter(obj){
 var carrying;
 //Similar to the variable carrying, except that is stores the corresponding program object
 var programCarrying;
-
+//Similar to programCarrying, except it refers to the codeObject being dragged from the drawers
+var dragCarrying;
 
 // .draggable is referring to the options within the drawers
 // .sortable is referring to the list containing the blocks within the program
@@ -811,46 +840,54 @@ $(function() {
 			carrying = $(ui.item);
 			programCarrying = program[itemIndex];
 			program.splice(itemIndex, 1);
-			console.log(ui.item);
 		},
 		stop: function(event, ui) {
+			var itemIndex;
 			if (ui.item.is('span.draggable')){
-        		ui.item.replaceWith($('<li>' + createBlock(makeCodeFromOptions(ui.item.html())) + '</li>'));
-   			}
-			var itemIndex = carrying.index();
-			carrying = null;
-			program.splice(itemIndex, 0, programCarrying);
+				var replacement = $('<li>' + createBlock(dragCarrying) + '</li>');
+        		ui.item.replaceWith(replacement);
+        		program.splice(replacement.index(), 0, dragCarrying);
+        		dragCarrying = null;
+   			} else{
+				itemIndex = carrying.index();
+				carrying = null;
+				program.splice(itemIndex, 0, programCarrying);
+			}
 			programCarrying = null;
+			carrying = null;
 		},
 		scroll:false,
 		items:'li'    
 	});
 
+	//makes things draggable from the drawer to the code
+	$('.draggable').draggable({
+		helper: function(event, ui){
+			dragCarrying = makeCodeFromOptions($(this).text());
+			carrying = $(createBlock(dragCarrying));
+			return createBlock(dragCarrying) ;
+		},
+		connectToSortable: "#List"
+	});
 
 	// EVERYTHING ABOVE WORKS GREAT. EXPERIMENTATION BELOW. DELETE IF THINGS GET FUCKED UP
 
-	$('.draggable').draggable({
-		helper: function(event, ui){
-			programCarrying = makeCodeFromOptions($(this).text());
-			carrying = $(createBlock(makeCodeFromOptions($(this).text())));
-			return "<li>" + createBlock(makeCodeFromOptions($(this).text())) ;
-		},
-		// helper:'clone',
-		connectToSortable: "#List"
-	});
+
 //	$( ".sortable" ).disableSelection();
 
-	// $(".droppable").droppable({
-	// 	accept:".expr",
-	// 	activate: function(event, ui){
-	// 		$(ui.draggable).css("z-index","100");
-	// 	},
-	// 	hoverClass:"highlight",
-	// 	drop: function(event, ui){
-	// 		$(this).html(carrying.sortable("destroy").html());
-	// 		carrying.remove();
-	// 	}
-	// });
+	$(".droppable").droppable({
+		accept: function(event, ui){
+			$(ui.draggable).hasClass("expr");
+		},
+		activate: function(event, ui){
+			$(ui.draggable).css("z-index","100");
+		},
+		hoverClass:"highlight",
+		drop: function(event, ui){
+			$(this).html(carrying.sortable("destroy").html());
+			carrying.remove();
+		}
+	});
 });
 
 /*====================================================================================
@@ -861,32 +898,43 @@ $(function() {
                             |___/                       
 =====================================================================================*/
 
-var ontrash=false;
 
 
-// $("#trash").hover(function(){ontrash=true;console.log(ontrash);}, 
-// 	function(){ontrash=false;console.log(ontrash);
-// });
-
-// $("#code table").live("mousedown", function(e){
-// 	carrying = $(this);
-// });
+$("#code table").live("mousedown", function(e){
+	carrying = $(this);
+});
 
 
-// /*
-// When hovering over the trash icon with an block, the block is deleted.
-// */
-// $(document.body).live("mouseup", function(e){
-// 	if (carrying != null){
-// 		if ((e.pageY > $(document).height() - 250)&& (e.pageY < $(document).height() - 100) && (e.pageX > $(document).width() - 150)){
-// 			console.log(e.pageX,e.pageY)
-// 			carrying.remove();
-// 			program.splice(getProgramIndex(carrying.attr("id")),1);
-// 			carrying = null;
-// 			console.log(program);
-// 		}
-// 	}
-// });
+/*
+When hovering over the trash icon with an block, the block is deleted.
+*/
+$(document.body).live("mouseup", function(e){
+	if (carrying != null){
+		if ((e.pageY > $(document).height() - 250)&& (e.pageY < $(document).height() - 100) && (e.pageX > $(document).width() - 150)){
+			carrying.remove();
+			program.splice(getProgramIndex(carrying.attr("id")),1);
+			carrying = null;
+		}
+	}
+});
+
+
+
+var toDrop = null;
+
+$("th").live("click", function(){
+	if (toDrop == null){
+		toDrop = $(this).closest("table");
+		console.log(toDrop)
+	}else if (toDrop != null && toDrop.attr('id') != $(this).closest("table").attr('id')){
+		$(this).html(toDrop);
+		$(this).css("border","none");
+		toDrop = null;
+		console.log("toDrop null")
+	}else{
+		toDrop = null
+	}
+})
 
 
 

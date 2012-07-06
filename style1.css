@@ -7,6 +7,11 @@ body{
 	left:0px;
 	margin: 0px;
 	overflow:hidden;
+	-webkit-user-select: none;
+-moz-user-select: none;
+-o-user-select: none;
+-khtml-user-select: none;
+user-select: none;
 }
 
 
@@ -31,12 +36,12 @@ GENERAL
 }
 
 #code{
-	width:100%;
 	position:relative;
 	float:top;
 	top:50px;
 	left:0px;
-	overflow: hidden;
+	overflow: auto;
+
 }
 
 /*****************************
@@ -60,6 +65,9 @@ table{
 	 border-style: solid; 
 	 border-radius: 5px;
 }
+th table{
+	border: none;
+}
 
 .expr{
 	border: gray; 
@@ -74,7 +82,10 @@ form{
 	height: 10px;
 }
 .droppable{
-	border: solid 1px gray;
+	border: gray; 
+	border-style: solid; 
+	border-radius: 10px;
+	padding: 2px;
 }
 .highlight {
     background-color:yellow;
