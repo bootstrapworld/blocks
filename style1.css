@@ -1,5 +1,5 @@
 body{
-	background-color:#fff;
+	background-color:#000;
 	font-family:Arial;
 	font-size:11pt;
 	font-color:#fff;
@@ -67,8 +67,8 @@ table{
 	border-radius: 10px;
 	padding: 2px;
 }
-#Name{
-	width: 100px;
+#List{
+	list-style:none;
 }
 form{
 	height: 10px;

@@ -394,6 +394,8 @@ function onResize(){
 	codeWidth = $(document).width();
 	$("#code").height(codeHeight);
 	$("#code").width(codeWidth);
+	$("#List").height(codeHeight);
+	$("#List").width(codeWidth);
 };
 
 //containsName takes in an array of objects and a string and returns the index at which that string is the name property of any of the objects
@@ -610,7 +612,7 @@ function makeCodeFromOptions(optionsText){
 		}
 	}
 
-//block takes in a string and outputs the corresponding block to that function
+//block takes in a string and outputs the corresponding DOMElement block to that function
 
 // createBlock: string -> element
 function createBlock(codeObject){
@@ -809,18 +811,16 @@ $(function() {
 			carrying = $(ui.item);
 			programCarrying = program[itemIndex];
 			program.splice(itemIndex, 1);
-			console.log(program);
+			console.log(ui.item);
 		},
 		stop: function(event, ui) {
 			if (ui.item.is('span.draggable')){
-        		ui.item.replaceWith($('<li>' + ui.item.html() + '</li>'));
+        		ui.item.replaceWith($('<li>' + createBlock(makeCodeFromOptions(ui.item.html())) + '</li>'));
    			}
 			var itemIndex = carrying.index();
-			console.log(itemIndex);
 			carrying = null;
 			program.splice(itemIndex, 0, programCarrying);
 			programCarrying = null;
-			console.log(program);
 		},
 		scroll:false,
 		items:'li'    
