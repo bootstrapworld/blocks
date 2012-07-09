@@ -11,7 +11,7 @@
 =====================================================================================*/
 
 /*
-program is an array of makeDefineFucn/makeDefineVar/Expressions that make up the user's program
+program is an array of makeDefineFunc/makeDefineVar/Expressions that make up the user's program
 on the screen.
 */
 var program = [];
@@ -62,22 +62,26 @@ var makeDefineConst = function(){
 /*
 Constructs the expression object
 */
-function isExpression (obj){
-	return (obj instanceof makeApp ||
+function isLiteral (obj){
+	return (
 	obj instanceof makeString ||
 	obj instanceof makeNumber ||
 	obj instanceof makeConst);
 };
+
+function isDefine (obj){
+	return (obj instanceof makeDefineConst || obj instanceof makeDefineFunc)
+}
 
 /*
 Constructs an application of an operator given the name, arguments, and output type. The arguments 
 is an array of expressions. Value is initially initialized to null.
 expr is a list of objects (one for each argument)
 */
-var makeApp = function(funcName, expr){
+var makeApp = function(funcName, args){
 	this.funcName = funcName;
-	this.funcIDList = makeIDList(expr.length)
-	this.expr = expr;
+	this.funcIDList = makeIDList(args.length)
+	this.args = args;
 	this.outputType = getOutput(funcName);
 	this.id = makeID();
 }
@@ -287,6 +291,8 @@ var colors={};
  colors.Expressions="#FFFFFF";
  colors.Constants="#FFFFFF";
 
+ var history = [];
+
 /*====================================================================================
    ___ _     _          _  __   __        _      _    _        
   / __| |___| |__  __ _| | \ \ / /_ _ _ _(_)__ _| |__| |___ ___
@@ -336,7 +342,7 @@ $(document).ready(function(){
 		    		} else{
 		    			console.log(focused.closest($("table")));
 		    			console.log(program);
-		    			var codeObject = program[getProgramIndex(focused.closest($("table")).attr("id"))];
+		    			var codeObject = program.searchForIndex(focused.closest($("table")).attr("id"));
 		    			codeObject.value = inputtext;
 
 						focused.css("background-color", colors.Numbers);
@@ -346,7 +352,7 @@ $(document).ready(function(){
 
 		    	//STRINGS
 		    	else if(focused.closest($("table")).attr("class")==="Strings"){
-		    		var codeObject = program[getProgramIndex(focused.closest($("table")).attr("id"))];
+		    		var codeObject =  program.searchForIndex(focused.closest($("table")).attr("id"));
 		    		codeObject.value = inputtext;
 					focused=null;
 		    	}
@@ -380,14 +386,97 @@ within the programs array.
 // 	throw new Error("Can't find code object");
 // }
 
-function getProgramIndex(id){
-	for(var i = 0; i < program.length ; i++){
-		if (program[i].id == id){
-			return i;
+//takes in id from DOMelement (#) and returns code object (internal representation of html blocks)
+// function getProgramIndex(id, arr){
+// 	for(var i = 0; i < program.length ; i++){
+// 		if (program[i].id == id){
+// 			return program[i];
+// 		} else if (program[i] instanceof makeDefineFunc){
+
+// 		}
+// 	}
+// 	throw new Error("Can't find code object");
+// }
+
+//DO COND!
+Array.prototype.searchForIndex=function(id){
+	for(var i=0; i<this.length;i++){
+		if(this[i].id==id){
+			return this[i]
+		}
+		else if(this[i] instanceof makeDefineFunc || this[i] instanceof makeDefineConst){
+			if(this[i].expr.id==id){
+				return this[i].expr
+			}
+			else if(this[i].expr instanceof makeApp){
+				return this[i].expr.args.searchForIndex(id)
+			}
+		}
+		else if(this[i] instanceof makeApp){
+			return this[i].args.searchForIndex(id)
 		}
 	}
 	throw new Error("Can't find code object");
 }
+
+//DELETE WHEN DONE WITH REMOVE PROGRAM THIGN
+// $("#trash").droppable({
+// 	accept: ".expr, .Define",
+// 	drop: function(event, ui){
+// 		history[history.length] = program;
+// 		$(ui.draggable).remove();
+// 		removeFromProgram($(ui.draggable).id);
+// 	}
+// })
+
+
+
+
+// //tries to remove id block within program array
+// function removeFromProgram(id){
+// 	for (var i = 0; i < program.length; i++){
+// 		if (program[i].id == id){
+// 			program.splice(i, 1);
+// 		}
+// 		 else if (isDefine(program[i])){
+// 			removeExpression(id, program[i])
+// 		}
+// 		else if(program[i] instanceof makeCond){
+// 			//removeCond(id,program[i])
+// 		}
+// 		 else if(program[i] instanceof makeApp){
+// 			removeApp(id,program[i])
+// 		}
+// 	}
+// }
+
+
+// //tries to remove id block within define block
+// function removeExpression(id, codeObject){
+// 	if (codeObject.expr.id == id){
+// 		codeObject.expr = null;
+// 	} else if (codeObject.expr instanceof makeApp){
+// 		removeApp(id, codeObject.expr)
+// 	} else if (arg instanceof makeCond){
+// 		//removeCond(something)
+// 	}
+// }
+
+// //tries to remove id block within app
+// function removeApp(id,parent){
+// 	for (var i = 0; i < parent.args.length; i++){
+// 		if (parent.args[i].id == id){
+// 			parent.args[i] = null;
+// 		}
+// 		else if (parent.args[i] instanceof makeApp){
+// 			removeApp(id, parent.args[i])
+// 		}
+// 		else if (parent.args[i] instanceof makeCond){
+// 			//removeCond(something)
+// 		}
+// 	}
+// }
+
 
 function makeID(){
 	return ID++;
@@ -692,7 +781,7 @@ function decode(string){
 
 //createDefineBlock outputs the block corresponding to defining a function
 function createDefineBlock(codeObject){
-	var block ="<table style=\"background: " + colors.Define +";\"" + "id=\""+codeObject.id+"\">";
+	var block ="<table class=\"Define\" style=\"background: " + colors.Define +";\"" + "id=\""+codeObject.id+"\">";
 	//contract
 	block+="<tr><th><input id=\"name\"></th><th> : </th><th>"+generateTypeDrop()+"</th><th> <button class=\"buttonPlus\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></th></tr>";
 	//define block
@@ -793,7 +882,7 @@ function interpreter(obj){
         alert(toReturn);
     }else if(obj instanceof makeApp){
         toReturn += "(" + decode(obj.funcName);
-        for(ex in obj.expr){
+        for(ex in obj.args){
             toReturn += " " + interpreter(ex);
         }
         toReturn += ")";
@@ -835,6 +924,7 @@ var dragCarrying;
 $(function() {
 
 	$("#List").sortable({
+		connectWith: '#trash',
 		start: function(event, ui){
 			var itemIndex = $(ui.item).index();
 			carrying = $(ui.item);
@@ -856,8 +946,31 @@ $(function() {
 			programCarrying = null;
 			carrying = null;
 		},
+		tolerance:'pointer',
+		cursor:'pointer',
+		dropOnEmpty:true,
 		scroll:false,
-		items:'li'    
+		items:'li',
+	});
+
+	$("#trash").sortable({
+		//accept: ".expr",
+		tolerance:'pointer',
+		cursor:'pointer',
+		dropOnEmpty:true,
+		update:function(event, ui){
+				console.log("updated")
+				history[history.length] = program;
+				$(ui.item).remove();
+				for(var i=0;i<program.length;i++){
+					if(program[i].id==$(ui.item).id){
+						program.splice(i,1);
+					}
+				}
+				console.log(program +"asdfasdf \n");
+				console.log(history)
+
+		}
 	});
 
 	//makes things draggable from the drawer to the code
@@ -876,9 +989,7 @@ $(function() {
 //	$( ".sortable" ).disableSelection();
 
 	$(".droppable").droppable({
-		accept: function(event, ui){
-			$(ui.draggable).hasClass("expr");
-		},
+		accept: "table",
 		activate: function(event, ui){
 			$(ui.draggable).css("z-index","100");
 		},
@@ -908,15 +1019,16 @@ $("#code table").live("mousedown", function(e){
 /*
 When hovering over the trash icon with an block, the block is deleted.
 */
-$(document.body).live("mouseup", function(e){
-	if (carrying != null){
-		if ((e.pageY > $(document).height() - 250)&& (e.pageY < $(document).height() - 100) && (e.pageX > $(document).width() - 150)){
-			carrying.remove();
-			program.splice(getProgramIndex(carrying.attr("id")),1);
-			carrying = null;
-		}
-	}
-});
+// $(document.body).live("mouseup", function(e){
+// 	if (carrying != null){
+// 		if ((e.pageY > $(document).height() - 250)&& (e.pageY < $(document).height() - 100) && (e.pageX > $(document).width() - 150)){
+// 			carrying.remove();
+// 			program.splice(getProgramIndex(carrying.attr("id")),1);
+// 			carrying = null;
+// 		}
+// 	}
+// });
+
 
 
 
@@ -962,16 +1074,29 @@ $("th").live("click", function(){
 
 /*
 
-- Draggable from drawers to program
+7/9-7/11
 - Draggable from program to trash
+
+7/11-7/13
 - Draggable blocks into blocks
-- type checking
-- user defined (function, constant) appearing in new drawer
-- Contracts in define full functionality (design check off by Shriram)
+- Type checking
+- Add functionality for cond
+
+7/16-7/20
+- undo (Monday)
+- full functionality of defines
+	- user defined (function, constant) appearing in new drawer. deleting defines
+	- Contracts in define full functionality (design check off by Shriram).
+
+7/22-27
 - run, stop
 - save program
-- Structs, lists
-- lists of generic type
+- Add functionality for structs
+
+
+OPTIONAL
+	- lists
+	- lists of generic type
 - Clean up appearance
 */
 

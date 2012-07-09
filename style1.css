@@ -78,6 +78,9 @@ th table{
 #List{
 	list-style:none;
 }
+#List li{
+	cursor:pointer;
+}
 form{
 	height: 10px;
 }
@@ -135,4 +138,20 @@ DRAWER
 	width:100%;
 	bottom:0px;
 	height:50px;
+}
+
+#trash{
+	background: url('trash.png') 0 no-repeat;
+	height:110px;
+	width:70px;
+	overflow: hidden;
+	position: fixed;
+	bottom:100px;
+	right:0px;
+}
+
+#trash li{
+	height: 0px;
+	width: 0px;
+	overflow: hidden;
 }
