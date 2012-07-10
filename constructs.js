@@ -924,13 +924,14 @@ var dragCarrying;
 $(function() {
 
 	$("#List").sortable({
-		connectWith: '#trash',
-		start: function(event, ui){
+		connectWith: "#trash, .droppable",
+	start: function(event, ui){
 			var itemIndex = $(ui.item).index();
-			carrying = $(ui.item);
+			carrying = ui.item;
 			programCarrying = program[itemIndex];
 			program.splice(itemIndex, 1);
 		},
+
 		stop: function(event, ui) {
 			var itemIndex;
 			if (ui.item.is('span.draggable')){
@@ -946,11 +947,20 @@ $(function() {
 			programCarrying = null;
 			carrying = null;
 		},
+		remove: function(event, ui){
+			$(ui.item).remove();
+		},
+		receive:function(event,ui){
+			if (!ui.item.is('span.draggable')){
+				ui.item.remove();
+			}
+		},
 		tolerance:'pointer',
 		cursor:'pointer',
 		dropOnEmpty:true,
 		scroll:false,
 		items:'li',
+		revert:'invalid'
 	});
 
 	$("#trash").sortable({
@@ -989,16 +999,28 @@ $(function() {
 //	$( ".sortable" ).disableSelection();
 
 	$(".droppable").droppable({
-		accept: "table",
-		activate: function(event, ui){
-			$(ui.draggable).css("z-index","100");
-		},
+//		accept: "table",
 		hoverClass:"highlight",
+		tolerance:"touch",
+		over: function (event,ui){
+			console.log("Hi")
+		},
 		drop: function(event, ui){
-			$(this).html(carrying.sortable("destroy").html());
-			carrying.remove();
+			console.log("I am here0")
+			if(($this).children().length===0){
+				console.log("I am here1")
+				var c1=$('<table>').html(ui.draggable.html())
+				c1.draggable({
+					connectToSortable: "#List",
+					helper: "clone"
+				});
+				$(this).html(c1);
+				ui.helper.hide();
+				ui.draggable.remove();
+			}
 		}
 	});
+
 });
 
 /*====================================================================================
@@ -1009,12 +1031,11 @@ $(function() {
                             |___/                       
 =====================================================================================*/
 
-
-
+/*
 $("#code table").live("mousedown", function(e){
 	carrying = $(this);
 });
-
+/*
 
 /*
 When hovering over the trash icon with an block, the block is deleted.
@@ -1033,7 +1054,7 @@ When hovering over the trash icon with an block, the block is deleted.
 
 
 var toDrop = null;
-
+/*
 $("th").live("click", function(){
 	if (toDrop == null){
 		toDrop = $(this).closest("table");
@@ -1047,7 +1068,7 @@ $("th").live("click", function(){
 		toDrop = null
 	}
 })
-
+*/
 
 
 // $("#trash").live("mousemove", function(e){
