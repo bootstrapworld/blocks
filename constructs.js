@@ -29,15 +29,15 @@ contract1 = makeContract("add2", ["Numbers"], "Numbers")
 
 expr = the expr, not a list, an object
 */
-var makeDefineFunc = function(){
-        this.contract = makeContract();
+var ExprDefineFunc = function(){
+        this.contract = new ExprContract();
         this.argumentNames = undefined;
         this.expr = undefined;
         this.funcIDList = makeIDList(this.expr.length);
         this.id = makeID();
 };
 
-var makeContract = function(){
+var ExprContract = function(){
         this.funcName = undefined;
         this.argumentTypes = undefined;
         this.outputType = undefined;
@@ -49,12 +49,12 @@ Constucts the define variable block given a name (string), an expression which i
 object, and an output type
 
 (define x 3) =>
-makeDefinevar("x", makeNum(3), "Numbers")
+ExprDefinevar("x", ExprNum(3), "Numbers")
 
 (define y (+ 2 x)) =>
-makeDefineVar("y", (makeApp("+", [makeNum("2"), makeVar("x")))
+ExprDefineVar("y", (ExprApp("+", [ExprNum("2"), ExprVar("x")))
 */
-var makeDefineConst = function(){
+var ExprDefineConst = function(){
         this.constName = undefined;
         this.expr = undefined;
         this.outputType = undefined; //MAKE SURE THIS WILL BE DEFINED!!!!
@@ -66,16 +66,16 @@ Returns true if the object is a literal or constant, false otherwise.
 */
 function isLiteral (obj){
         return (
-        obj instanceof makeString ||
-        obj instanceof makeNumber ||
-        obj instanceof makeConst);
+        obj instanceof ExprString ||
+        obj instanceof ExprNumber ||
+        obj instanceof ExprConst);
 }
 
 /*
 Returns true if the object is a definition, false otherwise
 */
 function isDefine (obj){
-        return (obj instanceof makeDefineConst || obj instanceof makeDefineFunc);
+        return (obj instanceof ExprDefineConst || obj instanceof ExprDefineFunc);
 }
 
 /*
@@ -83,7 +83,7 @@ Constructs an application of an operator given the name, arguments, and output t
 is an array of expressions. Value is initially initialized to null.
 expr is a list of objects (one for each argument)
 */
-var makeApp = function(funcName, args){
+var ExprApp = function(funcName, args){
         this.funcName = funcName;
         this.funcIDList = makeIDList(args.length);
         this.args = args;
@@ -95,7 +95,7 @@ var makeApp = function(funcName, args){
 Constructs a string given the contents of the string (str).
 The value of the string is initialized as an empty string "". <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 */
-var makeString= function(){
+var ExprString= function(){
         this.value = "";
         this.outputType = "Strings";
         this.id = makeID();
@@ -104,7 +104,7 @@ var makeString= function(){
 /*
 Constructs a number given a number num.
 */
-var makeNumber = function(){
+var ExprNumber = function(){
         this.value = undefined;
         this.outputType = "Numbers";
         this.id = makeID();
@@ -114,7 +114,7 @@ var makeNumber = function(){
 NOTE: Not sure if necessary
 Constructs a variable object given a name of type string.
 */
-var makeConst = function(constName){
+var ExprConst = function(constName){
         this.constName = constName;
         //this.outputType = getConstantType(constName);
         this.id = makeID();
@@ -123,7 +123,7 @@ var makeConst = function(constName){
 /*
 Constructs a boolean true or false (else == true)
 */
-var makeBoolean = function(value){
+var ExprBoolean = function(value){
         this.value=value;
         this.outputType = "Booleans";
         this.id = makeID();
@@ -132,7 +132,7 @@ var makeBoolean = function(value){
 /*
 Constructs a tuple of boolean and answer to use in a cond expression
 */
-var makeBoolAnswer=function(){
+var ExprBoolAnswer=function(){
         this.bool = undefined;
         this.answer = undefined;
         this.outputType = undefined;
@@ -148,11 +148,11 @@ The first expression has to be a boolean
         [(true) 2]
         [(false) 1]
 ) =>
-makeCond(list1)
-list1 = [makeBoolAnswer(makeBoolean(true),makeNum(2)).makeBoolAnswer(makeBoolean(False),makeNum(1))]
+ExprCond(list1)
+list1 = [ExprBoolAnswer(ExprBoolean(true),ExprNum(2)).ExprBoolAnswer(ExprBoolean(False),ExprNum(1))]
 */
-var makeCond = function(){
-        this.listOfBooleanAnswer=[new makeBoolAnswer()];
+var ExprCond = function(){
+        this.listOfBooleanAnswer=[new ExprBoolAnswer()];
         this.outputType = undefined;
         this.id = makeID();
 
@@ -436,15 +436,15 @@ function searchForIndex(id,array){
                 if(array[i].id===id){
                         return array[i];
                 }
-                else if(array[i] instanceof makeDefineFunc || array[i] instanceof makeDefineConst){
+                else if(array[i] instanceof ExprDefineFunc || array[i] instanceof ExprDefineConst){
                         if(array[i].expr.id===id){
                                 return array[i].expr;
                         }
-                        else if(array[i].expr instanceof makeApp){
+                        else if(array[i].expr instanceof ExprApp){
                                 return searchForIndex(id,array[i].expr.args);
                         }
                 }
-                else if(array[i] instanceof makeApp){
+                else if(array[i] instanceof ExprApp){
                         return searchForIndex(id,array[i].args);
                 }
         }
@@ -473,10 +473,10 @@ function searchForIndex(id,array){
 //               else if (isDefine(program[i])){
 //                      removeExpression(id, program[i])
 //              }
-//              else if(program[i] instanceof makeCond){
+//              else if(program[i] instanceof ExprCond){
 //                      //removeCond(id,program[i])
 //              }
-//               else if(program[i] instanceof makeApp){
+//               else if(program[i] instanceof ExprApp){
 //                      removeApp(id,program[i])
 //              }
 //      }
@@ -487,9 +487,9 @@ function searchForIndex(id,array){
 // function removeExpression(id, codeObject){
 //      if (codeObject.expr.id == id){
 //              codeObject.expr = null;
-//      } else if (codeObject.expr instanceof makeApp){
+//      } else if (codeObject.expr instanceof ExprApp){
 //              removeApp(id, codeObject.expr)
-//      } else if (arg instanceof makeCond){
+//      } else if (arg instanceof ExprCond){
 //              //removeCond(something)
 //      }
 // }
@@ -500,10 +500,10 @@ function searchForIndex(id,array){
 //              if (parent.args[i].id == id){
 //                      parent.args[i] = null;
 //              }
-//              else if (parent.args[i] instanceof makeApp){
+//              else if (parent.args[i] instanceof ExprApp){
 //                      removeApp(id, parent.args[i])
 //              }
-//              else if (parent.args[i] instanceof makeCond){
+//              else if (parent.args[i] instanceof ExprCond){
 //                      //removeCond(something)
 //              }
 //      }
@@ -719,20 +719,20 @@ Given the text within the options span, returns the code object associated with 
 function makeCodeFromOptions(optionsText){
         var i;
         if(optionsText === "define-function"){
-                        return new makeDefineFunc();
+                        return new ExprDefineFunc();
                 } else if (optionsText === "define-constant"){
-                        return new makeDefineConst();
+                        return new ExprDefineConst();
                 } else if (optionsText === "cond"){
-                        return new makeCond([makeBoolAnswer()]);
+                        return new ExprCond([new ExprBoolAnswer()]);
                 } 
                 else if(optionsText==="true" || optionsText==="false"){
-                        return new makeBoolean(optionsText);
+                        return new ExprBoolean(optionsText);
                 }
                 else if(optionsText==="Text"){
-                        return new makeString();
+                        return new ExprString();
                 }
                 else if(optionsText==="Number"){
-                        return new makeNumber();
+                        return new ExprNumber();
                 }
                 else if(optionsText==="define-struct"){
                         //todo
@@ -741,12 +741,12 @@ function makeCodeFromOptions(optionsText){
                 else{
                         for(i = 0; i < functions.length; i++){
                                 if (functions[i].name === optionsText){
-                                        return new makeApp(optionsText, [functions[i].input.length]);
+                                        return new ExprApp(optionsText, [functions[i].input.length]);
                                 }
                         }
                         for(i=0;i<constants.length;i++){
                                 if (constants[i].name === optionsText){
-                                        return new makeConst(optionsText);
+                                        return new ExprConst(optionsText);
                                 }
                         }
                         throw new Error("createBlock: internal error");
@@ -759,33 +759,33 @@ createBlock: code object -> element
 */
 function createBlock(codeObject){
         var i;
-        if(codeObject instanceof makeDefineFunc){
+        if(codeObject instanceof ExprDefineFunc){
                 return createDefineBlock(codeObject);
-        } else if (codeObject instanceof makeDefineConst){
+        } else if (codeObject instanceof ExprDefineConst){
                 return createDefineVarBlock(codeObject);
-        }/* else if (codeObject instanceof makeDefineStruct){
+        }/* else if (codeObject instanceof ExprDefineStruct){
                 return stringToElement(createDefineStructBlock());
-        }*/ else if (codeObject instanceof makeCond){
+        }*/ else if (codeObject instanceof ExprCond){
                 return createCondBlock(codeObject);
-        } else if (codeObject instanceof makeConst){
+        } else if (codeObject instanceof ExprConst){
                 for(i = 0; i < constants.length; i++){
                         if (encode(constants[i].name) === encode(codeObject.constName)){
                                 return createConstantBlock(constants[i], codeObject);
                         }
                 }
                 throw new Error("createBlock: internal error");
-        } else if (codeObject instanceof makeApp){
+        } else if (codeObject instanceof ExprApp){
                 for(i = 0; i < functions.length; i++){
                         if (encode(functions[i].name) === encode(codeObject.funcName)){
                                 return createFunctionBlock(i, codeObject);
                         }
                 }
                 throw new Error("createBlock: internal error");
-        } else if (codeObject instanceof makeNumber){
+        } else if (codeObject instanceof ExprNumber){
                 return createNumBlock(codeObject);
-        } else if (codeObject instanceof makeString){
+        } else if (codeObject instanceof ExprString){
                 return createStringBlock(codeObject);
-        } else if (codeObject instanceof makeBoolean){
+        } else if (codeObject instanceof ExprBoolean){
                 return createBooleanBlock(codeObject);
         }
         
@@ -922,9 +922,9 @@ The interpreter translates our representation of the program array to Racket cod
 */
 function interpreter(obj){
     var toReturn = "";
-    if(obj instanceof makeDefineConst){
+    if(obj instanceof ExprDefineConst){
         toReturn += "(define " + obj.constName + " \n" + interpreter(obj.expr) + ")";
-    }else if(obj instanceof makeDefineFunc){
+    }else if(obj instanceof ExprDefineFunc){
         toReturn += ";" + obj.contract.funcName + ":";
         for(var types in obj.contract.argumentTypes){
                 if (obj.contract.argumentTypes.hasOwnProperty(types)) {
@@ -940,7 +940,7 @@ function interpreter(obj){
         }
         toReturn += ") \n" + interpreter(obj.expr);
         alert(toReturn);
-    }else if(obj instanceof makeApp){
+    }else if(obj instanceof ExprApp){
         toReturn += "(" + decode(obj.funcName);
         for(var ex in obj.args){
         if (obj.args.hasOwnProperty(ex)) {    
@@ -948,13 +948,13 @@ function interpreter(obj){
     }
         }
         toReturn += ")";
-    }else if(obj instanceof makeNumber || obj instanceof makeBoolean){
+    }else if(obj instanceof ExprNumber || obj instanceof ExprBoolean){
         toReturn += obj.value;
-    }else if(obj instanceof makeString){
+    }else if(obj instanceof ExprString){
         toReturn += "\"" + obj.value + "\"";
-    }else if(obj instanceof makeConst){
+    }else if(obj instanceof ExprConst){
         toReturn += decode(obj.constName);
-    }else if(obj instanceof makeCond){
+    }else if(obj instanceof ExprCond){
         toReturn += "(cond\n";
         for(var ans in obj.listOfBooleanAnswer()){
                 if (obj.listOfBooleanAnswer.hasOwnProperty(ans)) {
@@ -1030,7 +1030,7 @@ $(function() {
         });
 
 
-        //makes things draggable from the drawer to the code
+        //Exprs things draggable from the drawer to the code
         $('.draggable').draggable({
                 helper: function(event, ui){
                         dragCarrying = makeCodeFromOptions($(this).text());
