@@ -352,7 +352,7 @@ $(document).ready(function(){
     var formValidation = function(e){
                         //e.preventDefault();
                         //if focused is not null and if you are clicking something else besides the focused object
-                    if(focused !=null && $(e.target).attr("id") != focused.attr("id")){
+                    if(focused !==null && $(e.target).attr("id") !== focused.attr("id")){
                         var inputtext=focused.val();
                         var codeObject = searchForIndex(focused.closest($("table")).attr("id"),program);
                         //NUMBERS
@@ -433,11 +433,11 @@ DO COND!
 // TODO: avoid the monkeypatch here.
 function searchForIndex(id,array){
         for(var i=0; i<array.length;i++){
-                if(array[i].id==id){
+                if(array[i].id===id){
                         return array[i];
                 }
                 else if(array[i] instanceof makeDefineFunc || array[i] instanceof makeDefineConst){
-                        if(array[i].expr.id==id){
+                        if(array[i].expr.id===id){
                                 return array[i].expr;
                         }
                         else if(array[i].expr instanceof makeApp){
@@ -511,7 +511,7 @@ function searchForIndex(id,array){
 
 // Returns a string representing an ID used for an HTML element and its corresp. code object
 function makeID(){
-        return ID++;
+        return String(ID++);
 }
 
 /* 
@@ -540,7 +540,7 @@ function onResize(){
 function containsName(array_of_obj,stringElement){
         var contain=-1;
         for (var i = 0; i < array_of_obj.length; i++) {
-                if(array_of_obj[i].name==stringElement){
+                if(array_of_obj[i].name===stringElement){
                         contain=i;
                          break;
                 }
@@ -573,7 +573,7 @@ function makeTypesArray(allFunctions,allConstants){
         var types={};
         for(var i=0;i<allFunctions.length;i++){
                 var curOutput=allFunctions[i].output;
-                if(types[curOutput]!=undefined){
+                if(types[curOutput]!==undefined){
                         types[curOutput].push(i);
                 }
                 else{
@@ -584,8 +584,8 @@ function makeTypesArray(allFunctions,allConstants){
                 var curInput=allFunctions[i].input;
                 if(unique(curInput) && curInput.length>0){
                         var addition=curInput[0].type;
-                        if( types[addition]!=undefined ){
-                                if( types[addition][ types[addition].length-1 ]!=i ){
+                        if( types[addition]!==undefined ){
+                                if( types[addition][ types[addition].length-1 ]!==i ){
                                         types[addition].push(i);
                                 }
                         }
@@ -614,7 +614,7 @@ function unique(array_inputs){
         if(array_inputs.length>0){
                 var first=array_inputs[0].type;
                 for(var i=1;i<array_inputs.length;i++){
-                        if(first!=array_inputs[i].type){
+                        if(first!==array_inputs[i].type){
                                 return false;
                         }
                 }
@@ -633,17 +633,17 @@ function makeDrawers(allFunctions,allConstants){
         for(var Type in typeDrawers){
                 if(typeDrawers.hasOwnProperty(Type)){
                 Drawers+="<div id=\""+Type+"\">\n";
-                if(Type=="Constants"){
+                if(Type==="Constants"){
                         for(i=0;i<typeDrawers[Type].length;i++){
                                 Drawers+="<span class=\"draggable "+Type+"\">"+allConstants[typeDrawers[Type][i]].name+"</span>\n";
                         }
                 }
-                else if(Type=="Define"){
+                else if(Type==="Define"){
                         for(i=0;i<typeDrawers[Type].length;i++){
                                 Drawers+="<span class=\"draggable "+Type+"\">"+typeDrawers[Type][i]+"</span>\n";
                         }
                 }
-                else if(Type=="Expressions"){
+                else if(Type==="Expressions"){
                         for(i=0;i<typeDrawers[Type].length;i++){
                                 Drawers+="<span class=\"draggable "+Type+"\">"+typeDrawers[Type][i]+"</span>\n";
                         }
@@ -708,7 +708,7 @@ Gets the output type of a function
 */
 function getOutput(funcname){
         var index=containsName(functions,funcname);
-        if(index!=-1){
+        if(index!==-1){
                 return functions[index].output;
         }
 }
@@ -1051,7 +1051,7 @@ $(function() {
                         history[history.length] = program;
                         $(ui.item).remove();
                         for(var i=0;i<program.length;i++){
-                                if(program[i].id==$(ui.item).id){
+                                if(program[i].id===$(ui.item).id){
                                         program.splice(i,1);
                                 }
                         }
