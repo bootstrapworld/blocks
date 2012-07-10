@@ -29,16 +29,16 @@ expr = the expr, not a list, an object
 */
 var makeDefineFunc = function(){
 	this.contract = makeContract();
-	this.argumentNames;
+	this.argumentNames = undefined;
 	this.funcIDList = makeIDList(expr.length)
-	this.expr;
+	this.expr = undefined;
 	this.id = makeID();
 }
 
 var makeContract = function(){
-	this.funcName;
-	this.argumentTypes;
-	this.outputType;
+	this.funcName = undefined;
+	this.argumentTypes = undefined;
+	this.outputType = undefined;
 	this.id = makeID();
 }
 
@@ -53,9 +53,9 @@ makeDefinevar("x", makeNum(3), "Numbers")
 makeDefineVar("y", (makeApp("+", [makeNum("2"), makeVar("x")))
 */
 var makeDefineConst = function(){
-	this.constName;
-	this.expr;
-	this.outputType; //MAKE SURE THIS WILL BE DEFINED!!!!
+	this.constName = undefined;
+	this.expr = undefined;
+	this.outputType = undefined; //MAKE SURE THIS WILL BE DEFINED!!!!
 	this.id = makeID();
 }
 
@@ -103,7 +103,7 @@ var makeString= function(){
 Constructs a number given a number num.
 */
 var makeNumber = function(){
-	this.value;
+	this.value = undefined;
 	this.outputType = "Numbers";
 	this.id = makeID();
 }
@@ -131,9 +131,9 @@ var makeBoolean = function(value){
 Constructs a tuple of boolean and answer to use in a cond expression
 */
 var makeBoolAnswer=function(){
-	this.bool;
-	this.answer;
-	this.outputType;
+	this.bool = undefined;
+	this.answer = undefined;
+	this.outputType = undefined;
 	this.id = makeID();
 }
 
@@ -150,9 +150,10 @@ makeCond(list1)
 list1 = [makeBoolAnswer(makeBoolean(true),makeNum(2)).makeBoolAnswer(makeBoolean(False),makeNum(1))]
 */
 var makeCond = function(){
-	this.listOfBooleanAnswer=new makeBoolAnswer();
-	this.outputType;
+	this.listOfBooleanAnswer=[new makeBoolAnswer()];
+	this.outputType = undefined;
 	this.id = makeID();
+
 }
 
 
@@ -346,7 +347,7 @@ $(document).ready(function(){
     	focused=$(this);
     });
 
-    $(document.body).live('click',function(e){
+    var formValidation = function(e){
 			//e.preventDefault();
 
 			//if focused is not null and if you are clicking something else besides the focused object
@@ -378,7 +379,8 @@ $(document).ready(function(){
 		    	}
 		    	//TODO saving values
 		    }
-		});
+		};
+    $(document.body).live('click', formValidation);
 });
 
 /*
@@ -387,7 +389,9 @@ $(document).ready(function(){
 function renderTypeColors(){
 	var styleCSS = "<style type='text/css'>";
 	for (var type in colors){
-		styleCSS+="."+type+"{background-color:"+colors[type]+";}";
+		if (colors.hasOwnProperty(type)) {
+			styleCSS+="."+encode(type)+"{background-color:"+colors[type]+";}";
+		}
 	}
 	styleCSS += "</style>";
 	$(styleCSS).appendTo("head");
@@ -423,6 +427,8 @@ A function for Arrays that takes in an id (String) and outputs the code object w
 the same id
 DO COND!
 */
+
+// TODO: avoid the monkeypatch here.
 Array.prototype.searchForIndex=function(id){
 	for(var i=0; i<this.length;i++){
 		if(this[i].id==id){
@@ -566,7 +572,7 @@ function makeTypesArray(allFunctions,allConstants){
 	for(var i=0;i<allFunctions.length;i++){
 		var curOutput=allFunctions[i].output;
 		if(types[curOutput]!=undefined){
-			types[curOutput][types[curOutput].length]=i;
+			types[curOutput].push(i);
 		}
 		else{
 			types[curOutput]=[i];
@@ -578,7 +584,7 @@ function makeTypesArray(allFunctions,allConstants){
 			var addition=curInput[0].type;
 			if( types[addition]!=undefined ){
 				if( types[addition][ types[addition].length-1 ]!=i ){
-					types[addition][ types[addition].length ]=i;
+					types[addition].push(i);
 				}
 			}
 			else{
@@ -591,8 +597,8 @@ function makeTypesArray(allFunctions,allConstants){
 		types.Constantstypes.Constants.length=i;
 	}
 
-	types.Define=new Array("define-constant","define-function","define-struct");
-	types.Expressions=new Array("cond");
+	types.Define=["define-constant","define-function","define-struct"];
+	types.Expressions=["cond"];
 	types.Booleans.unshift("true","false");
 	types.Numbers.unshift("Number");
 	types.Strings.unshift("Text");
@@ -800,6 +806,8 @@ function decode(string){
             .replace('&gt;',">")
 }
 
+
+
 /*
 createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to 
 that function with name, color, and spaces for input blocks
@@ -913,7 +921,9 @@ function interpreter(obj){
     }else if(obj instanceof makeDefineFunc){
         toReturn += ";" + obj.contract.funcName + ":";
         for(type in obj.contract.argumentTypes){
-            toReturn += " " + type;
+        	if (obj.contract.argumentTypes.hasOwnProperty(type)) {
+	            toReturn += " " + type;
+	        }
         }
         toReturn += "-> " + obj.contract.outputType + "\n";
         toReturn += "(define (" + obj.contract.funcName;
