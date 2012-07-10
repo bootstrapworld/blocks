@@ -60,7 +60,7 @@ var makeDefineConst = function(){
 }
 
 /*
-Constructs the expression object
+Returns true if the object is a literal or constant, false otherwise.
 */
 function isLiteral (obj){
 	return (
@@ -69,6 +69,9 @@ function isLiteral (obj){
 	obj instanceof makeConst);
 };
 
+/*
+Returns true if the object is a definition, false otherwise
+*/
 function isDefine (obj){
 	return (obj instanceof makeDefineConst || obj instanceof makeDefineFunc)
 }
@@ -279,8 +282,9 @@ var constants=[];
 //restricted contains a list of key words in racket that we aren't allowing the user to redefine
 var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map","let","local"];
 
-
+//pre-defined and user-defined types
 var types=["Numbers","Strings","Booleans","Images"];
+
 //Colors is an object containing kv pairs of type to color
 var colors={};
  colors.Numbers="#33CCFF";
@@ -291,6 +295,10 @@ var colors={};
  colors.Expressions="#FFFFFF";
  colors.Constants="#FFFFFF";
 
+/*
+history of the program state. Updated when the user changes something about the program (i.e.
+adds a block, moves a block, deletes something, etc.)
+*/
  var history = [];
 
 /*====================================================================================
@@ -303,24 +311,37 @@ var colors={};
  \_____|  |_| \_,_|_||_\__|\__|_\___/_||_/__/                  
                                                                 
 =====================================================================================*/
-//These variables store what the height and width of the code div should be
+
+// These variables store what the height and width of the code div should be
 var codeHeight;
 var codeWidth;
+// Which Drawer type is currently being displayed
 var activated;
+// which text block in the #code div is currently being focused
 var focused=null;
+// ID that matches together a code object and an HTML element
 var ID =0;
 
 $(document).ready(function(){
 	//When the window is resized, the height of the width of the code div changes
 	$(window).resize(onResize);
 	onResize();
+
+	//draws drawers when the page is loaded
 	makeDrawers(functions,constants);
+
+	// activated is initially set to "Numbers"
 	activated = $("#options #Numbers");
 	activated.css("visibility", "visible");
 
+	/*
+	adds a stylesheet to <head> such that blocks can be colored according to their type
+	*/
     renderTypeColors();
     
-    //Prevents highlighting
+    /*
+    sets focus equal to the input that is focused. 
+    */
     $("#List input").live('focus',function(){
     	focused=$(this);
     });
@@ -340,7 +361,6 @@ $(document).ready(function(){
 		    			focused.focus();
 		    			return;
 		    		} else{
-		    			console.log(focused.closest($("table")));
 		    			console.log(program);
 		    			var codeObject = program.searchForIndex(focused.closest($("table")).attr("id"));
 		    			codeObject.value = inputtext;
@@ -359,11 +379,11 @@ $(document).ready(function(){
 		    	//TODO saving values
 		    }
 		});
-	//$(document.body).live('mousedown',function(e){e.preventDefault();});
 });
 
-
-
+/*
+	adds a stylesheet to <head> such that blocks can be colored according to their type
+*/
 function renderTypeColors(){
 	var styleCSS = "<style type='text/css'>";
 	for (var type in colors){
@@ -398,7 +418,11 @@ within the programs array.
 // 	throw new Error("Can't find code object");
 // }
 
-//DO COND!
+/*
+A function for Arrays that takes in an id (String) and outputs the code object which has
+the same id
+DO COND!
+*/
 Array.prototype.searchForIndex=function(id){
 	for(var i=0; i<this.length;i++){
 		if(this[i].id==id){
@@ -477,10 +501,15 @@ Array.prototype.searchForIndex=function(id){
 // 	}
 // }
 
-
+// Returns a string representing an ID used for an HTML element and its corresp. code object
 function makeID(){
 	return ID++;
 }
+
+/* 
+Returns an array of strings representing IDs. Used for functions such that every argument
+can have an ID
+*/
 function makeIDList(num){
 	var toReturn = [];
 	for(var i = 0; i<num; i++){
@@ -660,9 +689,9 @@ function makeDrawers(allFunctions,allConstants){
 /*
 Adds a block to the end of the list given the HTML of the block.
 */
-function renderBlocktoProgram(block){
-		document.getElementById("List").appendChild(block);
-}
+// function renderBlocktoProgram(block){
+// 		document.getElementById("List").appendChild(block);
+// }
 
 /*
 Gets the output type of a function
@@ -675,7 +704,7 @@ function getOutput(funcname){
 }
 
 /*
-Given the text within the options span, returns the html object associated with it in table form.
+Given the text within the options span, returns the code object associated with it.
 */
 function makeCodeFromOptions(optionsText){
 	if(optionsText === "define-function"){
@@ -713,9 +742,10 @@ function makeCodeFromOptions(optionsText){
 		}
 	}
 
-//block takes in a string and outputs the corresponding DOMElement block to that function
-
-// createBlock: string -> element
+/*
+createBlock takes in a code object and outputs the corresponding DOMElement block to that function
+createBlock: code object -> element
+*/
 function createBlock(codeObject){
  	if(codeObject instanceof makeDefineFunc){
  		return createDefineBlock(codeObject);
@@ -749,7 +779,10 @@ function createBlock(codeObject){
  	
  }
 
-
+/*
+encode takes in a string and encodes it such that bugs resulting from &, ", #, etc are eliminated"
+decode does something similar for the same purpose
+*/
 function encode(string){
 	    return String(string)
             .replace(/&/g, '&amp;')
@@ -767,8 +800,11 @@ function decode(string){
             .replace('&gt;',">")
 }
 
-//createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to that function with name, color, and spaces for input blocks
- // createFunctionBlock: number -> string
+/*
+createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to 
+that function with name, color, and spaces for input blocks
+ createFunctionBlock: number -> string
+ */
  function createFunctionBlock(functionIndex, codeObject){
  	var func = functions[functionIndex];
  	var block = "<table class=\"expr " + func.output  +"\"" + "id=\""+codeObject.id+"\">";
@@ -856,6 +892,9 @@ function generateTypeDrop(){
                      |_|                       
 =====================================================================================*/
 
+/*
+parseProgram takes in the entire program array and runs it through the interpreter
+*/
 function parseProgram(){
 	var racketCode="";
 	for(var i=0;i<program.length;i++){
@@ -864,6 +903,9 @@ function parseProgram(){
 	return racketCode;
 }
 
+/*
+The interpreter translates our representation of the program array to Racket code
+*/
 function interpreter(obj){
     var toReturn = "";
     if(obj instanceof makeDefineConst){
@@ -923,11 +965,13 @@ var dragCarrying;
 // .droppable is referring to things within the table that need to be filled and are yet to be actual expressions <e.g. (+ exp1 exp2)>
 $(function() {
 
+	//implements sortability for the program block
 	$("#List").sortable({
 		connectWith: "#trash, .droppable",
-	start: function(event, ui){
+		start: function(event, ui){
 			var itemIndex = $(ui.item).index();
-			carrying = ui.item;
+			carrying = $(ui.item).children();
+			console.log(carrying);
 			programCarrying = program[itemIndex];
 			program.splice(itemIndex, 1);
 		},
@@ -936,6 +980,7 @@ $(function() {
 			var itemIndex;
 			if (ui.item.is('span.draggable')){
 				var replacement = $('<li>' + createBlock(dragCarrying) + '</li>');
+				addDroppableFeature(replacement.find('.droppable'));
         		ui.item.replaceWith(replacement);
         		program.splice(replacement.index(), 0, dragCarrying);
         		dragCarrying = null;
@@ -957,71 +1002,72 @@ $(function() {
 		},
 		tolerance:'pointer',
 		cursor:'pointer',
-		dropOnEmpty:true,
 		scroll:false,
-		items:'li',
-		revert:'invalid'
+		items:'li'
+		//revert:'invalid'
 	});
 
-	$("#trash").sortable({
-		//accept: ".expr",
-		tolerance:'pointer',
-		cursor:'pointer',
-		dropOnEmpty:true,
-		update:function(event, ui){
-				console.log("updated")
-				history[history.length] = program;
-				$(ui.item).remove();
-				for(var i=0;i<program.length;i++){
-					if(program[i].id==$(ui.item).id){
-						program.splice(i,1);
-					}
-				}
-				console.log(program +"asdfasdf \n");
-				console.log(history)
-
-		}
-	});
 
 	//makes things draggable from the drawer to the code
 	$('.draggable').draggable({
 		helper: function(event, ui){
 			dragCarrying = makeCodeFromOptions($(this).text());
 			carrying = $(createBlock(dragCarrying));
+			console.log(carrying);
 			return createBlock(dragCarrying) ;
 		},
 		connectToSortable: "#List"
 	});
 
-	// EVERYTHING ABOVE WORKS GREAT. EXPERIMENTATION BELOW. DELETE IF THINGS GET FUCKED UP
+	//allows for deletion
+	$("#trash").sortable({
+		//accept: ".expr",
+		tolerance:'pointer',
+		cursor:'pointer',
+		dropOnEmpty:true,
+		update:function(event, ui){
+			history[history.length] = program;
+			$(ui.item).remove();
+			for(var i=0;i<program.length;i++){
+				if(program[i].id==$(ui.item).id){
+					program.splice(i,1);
+				}
+			}
+			console.log(program +"asdfasdf \n");
+			console.log(history)
+
+		}
+	});
+});
 
 
-//	$( ".sortable" ).disableSelection();
-
-	$(".droppable").droppable({
+/*
+addDroppableFeature is a function that takes in a jQuery selector and applys droppable functionality
+to that selector
+*/
+var addDroppableFeature = function(jQuerySelection) {
+	console.log("adding droppability to", jQuerySelection);
+		$(jQuerySelection).droppable({
 //		accept: "table",
 		hoverClass:"highlight",
 		tolerance:"touch",
-		over: function (event,ui){
-			console.log("Hi")
-		},
 		drop: function(event, ui){
-			console.log("I am here0")
-			if(($this).children().length===0){
-				console.log("I am here1")
-				var c1=$('<table>').html(ui.draggable.html())
-				c1.draggable({
+			if($(this).children().length===0){
+//				carrying=$('<table>').html(ui.draggable.html())
+				carrying.draggable({
 					connectToSortable: "#List",
 					helper: "clone"
 				});
-				$(this).html(c1);
+				$(this).html(carrying);
 				ui.helper.hide();
 				ui.draggable.remove();
 			}
 		}
 	});
+}
 
-});
+
+
 
 /*====================================================================================
  __      __       _   _                      
@@ -1031,58 +1077,6 @@ $(function() {
                             |___/                       
 =====================================================================================*/
 
-/*
-$("#code table").live("mousedown", function(e){
-	carrying = $(this);
-});
-/*
-
-/*
-When hovering over the trash icon with an block, the block is deleted.
-*/
-// $(document.body).live("mouseup", function(e){
-// 	if (carrying != null){
-// 		if ((e.pageY > $(document).height() - 250)&& (e.pageY < $(document).height() - 100) && (e.pageX > $(document).width() - 150)){
-// 			carrying.remove();
-// 			program.splice(getProgramIndex(carrying.attr("id")),1);
-// 			carrying = null;
-// 		}
-// 	}
-// });
-
-
-
-
-var toDrop = null;
-/*
-$("th").live("click", function(){
-	if (toDrop == null){
-		toDrop = $(this).closest("table");
-		console.log(toDrop)
-	}else if (toDrop != null && toDrop.attr('id') != $(this).closest("table").attr('id')){
-		$(this).html(toDrop);
-		$(this).css("border","none");
-		toDrop = null;
-		console.log("toDrop null")
-	}else{
-		toDrop = null
-	}
-})
-*/
-
-
-// $("#trash").live("mousemove", function(e){
-// 	console.log('over trash!');
-// 	$(this).live("mouseup", function(e){
-// 	if (carrying != null){
-// 		carrying.remove();
-// 	}
-// 	});
-// });
-
-// $(document.body).live("mouseup", function(){
-// 	carrying = null;
-// })
 
 
 /*====================================================================================
@@ -1126,7 +1120,7 @@ OPTIONAL
   _____                 ___       __                         
  |_   _|  _ _ __  ___  |_ _|_ _  / _|___ _ _ ___ _ _  __ ___ 
    | || || | '_ \/ -_)  | || ' \|  _/ -_) '_/ -_) ' \/ _/ -_)
-   |_| \_, | .__/\___| |___|_||_|_| \___|_| \___|_||_\__\___|
+   |_| \_, | .__/\___| |___|_||_|_| \___|_| \___|_||_\__\___| 
        |__/|_|                                               
 =====================================================================================
  
