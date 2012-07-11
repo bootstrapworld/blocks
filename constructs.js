@@ -1,4 +1,4 @@
-(function () {
+
    "use strict";
    // this function is strict...
 
@@ -33,7 +33,7 @@ var ExprDefineFunc = function(){
         this.contract = new ExprContract();
         this.argumentNames = undefined;
         this.expr = undefined;
-        this.funcIDList = makeIDList(this.expr.length);
+        this.funcIDList = makeIDList(1);
         this.id = makeID();
 };
 
@@ -922,30 +922,24 @@ The interpreter translates our representation of the program array to Racket cod
 */
 function interpreter(obj){
     var toReturn = "";
+    var i;
     if(obj instanceof ExprDefineConst){
         toReturn += "(define " + obj.constName + " \n" + interpreter(obj.expr) + ")";
     }else if(obj instanceof ExprDefineFunc){
         toReturn += ";" + obj.contract.funcName + ":";
-        for(var types in obj.contract.argumentTypes){
-                if (obj.contract.argumentTypes.hasOwnProperty(types)) {
-                    toReturn += " " + types;
-                }
+        for(i = 0; i < obj.contract.argumentTypes.length; i++){
+                    toReturn += " " + obj.contract.argumentTypes[i];
         }
         toReturn += "-> " + obj.contract.outputType + "\n";
         toReturn += "(define (" + obj.contract.funcName;
-        for(var argName in obj.argumentNames){
-                if (obj.argumentTypes.hasOwnProperty(argName)) {
-            toReturn += " " + argName;
-    }
+        for(i = 0; i < obj.argumentNames.length; i++){
+            toReturn += " " + obj.argumentNames[i];
         }
         toReturn += ") \n" + interpreter(obj.expr);
-        alert(toReturn);
     }else if(obj instanceof ExprApp){
         toReturn += "(" + decode(obj.funcName);
-        for(var ex in obj.args){
-        if (obj.args.hasOwnProperty(ex)) {    
-            toReturn += " " + interpreter(ex);
-    }
+        for(i=0; i < obj.args.length; i++){    
+            toReturn += " " + interpreter(obj.args[i]);
         }
         toReturn += ")";
     }else if(obj instanceof ExprNumber || obj instanceof ExprBoolean){
@@ -956,10 +950,8 @@ function interpreter(obj){
         toReturn += decode(obj.constName);
     }else if(obj instanceof ExprCond){
         toReturn += "(cond\n";
-        for(var ans in obj.listOfBooleanAnswer()){
-                if (obj.listOfBooleanAnswer.hasOwnProperty(ans)) {
-            toReturn += "[" + interpreter(ans.bool) + " " + interpreter(ans.answer) + "]\n";
-    }
+        for(i = 0; i < obj.listOfBooleanAnswer.length; i++){
+            toReturn += "[" + interpreter(obj.listOfBooleanAnswer[i].bool) + " " + interpreter(obj.listOfBooleanAnswer[i].answer) + "]\n";
         }
         toReturn+= ")";
     }
@@ -1158,5 +1150,3 @@ function typeInfer(expr){
 }
 
 
-
-}());
