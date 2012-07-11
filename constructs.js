@@ -358,8 +358,8 @@ var ID =0;
 
 //resizes code div when the window is resized
 function onResize(){
-        codeHeight = window.innerHeight - $("#header").height() - $("#Drawer").height();
-        codeWidth = window.innerWidth;
+        codeHeight = $(window).height() - $("#header").height() - $("#Drawer").height();
+        codeWidth = $(window).width();
         $("#code").height(codeHeight);
         $("#code").width(codeWidth);
         $("#List").height(codeHeight - 150);
@@ -1000,12 +1000,10 @@ function interpreter(obj){
                |___/                        |_|
 =====================================================================================*/
 
-//What is currently being carried. Type: Jquery object
+//What is currently being carried. Type: DOM
 var carrying;
 //Similar to the variable carrying, except that is stores the corresponding program object
 var programCarrying;
-//Similar to programCarrying, except it refers to the codeObject being dragged from the drawers
-var dragCarrying;
 
 // .draggable is referring to the options within the drawers
 // .sortable is referring to the list containing the blocks within the program
@@ -1016,25 +1014,22 @@ $(function() {
         $("#List").sortable({
                 connectWith: "#trash, .droppable",
                 start: function(event, ui){
+                        console.log(ui.sender);
                         var itemIndex = $(ui.item).index();
-                        carrying = $(ui.item).children();
-                        console.log(carrying);
-                        programCarrying = program[itemIndex];
-                        program.splice(itemIndex, 1);
+                        if (!ui.item.is('span.draggable')){
+                                carrying = $(ui.item).children();
+                        }
                 },
 
                 stop: function(event, ui) {
                         var itemIndex;
                         if (ui.item.is('span.draggable')){
-                                var replacement = $('<li>' + createBlock(dragCarrying) + '</li>');
+                                var replacement = $('<li>' + carrying + '</li>');
                                 addDroppableFeature(replacement.find('.droppable'));
-                        ui.item.replaceWith(replacement);
-                        program.splice(replacement.index(), 0, dragCarrying);
-                        dragCarrying = null;
+                                ui.item.replaceWith(replacement);
+                                itemIndex = replacement.index();
                         } else{
                                 itemIndex = carrying.index();
-                                carrying = null;
-                                program.splice(itemIndex, 0, programCarrying);
                         }
                         programCarrying = null;
                         carrying = null;
@@ -1043,8 +1038,9 @@ $(function() {
                         $(ui.item).remove();
                 },
                 receive:function(event,ui){
+
                         if (!ui.item.is('span.draggable')){
-                                ui.item.remove();
+                              ui.item.remove();
                         }
                 },
                 tolerance:'pointer',
@@ -1058,10 +1054,9 @@ $(function() {
         //Exprs things draggable from the drawer to the code
         $('.draggable').draggable({
                 helper: function(event, ui){
-                        dragCarrying = makeCodeFromOptions($(this).text());
-                        carrying = $(createBlock(dragCarrying));
-                        console.log(carrying);
-                        return createBlock(dragCarrying) ;
+                        programCarrying = makeCodeFromOptions($(this).text());
+                        carrying = createBlock(programCarrying);
+                        return carrying;
                 },
                 connectToSortable: "#List"
         });
@@ -1093,7 +1088,7 @@ addDroppableFeature is a function that takes in a jQuery selector and applys dro
 to that selector
 */
 var addDroppableFeature = function(jQuerySelection) {
-        console.log("adding droppability to", jQuerySelection);
+       // console.log("adding droppability to", jQuerySelection);
                 $(jQuerySelection).droppable({
 //              accept: "table",
                 hoverClass:"highlight",
@@ -1102,8 +1097,8 @@ var addDroppableFeature = function(jQuerySelection) {
                         if($(this).children().length===0){
 //                              carrying=$('<table>').html(ui.draggable.html())
                                 carrying.draggable({
-                                        connectToSortable: "#List",
-                                        helper: "clone"
+                                        connectToSortable: "#List"
+                                       // helper: "clone"
                                 });
                                 $(this).html(carrying);
                                 ui.helper.hide();
