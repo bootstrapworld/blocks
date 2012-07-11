@@ -2,7 +2,6 @@ body{
 	background-color:#000;
 	font-family:Arial;
 	font-size:11pt;
-	font-color:#fff;
 	position:absolute;
 	left:0px;
 	margin: 0px;
@@ -37,7 +36,6 @@ GENERAL
 
 #code{
 	position:relative;
-	float:top;
 	top:50px;
 	left:0px;
 	overflow: auto;
@@ -77,6 +75,7 @@ th table{
 }
 #List{
 	list-style:none;
+	//background-color:red;
 }
 #List li{
 	cursor:pointer;

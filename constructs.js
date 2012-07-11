@@ -1,6 +1,36 @@
+(function(){
 
-   "use strict";
-   // this function is strict...
+"use strict";
+  // this function is strict...
+
+// If there is no window.console, we'll make one up.
+if (!window.console){
+        $(document).ready(function() {
+                var consoleDiv = $("<div id='console'/>");
+                $(document.body).append(consoleDiv);
+                consoleDiv.css("position", "absolute");
+                consoleDiv.css("right", "10px");
+                consoleDiv.css("top", "10px");
+                consoleDiv.css("width", "300px");
+                consoleDiv.css("height", "500px");
+                consoleDiv.css("background-color", "white");
+                consoleDiv.css("border", "1px solid red");
+                consoleDiv.css("overflow", "scroll");
+                window.console = { log: function() {
+                                            var i;
+                                            for (i = 0; i < arguments.length; i++) {
+                                                consoleDiv.append($("<span/>").text(arguments[i]));
+                                                consoleDiv.append($("<br/>")); 
+                                             }
+                                        }
+                                 };
+                
+                 
+
+        });
+} 
+
+
 
 
 
@@ -302,7 +332,7 @@ var colors={};
 history of the program state. Updated when the user changes something about the program (i.e.
 adds a block, moves a block, deletes something, etc.)
 */
- var history = [];
+var history = [];
 
 /*====================================================================================
    ___ _     _          _  __   __        _      _    _        
@@ -324,6 +354,18 @@ var activated;
 var focused=null;
 // ID that matches together a code object and an HTML element
 var ID =0;
+
+
+//resizes code div when the window is resized
+function onResize(){
+        codeHeight = window.innerHeight - $("#header").height() - $("#Drawer").height();
+        codeWidth = window.innerWidth;
+        $("#code").height(codeHeight);
+        $("#code").width(codeWidth);
+        $("#List").height(codeHeight - 150);
+        $("#List").width(codeWidth - 150);
+}
+
 
 $(document).ready(function(){
         //When the window is resized, the height of the width of the code div changes
@@ -526,16 +568,6 @@ function makeIDList(num){
         return toReturn;
 }
 
-//resizes code div when the window is resized
-function onResize(){
-        codeHeight = $(document).height() - $("#header").height() - $("#Drawer").height();
-        codeWidth = $(document).width();
-        $("#code").height(codeHeight);
-        $("#code").width(codeWidth);
-        $("#List").height(codeHeight - 150);
-        $("#List").width(codeWidth - 150);
-}
-
 //containsName takes in an array of objects and a string and returns the index at which that string is the name property of any of the objects
 function containsName(array_of_obj,stringElement){
         var contain=-1;
@@ -606,6 +638,8 @@ function makeTypesArray(allFunctions,allConstants){
         types.Strings.unshift("Text");
 
         return types;
+
+        $("")
 }
 
 //unique takes as input an array and outputs if there is only one type in the whole array
@@ -690,9 +724,8 @@ function makeDrawers(allFunctions,allConstants){
 
 //changes the program array when a draggable element is clicked
 // $("#options span").live('click',function(){
-//      //TODO, change where in the program the block is adde
-//      program[program.length] = makeCodeFromOptions($(this).text());
-//      renderBlocktoProgram(stringToElement(createBlock(program[program.length-1])));
+//      //TODO, change where in the program the block is added
+//      $("#List").append("<li>" + createBlock(makeCodeFromOptions($(this).text())));
 // });
 
 
@@ -1040,7 +1073,7 @@ $(function() {
                 cursor:'pointer',
                 dropOnEmpty:true,
                 update:function(event, ui){
-                        history[history.length] = program;
+                        history.push(program);
                         $(ui.item).remove();
                         for(var i=0;i<program.length;i++){
                                 if(program[i].id===$(ui.item).id){
@@ -1149,4 +1182,4 @@ var argsArray = [];
 function typeInfer(expr){
 }
 
-
+}());
