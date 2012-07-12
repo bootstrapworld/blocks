@@ -42,6 +42,24 @@ if (!window.console){
                                                                
 =====================================================================================*/
 
+
+// Returns a string representing an ID used for an HTML element and its corresp. code object
+function makeID(){
+        return String(ID++);
+}
+
+/* 
+Returns an array of strings representing IDs. Used for functions such that every argument
+can have an ID
+*/
+function makeIDList(num){
+        var toReturn = [];
+        for(var i = 0; i<num; i++){
+                toReturn[i] = makeID();
+        }
+        return toReturn;
+}
+
 /*
 program is an array of makeDefineFunc/makeDefineVar/Expressions that make up the user's program
 on the screen.
@@ -63,8 +81,8 @@ var ExprDefineFunc = function(){
         this.contract = new ExprContract();
         this.argumentNames = undefined;
         this.expr = undefined;
-        this.funcIDList = makeIDList(1);
         this.id = makeID();
+        this.funcIDList = makeIDList(1);
 };
 
 var ExprContract = function(){
@@ -115,10 +133,10 @@ expr is a list of objects (one for each argument)
 */
 var ExprApp = function(funcName, args){
         this.funcName = funcName;
+        this.id = makeID();
         this.funcIDList = makeIDList(args.length);
         this.args = args;
         this.outputType = getOutput(funcName);
-        this.id = makeID();
 };
 
 /*
@@ -469,7 +487,7 @@ within the programs array.
 /*
 A function for Arrays that takes in an id (String) and outputs the code object which has
 the same id
-DO COND!
+Has a helper named condHelp.
 */
 
 function searchForIndex(id,array){
@@ -583,22 +601,6 @@ function condHelp(id, obj){
 //      }
 // }
 
-// Returns a string representing an ID used for an HTML element and its corresp. code object
-function makeID(){
-        return String(ID++);
-}
-
-/* 
-Returns an array of strings representing IDs. Used for functions such that every argument
-can have an ID
-*/
-function makeIDList(num){
-        var toReturn = [];
-        for(var i = 0; i<num; i++){
-                toReturn[i] = makeID();
-        }
-        return toReturn;
-}
 
 //containsName takes in an array of objects and a string and returns the index at which that string is the name property of any of the objects
 function containsName(array_of_obj,stringElement){
@@ -806,7 +808,7 @@ function makeCodeFromOptions(optionsText){
                 else{
                         for(i = 0; i < functions.length; i++){
                                 if (functions[i].name === optionsText){
-                                        return new ExprApp(optionsText, [functions[i].input.length]);
+                                        return new ExprApp(optionsText, functions[i].input);
                                 }
                         }
                         for(i=0;i<constants.length;i++){
@@ -1049,41 +1051,63 @@ $(function() {
                 connectWith: "#trash, .droppable",
                // handle:$('li table:not(tr)'),
                 start: function(event, ui){
-                        if (ui.item.is('li')){
-                                carrying = ui.item.html();
-                               // console.log($(carrying));
+                        if (ui.item === null){
+                                throw new Error("sortable start: ui.item is undefined");
+                        } else {
+                                if (ui.item.is('li')){
+                                        carrying = ui.item.html();
+                                       // console.log($(carrying));
+                                }
                         }
 
                      //   console.log(carrying);
                 },
-
                 stop: function(event, ui) {
-                        var replacement = $('<li>' + carrying + '</li>');
-                      //  console.log(replacement)
-                        addDroppableFeature(replacement.find(('.droppable')).not('.ui-droppable'));
-                        ui.item.replaceWith(replacement);
-                        setLiWidth();
-                        programCarrying = null;
-                        carrying = null;
+                       // console.log(carrying);
+                        if (carrying === null || ui.item === null){
+                                throw new Error("sortable stop: carrying is undefined");
+                        } else{
+                                var replacement = $('<li>' + carrying + '</li>');
+                           //     console.log(replacement.find(('.droppable')).not('ui-droppable'));
+                                addDroppableFeature(replacement.find(('.droppable')));
+                                replacement.children("table").removeClass("ui-draggable");
+                                ui.item.replaceWith(replacement);
+                         //       console.log($(replacement));
+                                setLiWidth();
+                                program[replacement.index()] = programCarrying;
+                                programCarrying = null;
+                                carrying = null;
+                        }
 
                      //   console.log(carrying);
                 },
                 remove: function(event, ui){
-
                         $(ui.item).remove();
                       //  console.log(carrying);
                 },
                 receive:function(event,ui){
-                        if (!ui.item.is('span.draggable')){
-                              ui.item.remove();
+                        if(ui.item === null){
+                                throw new Error ("sortable receive");
+                        }else{
+                                if (!ui.item.is('span.draggable')){
+                                  //    console.log(ui.sender.parent().parent())
+                                      ui.sender.parent().parent().attr('style','border:3px;'+
+                                                                                "border-style:solid;"+
+                                                                                "border-radius:5px;"+
+                                                                                "height:30px;" +
+                                                                                "width:40px;"+
+                                                                                "border-color:grey");
+                                      ui.sender.parent().parent().html('Exp');
+                                     // ui.item.remove();
+                                }
                         }
 
                       //  console.log(carrying);
                 },
                 tolerance:'pointer',
                 cursor:'pointer',
-                scroll:false,
-                items:'li'
+                scroll:false
+                //items:'li'
                 //revert:'invalid'
         });
 
@@ -1093,7 +1117,6 @@ $(function() {
                 helper: function(event, ui){
                         programCarrying = makeCodeFromOptions($(this).text());
                         carrying = createBlock(programCarrying);
-
                        // console.log(carrying);
                         return carrying;
                 },
@@ -1105,7 +1128,7 @@ $(function() {
                 //accept: ".expr",
                 tolerance:'touch',
                 over:function(event, ui){
-                        console.log('over trash');
+                        //console.log('over trash');
                 },
                 drop: function(event, ui){
                         $(ui.draggable).remove();
@@ -1113,7 +1136,10 @@ $(function() {
         });
 });
 
-
+/*
+Sets the width of list items such that they span only the width of its contents, rather 
+than the entire page
+*/
 var setLiWidth = function() {
         $("#List li").each(function() {
                 $(this).width($(this).find("table").width() + 10);
@@ -1132,20 +1158,22 @@ Adds draggable to blocks that are inserted within blocks such as the inner block
 the outer block and into the sortable list
 */
 var addDraggingFeature = function(jQuerySelection) {
-        if (jQuerySelection != null){
+        if (jQuerySelection !== null){
                 $(jQuerySelection).draggable({
                         connectToSortable: "#List",
                         helper:'clone',
                         start:function(event, ui){
-                                carrying = getHTML($(this));
-                              //  console.log(carrying);
+                                if ($(this) === undefined){
+                                        throw new Error ("addDraggingFeature start: $(this) is undefined");
+                                } else {
+                                        carrying = getHTML($(this));
+                                        //  console.log(carrying);
+                                }
                         }
 
                 });
         }
 };
-
-
 
 /*
 addDroppableFeature is a function that takes in a jQuery selector and applys droppable functionality
@@ -1153,17 +1181,21 @@ to that selector
 */
 var addDroppableFeature = function(jQuerySelection) {
        // console.log("adding droppability to", jQuerySelection);
-       console.log(jQuerySelection);
-        if (jQuerySelection != null){
+      // console.log(jQuerySelection);
+        if (jQuerySelection !== null){
+                //console.log("adding drop")
                 $(jQuerySelection).droppable({
                         //accept: "table",
                         hoverClass:"highlight",
-                        tolerance:"touch",
+                        tolerance:"pointer",
                         over:function(event,ui){
-                             //   console.log($(this));
+                          // console.log($(this));
                         },
                         drop: function(event, ui){
-                                if($(this).children().length === 0){
+                                console.log($(this));
+                                if ($(this) === undefined){
+                                        throw new Error ("addDroppableFeature drop: $(this) is undefined");
+                                } else if($(this).children().length === 0){
         //                              carrying=$('<table>').html(ui.draggable.html())
                                        // console.log(carrying);
                                         //addDraggingFeature($(carrying));
@@ -1172,10 +1204,11 @@ var addDroppableFeature = function(jQuerySelection) {
                                         //        helper: "clone"
                                         // });
                                         $(this).html(carrying);
-                                        addDraggingFeature($(this).find("table"))
+                                        addDraggingFeature($(this).find("table"));
                                         $(this).css("border", "none");
-                                        addDroppableFeature($(carrying).find('.droppable'));
-                                        ui.helper.hide();
+                                        addDroppableFeature($(this).find('.droppable'));
+                                       // console.log($(this));
+                                        //ui.helper.hide();
                                         ui.draggable.remove();
                                 }
                         }
