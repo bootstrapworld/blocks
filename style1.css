@@ -73,6 +73,7 @@ th table{
 }
 #List li{
 	cursor:pointer;
+	background-color:red;
 }
 form{
 	height: 10px;

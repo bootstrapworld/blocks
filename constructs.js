@@ -1,4 +1,4 @@
-(function(){
+//(function(){
 
 "use strict";
   // this function is strict...
@@ -362,7 +362,7 @@ function onResize(){
         codeWidth = $(window).width();
         $("#code").height(codeHeight);
         $("#code").width(codeWidth);
-        $("#List").height(codeHeight - 150);
+       $("#List").height(codeHeight - 150);
         $("#List").width(codeWidth - 150);
 }
 
@@ -472,8 +472,8 @@ the same id
 DO COND!
 */
 
-// TODO: avoid the monkeypatch here.
 function searchForIndex(id,array){
+        var toReturn = undefined;
         for(var i=0; i<array.length;i++){
                 if(array[i].id===id){
                         return array[i];
@@ -483,14 +483,46 @@ function searchForIndex(id,array){
                                 return array[i].expr;
                         }
                         else if(array[i].expr instanceof ExprApp){
-                                return searchForIndex(id,array[i].expr.args);
+                                toReturn = searchForIndex(id,array[i].expr.args);
+                        } else if(array[i].expr instanceof ExprCond){
+                                toReturn = condHelp(id, array[i].expr)
                         }
                 }
                 else if(array[i] instanceof ExprApp){
-                        return searchForIndex(id,array[i].args);
+                        toReturn = searchForIndex(id,array[i].args);
+                }else if(array[i] instanceof ExprCond){
+                        toReturn = condHelp(id, array[i].expr)
+                }
+                //if breaks, change to !=
+                if(toReturn !== undefined){
+                        return toReturn;
                 }
         }
-        //throw new Error("Can't find code object");
+        return undefined;
+}
+
+function condHelp(id, obj){
+        var toReturn = undefined;
+        for(var i = 0; i < obj.listOfBooleanAnswer.length; i++){
+                if(obj.listOfBooleanAnswer[i].id === id){
+                        toReturn = obj.listOfBooleanAnswer[i];
+                }else if(obj.listOfBooleanAnswer[i].bool.id === id){
+                        toReturn = obj.listOfBooleanAnswer[i].bool;
+                }else if(obj.listOfBooleanAnswer[i].bool instanceof ExprApp){
+                        toReturn = searchForIndex(id, obj.listOfBooleanAnswer[i].answer.args);
+                }
+                if(toReturn === undefined){
+                        if(obj.listOfBooleanAnswer[i].answer.id === id){
+                                toReturn = obj.listOfBooleanAnswer[i].answer;
+                        }else if(obj.listOfBooleanAnswer[i].answer instanceof ExprApp){
+                                toReturn = searchForIndex(id, obj.listOfBooleanAnswer[i].answer.args);
+                        }
+                }
+                if(toReturn !== undefined){
+                        return toReturn;
+                }
+        }
+        return undefined;
 }
 
 //DELETE WHEN DONE WITH REMOVE PROGRAM THIGN
@@ -854,7 +886,7 @@ that function with name, color, and spaces for input blocks
  */
  function createFunctionBlock(functionIndex, codeObject){
         var func = functions[functionIndex];
-        var block = "<table class=\"expr " + func.output  +"\"" + "id=\""+codeObject.id+"\">";
+        var block = "<table class=\"expr " + func.output  +"\"" + " id=\""+codeObject.id+"\">";
         block += "<tr><th>" + encode(func.name) + "</th>";
         for(var i = 0; i < func.input.length; i++){
                 block += "<th class=\"" + encode(func.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">" + func.input[i].name + "</th>";
@@ -864,7 +896,7 @@ that function with name, color, and spaces for input blocks
 
 //createDefineBlock outputs the block corresponding to defining a function
 function createDefineBlock(codeObject){
-        var block ="<table class=\"Define\" style=\"background: " + colors.Define +";\"" + "id=\""+codeObject.id+"\">";
+        var block ="<table class=\"Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
         //contract
         block+="<tr><th><input id=\"name\"></th><th> : </th><th>"+generateTypeDrop()+"</th><th> <button class=\"buttonPlus\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></th></tr>";
         //define block
@@ -956,19 +988,21 @@ The interpreter translates our representation of the program array to Racket cod
 function interpreter(obj){
     var toReturn = "";
     var i;
-    if(obj instanceof ExprDefineConst){
+    if(obj == undefined){
+        toReturn += "**UNDEFINED**"
+    }else if(obj instanceof ExprDefineConst){
         toReturn += "(define " + obj.constName + " \n" + interpreter(obj.expr) + ")";
     }else if(obj instanceof ExprDefineFunc){
         toReturn += ";" + obj.contract.funcName + ":";
         for(i = 0; i < obj.contract.argumentTypes.length; i++){
                     toReturn += " " + obj.contract.argumentTypes[i];
         }
-        toReturn += "-> " + obj.contract.outputType + "\n";
+        toReturn += " -> " + obj.contract.outputType + "\n";
         toReturn += "(define (" + obj.contract.funcName;
         for(i = 0; i < obj.argumentNames.length; i++){
             toReturn += " " + obj.argumentNames[i];
         }
-        toReturn += ") \n" + interpreter(obj.expr);
+        toReturn += ")\n" + interpreter(obj.expr) + ")";
     }else if(obj instanceof ExprApp){
         toReturn += "(" + decode(obj.funcName);
         for(i=0; i < obj.args.length; i++){    
@@ -982,9 +1016,9 @@ function interpreter(obj){
     }else if(obj instanceof ExprConst){
         toReturn += decode(obj.constName);
     }else if(obj instanceof ExprCond){
-        toReturn += "(cond\n";
+        toReturn += "(cond";
         for(i = 0; i < obj.listOfBooleanAnswer.length; i++){
-            toReturn += "[" + interpreter(obj.listOfBooleanAnswer[i].bool) + " " + interpreter(obj.listOfBooleanAnswer[i].answer) + "]\n";
+            toReturn += "\n[" + interpreter(obj.listOfBooleanAnswer[i].bool) + " " + interpreter(obj.listOfBooleanAnswer[i].answer) + "]";
         }
         toReturn+= ")";
     }
@@ -1001,7 +1035,7 @@ function interpreter(obj){
 =====================================================================================*/
 
 //What is currently being carried. Type: DOM
-var carrying;
+var carrying = undefined;
 //Similar to the variable carrying, except that is stores the corresponding program object
 var programCarrying;
 
@@ -1013,35 +1047,38 @@ $(function() {
         //implements sortability for the program block
         $("#List").sortable({
                 connectWith: "#trash, .droppable",
+               // handle:$('li table:not(tr)'),
                 start: function(event, ui){
-                        console.log(ui.sender);
-                        var itemIndex = $(ui.item).index();
-                        if (!ui.item.is('span.draggable')){
-                                carrying = $(ui.item).children();
+                        if (ui.item.is('li')){
+                                carrying = ui.item.html();
+                               // console.log($(carrying));
                         }
+
+                     //   console.log(carrying);
                 },
 
                 stop: function(event, ui) {
-                        var itemIndex;
-                        if (ui.item.is('span.draggable')){
-                                var replacement = $('<li>' + carrying + '</li>');
-                                addDroppableFeature(replacement.find('.droppable'));
-                                ui.item.replaceWith(replacement);
-                                itemIndex = replacement.index();
-                        } else{
-                                itemIndex = carrying.index();
-                        }
+                        var replacement = $('<li>' + carrying + '</li>');
+                      //  console.log(replacement)
+                        addDroppableFeature(replacement.find(('.droppable')).not('.ui-droppable'));
+                        ui.item.replaceWith(replacement);
+                        setLiWidth();
                         programCarrying = null;
                         carrying = null;
+
+                     //   console.log(carrying);
                 },
                 remove: function(event, ui){
+
                         $(ui.item).remove();
+                      //  console.log(carrying);
                 },
                 receive:function(event,ui){
-
                         if (!ui.item.is('span.draggable')){
                               ui.item.remove();
                         }
+
+                      //  console.log(carrying);
                 },
                 tolerance:'pointer',
                 cursor:'pointer',
@@ -1056,31 +1093,58 @@ $(function() {
                 helper: function(event, ui){
                         programCarrying = makeCodeFromOptions($(this).text());
                         carrying = createBlock(programCarrying);
+
+                       // console.log(carrying);
                         return carrying;
                 },
                 connectToSortable: "#List"
         });
 
         //allows for deletion
-        $("#trash").sortable({
+        $("#trash").droppable({
                 //accept: ".expr",
-                tolerance:'pointer',
-                cursor:'pointer',
-                dropOnEmpty:true,
-                update:function(event, ui){
-                        history.push(program);
-                        $(ui.item).remove();
-                        for(var i=0;i<program.length;i++){
-                                if(program[i].id===$(ui.item).id){
-                                        program.splice(i,1);
-                                }
-                        }
-                        console.log(program +"asdfasdf \n");
-                        console.log(history);
-
+                tolerance:'touch',
+                over:function(event, ui){
+                        console.log('over trash');
+                },
+                drop: function(event, ui){
+                        $(ui.draggable).remove();
                 }
         });
 });
+
+
+var setLiWidth = function() {
+        $("#List li").each(function() {
+                $(this).width($(this).find("table").width() + 10);
+        });
+};
+
+/*
+Makes the jQuerySelection into an HTMLDom element
+*/
+var getHTML = function(jQuerySelection) {
+        return $(jQuerySelection).wrap("<div>").parent().html();
+};
+
+/*
+Adds draggable to blocks that are inserted within blocks such as the inner blocks can be moved out of
+the outer block and into the sortable list
+*/
+var addDraggingFeature = function(jQuerySelection) {
+        if (jQuerySelection != null){
+                $(jQuerySelection).draggable({
+                        connectToSortable: "#List",
+                        helper:'clone',
+                        start:function(event, ui){
+                                carrying = getHTML($(this));
+                              //  console.log(carrying);
+                        }
+
+                });
+        }
+};
+
 
 
 /*
@@ -1089,23 +1153,34 @@ to that selector
 */
 var addDroppableFeature = function(jQuerySelection) {
        // console.log("adding droppability to", jQuerySelection);
+       console.log(jQuerySelection);
+        if (jQuerySelection != null){
                 $(jQuerySelection).droppable({
-//              accept: "table",
-                hoverClass:"highlight",
-                tolerance:"touch",
-                drop: function(event, ui){
-                        if($(this).children().length===0){
-//                              carrying=$('<table>').html(ui.draggable.html())
-                                carrying.draggable({
-                                        connectToSortable: "#List"
-                                       // helper: "clone"
-                                });
-                                $(this).html(carrying);
-                                ui.helper.hide();
-                                ui.draggable.remove();
+                        //accept: "table",
+                        hoverClass:"highlight",
+                        tolerance:"touch",
+                        over:function(event,ui){
+                             //   console.log($(this));
+                        },
+                        drop: function(event, ui){
+                                if($(this).children().length === 0){
+        //                              carrying=$('<table>').html(ui.draggable.html())
+                                       // console.log(carrying);
+                                        //addDraggingFeature($(carrying));
+                                        //$(carrying).draggable({
+                                        //        connectToSortable: "#List",
+                                        //        helper: "clone"
+                                        // });
+                                        $(this).html(carrying);
+                                        addDraggingFeature($(this).find("table"))
+                                        $(this).css("border", "none");
+                                        addDroppableFeature($(carrying).find('.droppable'));
+                                        ui.helper.hide();
+                                        ui.draggable.remove();
+                                }
                         }
-                }
-        });
+                });
+        }
 };
 
 
@@ -1177,4 +1252,4 @@ var argsArray = [];
 function typeInfer(expr){
 }
 
-}());
+//}());
