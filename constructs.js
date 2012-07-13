@@ -1049,7 +1049,8 @@ $(function() {
         //implements sortability for the program block
         $("#List").sortable({
                 connectWith: "#trash, .droppable",
-               // handle:$('li table:not(tr)'),
+                //distance: 15,
+                handle:'table th:first',
                 start: function(event, ui){
                         if (ui.item === null){
                                 throw new Error("sortable start: ui.item is undefined");
@@ -1157,7 +1158,11 @@ var getHTML = function(jQuerySelection) {
 Adds draggable to blocks that are inserted within blocks such as the inner blocks can be moved out of
 the outer block and into the sortable list
 */
+var num = 0;
 var addDraggingFeature = function(jQuerySelection) {
+        console.log(num++);
+        console.log(jQuerySelection);
+        console.log("===============================");
         if (jQuerySelection !== null){
                 $(jQuerySelection).draggable({
                         connectToSortable: "#List",
@@ -1188,11 +1193,12 @@ var addDroppableFeature = function(jQuerySelection) {
                         //accept: "table",
                         hoverClass:"highlight",
                         tolerance:"pointer",
+                        greedy:true,
                         over:function(event,ui){
                           // console.log($(this));
                         },
                         drop: function(event, ui){
-                                console.log($(this));
+                      //         console.log($(this));
                                 if ($(this) === undefined){
                                         throw new Error ("addDroppableFeature drop: $(this) is undefined");
                                 } else if($(this).children().length === 0){
@@ -1204,6 +1210,8 @@ var addDroppableFeature = function(jQuerySelection) {
                                         //        helper: "clone"
                                         // });
                                         $(this).html(carrying);
+                                        console.log($(this));
+                                        console.log($(this).find("table"));
                                         addDraggingFeature($(this).find("table"));
                                         $(this).css("border", "none");
                                         addDroppableFeature($(this).find('.droppable'));
