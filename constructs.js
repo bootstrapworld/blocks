@@ -107,6 +107,7 @@ var ExprDefineConst = function(){
         this.expr = undefined;
         this.outputType = undefined; //MAKE SURE THIS WILL BE DEFINED!!!!
         this.id = makeID();
+        this.funcIDList = makeIDList(1);
 };
 
 /*
@@ -116,6 +117,7 @@ function isLiteral (obj){
         return (
         obj instanceof ExprString ||
         obj instanceof ExprNumber ||
+        obj instanceof ExprBoolean ||
         obj instanceof ExprConst);
 }
 
@@ -185,6 +187,7 @@ var ExprBoolAnswer=function(){
         this.answer = undefined;
         this.outputType = undefined;
         this.id = makeID();
+        this.funcIDList = makeIDList(2);
 };
 
 
@@ -203,6 +206,7 @@ var ExprCond = function(){
         this.listOfBooleanAnswer=[new ExprBoolAnswer()];
         this.outputType = undefined;
         this.id = makeID();
+        
 
 };
 
@@ -490,28 +494,77 @@ the same id
 Has a helper named condHelp.
 */
 
-function searchForIndex(id,array){
+// function searchForIndex(id,array){
+//         var toReturn = undefined;
+//         for(var i=0; i<array.length;i++){
+//                 if(array[i].id===id){
+//                         return array[i];
+//                 }
+//                 else if(array[i] instanceof ExprDefineFunc || array[i] instanceof ExprDefineConst){
+//                         if(array[i].expr.id===id){
+//                                 return array[i].expr;
+//                         }
+//                         else if(array[i].expr instanceof ExprApp){
+//                                 toReturn = searchForIndex(id,array[i].expr.args);
+//                         } else if(array[i].expr instanceof ExprCond){
+//                                 toReturn = condHelp(id, array[i].expr)
+//                         }
+//                 }
+//                 else if(array[i] instanceof ExprApp){
+//                         toReturn = searchForIndex(id,array[i].args);
+//                 }else if(array[i] instanceof ExprCond){
+//                         toReturn = condHelp(id, array[i].expr)
+//                 }
+//                 //if breaks, change to !=
+//                 if(toReturn !== undefined){
+//                         return toReturn;
+//                 }
+//         }
+//         return undefined;
+// }
+
+// function condHelp(id, obj){
+//         var toReturn = undefined;
+//         for(var i = 0; i < obj.listOfBooleanAnswer.length; i++){
+//                 if(obj.listOfBooleanAnswer[i].id === id){
+//                         toReturn = obj.listOfBooleanAnswer[i];
+//                 }else if(obj.listOfBooleanAnswer[i].bool.id === id){
+//                         toReturn = obj.listOfBooleanAnswer[i].bool;
+//                 }else if(obj.listOfBooleanAnswer[i].bool instanceof ExprApp){
+//                         toReturn = searchForIndex(id, obj.listOfBooleanAnswer[i].answer.args);
+//                 }
+//                 if(toReturn === undefined){
+//                         if(obj.listOfBooleanAnswer[i].answer.id === id){
+//                                 toReturn = obj.listOfBooleanAnswer[i].answer;
+//                         }else if(obj.listOfBooleanAnswer[i].answer instanceof ExprApp){
+//                                 toReturn = searchForIndex(id, obj.listOfBooleanAnswer[i].answer.args);
+//                         }
+//                 }
+//                 if(toReturn !== undefined){
+//                         return toReturn;
+//                 }
+//         }
+//         return undefined;
+// }
+
+/*
+* searchForIndex - searches the program for the given index
+*id - the id we are searching for
+*obj - the ExprCond we are searching through
+*@return - the object with the given id
+*/
+function searchForIndex(id, array){
         var toReturn = undefined;
-        for(var i=0; i<array.length;i++){
+        for(var i = 0; i< array.length; i++){
                 if(array[i].id===id){
-                        return array[i];
-                }
-                else if(array[i] instanceof ExprDefineFunc || array[i] instanceof ExprDefineConst){
-                        if(array[i].expr.id===id){
-                                return array[i].expr;
-                        }
-                        else if(array[i].expr instanceof ExprApp){
-                                toReturn = searchForIndex(id,array[i].expr.args);
-                        } else if(array[i].expr instanceof ExprCond){
-                                toReturn = condHelp(id, array[i].expr)
-                        }
-                }
-                else if(array[i] instanceof ExprApp){
-                        toReturn = searchForIndex(id,array[i].args);
+                        toReturn = array[i]
+                }else if(isDefine(array[i])){
+                        toReturn = searchForIndex(id, [array[i].expr]);
+                }else if(array[i] instanceof ExprApp){
+                        toReturn = searchForIndex(id, array[i].args);
                 }else if(array[i] instanceof ExprCond){
-                        toReturn = condHelp(id, array[i].expr)
+                        toReturn = searchForIndex(id, flatten(array[i].listOfBooleanAnswer));
                 }
-                //if breaks, change to !=
                 if(toReturn !== undefined){
                         return toReturn;
                 }
@@ -519,28 +572,20 @@ function searchForIndex(id,array){
         return undefined;
 }
 
-function condHelp(id, obj){
-        var toReturn = undefined;
-        for(var i = 0; i < obj.listOfBooleanAnswer.length; i++){
-                if(obj.listOfBooleanAnswer[i].id === id){
-                        toReturn = obj.listOfBooleanAnswer[i];
-                }else if(obj.listOfBooleanAnswer[i].bool.id === id){
-                        toReturn = obj.listOfBooleanAnswer[i].bool;
-                }else if(obj.listOfBooleanAnswer[i].bool instanceof ExprApp){
-                        toReturn = searchForIndex(id, obj.listOfBooleanAnswer[i].answer.args);
-                }
-                if(toReturn === undefined){
-                        if(obj.listOfBooleanAnswer[i].answer.id === id){
-                                toReturn = obj.listOfBooleanAnswer[i].answer;
-                        }else if(obj.listOfBooleanAnswer[i].answer instanceof ExprApp){
-                                toReturn = searchForIndex(id, obj.listOfBooleanAnswer[i].answer.args);
+/**
+*flatten : array -> array
+*turns an array of tuples into a single level array
+*/
+function flatten(arr){
+        var toReturn =[];
+        for(var i = 0; i < arr.length; i++){
+                for(var item in arr[i]){
+                        if(arr[i].hasOwnProperty(item) && arr[i][item] !== undefined && arr[i][item] instanceof Object){
+                                toReturn.push(arr[i][item]);
                         }
                 }
-                if(toReturn !== undefined){
-                        return toReturn;
-                }
         }
-        return undefined;
+        return toReturn;
 }
 
 //DELETE WHEN DONE WITH REMOVE PROGRAM THIGN
@@ -924,7 +969,7 @@ function createDefineStructBlock(codeObject){
 //createCondBlock outputs the block corresponding to creating a conditional
 function createCondBlock(codeObject){
         var block =  "<table class=\"expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th>cond</tr>";
-        block+="<tr><th><th class=\"Booleans expr\">boolean <th class=\"expr\">expr</tr>";
+        block+="<tr id=\"" + codeObject.id + "\"><th><th id=\"" + codeObject.funcIDList[0] + "\" class=\"Booleans expr\">boolean <th id=\"" + codeObject.funcIDList[1] + "\" class=\"expr\">expr</tr>";
         block+="<tr><th><th><button class=\"buttonCond\">+</button></th></tr>";
         return block + "</table>";
 }
@@ -1049,49 +1094,41 @@ $(function() {
         //implements sortability for the program block
         $("#List").sortable({
                 connectWith: "#trash, .droppable",
-                //distance: 15,
-                handle:'table th:first',
+                placeholder:'placeholder',
+
                 start: function(event, ui){
                         if (ui.item === null){
                                 throw new Error("sortable start: ui.item is undefined");
                         } else {
                                 if (ui.item.is('li')){
                                         carrying = ui.item.html();
-                                       // console.log($(carrying));
                                 }
                         }
-
-                     //   console.log(carrying);
                 },
                 stop: function(event, ui) {
-                       // console.log(carrying);
                         if (carrying === null || ui.item === null){
                                 throw new Error("sortable stop: carrying is undefined");
                         } else{
-                            var replacement = $('<li>').append(carrying);
-                           //     console.log(replacement.find(('.droppable')).not('ui-droppable'));
+                                var replacement = $('<li>').append(carrying);
+                                console.log('before adding drop');
                                 addDroppableFeature(replacement.find(('.droppable')));
-                            replacement.children("table").draggable('destroy');
+                                console.log('after adding drop');
+                               // replacement.children("table").draggable('destroy');
                                 ui.item.replaceWith(replacement);
-                         //       console.log($(replacement));
                                 setLiWidth();
                                 program[replacement.index()] = programCarrying;
                                 programCarrying = null;
                                 carrying = null;
                         }
-
-                     //   console.log(carrying);
                 },
                 remove: function(event, ui){
-                        $(ui.item).remove();
-                      //  console.log(carrying);
+                        $(ui.item).detach();
                 },
                 receive:function(event,ui){
                         if(ui.item === null){
                                 throw new Error ("sortable receive");
                         }else{
                                 if (!ui.item.is('span.draggable')){
-                                  //    console.log(ui.sender.parent().parent())
                                       ui.sender.parent().parent().attr('style','border:3px;'+
                                                                                 "border-style:solid;"+
                                                                                 "border-radius:5px;"+
@@ -1101,17 +1138,12 @@ $(function() {
                                     var ancestor = ui.sender.parent().parent();
                                     ancestor.children().detach();
                                     ancestor.append("Exp");
-                                     // ui.item.remove();
                                 }
                         }
-
-                      //  console.log(carrying);
                 },
                 tolerance:'pointer',
                 cursor:'pointer',
                 scroll:false
-                //items:'li'
-                //revert:'invalid'
         });
 
 
@@ -1120,7 +1152,6 @@ $(function() {
                 helper: function(event, ui){
                         programCarrying = makeCodeFromOptions($(this).text());
                         carrying = createBlock(programCarrying);
-                       // console.log(carrying);
                         return carrying;
                 },
                 connectToSortable: "#List"
@@ -1128,10 +1159,8 @@ $(function() {
 
         //allows for deletion
         $("#trash").droppable({
-                //accept: ".expr",
                 tolerance:'touch',
                 over:function(event, ui){
-                        //console.log('over trash');
                 },
                 drop: function(event, ui){
                         $(ui.draggable).remove();
@@ -1162,11 +1191,9 @@ the outer block and into the sortable list
 */
 var num = 0;
 var addDraggingFeature = function(jQuerySelection) {
-        console.log(num++);
-        console.log(jQuerySelection);
-        console.log("===============================");
         if (jQuerySelection !== null){
-                $(jQuerySelection).draggable({
+                console.log('during adding drag', jQuerySelection)
+                jQuerySelection.draggable({
                         connectToSortable: "#List",
                         helper:'clone',
                         start:function(event, ui){
@@ -1174,7 +1201,6 @@ var addDraggingFeature = function(jQuerySelection) {
                                         throw new Error ("addDraggingFeature start: $(this) is undefined");
                                 } else {
                                         carrying = getHTML($(this));
-                                        //  console.log(carrying);
                                 }
                         }
 
@@ -1187,39 +1213,28 @@ addDroppableFeature is a function that takes in a jQuery selector and applys dro
 to that selector
 */
 var addDroppableFeature = function(jQuerySelection) {
-       // console.log("adding droppability to", jQuerySelection);
-      // console.log(jQuerySelection);
         if (jQuerySelection !== null){
-                //console.log("adding drop")
-                $(jQuerySelection).droppable({
-                        //accept: "table",
+                console.log('during adding drop', jQuerySelection);
+                addDraggingFeature((jQuerySelection).find("table"));
+                jQuerySelection.droppable({
                         hoverClass:"highlight",
                         tolerance:"pointer",
                         greedy:true,
-                        over:function(event,ui){
-                          // console.log($(this));
-                        },
                         drop: function(event, ui){
-                      //         console.log($(this));
                                 if ($(this) === undefined){
                                         throw new Error ("addDroppableFeature drop: $(this) is undefined");
-                                } else if($(this).children().length === 0){
-        //                              carrying=$('<table>').html(ui.draggable.html())
-                                       // console.log(carrying);
-                                        //addDraggingFeature($(carrying));
-                                        //$(carrying).draggable({
-                                        //        connectToSortable: "#List",
-                                        //        helper: "clone"
-                                        // });
+                                } 
+                                else if ($(this).children().length !== 0){
+                                        console.log("CHILDREN");
+                                        console.log($(this).children());
+                                } 
+                                else if($(this).children().length === 0){
                                         $(this).html(carrying);
-                                        console.log($(this));
-                                        console.log($(this).find("table"));
+                                        console.log('here')
+                                        addDroppableFeature($(this).find('.droppable'));
                                         addDraggingFeature($(this).find("table"));
                                         $(this).css("border", "none");
-                                        addDroppableFeature($(this).find('.droppable'));
-                                       // console.log($(this));
-                                        //ui.helper.hide();
-                                        ui.draggable.remove();
+                                        ui.draggable.detach();
                                 }
                         }
                 });
