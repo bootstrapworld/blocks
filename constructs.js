@@ -135,10 +135,10 @@ expr is a list of objects (one for each argument)
 */
 var ExprApp = function(funcName, args){
         this.funcName = funcName;
-        this.id = makeID();
-        this.funcIDList = makeIDList(args.length);
-        this.args = args;
+        this.funcIDList = makeIDList(functions[containsName(functions, funcName)].input.length);
+        this.args = (args != undefined) ? args : [];
         this.outputType = getOutput(funcName);
+        this.id = makeID();
 };
 
 /*
@@ -384,7 +384,7 @@ function onResize(){
         codeWidth = $(window).width();
         $("#code").height(codeHeight);
         $("#code").width(codeWidth);
-       $("#List").height(codeHeight - 150);
+        $("#List").height(codeHeight - 150);
         $("#List").width(codeWidth - 150);
 }
 
@@ -404,16 +404,16 @@ $(document).ready(function(){
         /*
         adds a stylesheet to <head> such that blocks can be colored according to their type
         */
-    renderTypeColors();
+        renderTypeColors();
     
-    /*
-    sets focus equal to the input that is focused. 
-    */
-    $("#List input").live('focus',function(){
-        focused=$(this);
-    });
+        /*
+        sets focus equal to the input that is focused. 
+        */
+        $("#List input").live('focus',function(){
+            focused=$(this);
+        });
 
-    var formValidation = function(e){
+        var formValidation = function(e){
                         //e.preventDefault();
                         //if focused is not null and if you are clicking something else besides the focused object
                     if(focused !==null && $(e.target).attr("id") !== focused.attr("id")){
@@ -446,7 +446,7 @@ $(document).ready(function(){
                         //TODO saving values
                     }
                 };
-    $(document.body).live('click', formValidation);
+        $(document.body).live('click', formValidation);
 });
 
 /*
@@ -586,6 +586,48 @@ function flatten(arr){
                 }
         }
         return toReturn;
+}
+
+/*
+addProgram adds a code object (obj) to the program array given the id of the parent (parentId)
+and the id of the child (childId).
+STILL NEEDS TESTING: If obj is undefined, addProg removes the object at childId
+MAYBE: childID won't work and we'll need array position
+*/
+function addProg(parentId, childId, obj){
+        var parent = searchForIndex(parentId, program);
+        if(parent === undefined){
+                throw new Error("addProg failure: parentId not found");
+        }
+        if(isLiteral(parent)){
+                throw new Error("addProg failure: parent was a literal, and cannot be added to");
+        }
+        if(parent.hasOwnProperty("funcIDList")){
+                var index = -1;
+                for(var i = 0; i < parent.funcIDList.length; i++){
+                        if(parent.funcIDList[i] === childId){
+                                index = i;
+                                break;
+                        }
+                }
+                if(index === -1){
+                        throw new Error("addProg failure: childId not found");
+                }else{
+                        if(parent instanceof ExprApp){
+                                parent.args[index] = obj;
+                        }else if(isDefine(parent)){
+                                parent.expr = obj;
+                        }else if(parent instanceof ExprBoolAnswer){
+                                if(index === 0){
+                                        parent.bool = obj;
+                                }else{
+                                        parent.answer = obj;
+                                }
+                        }
+                }
+        }else{
+                throw new Error("addProg failure: parent was top level of cond, that doesn't work");
+        }
 }
 
 //DELETE WHEN DONE WITH REMOVE PROGRAM THIGN
@@ -1095,7 +1137,6 @@ $(function() {
         $("#List").sortable({
                 connectWith: "#trash, .droppable",
                 placeholder:'placeholder',
-
                 start: function(event, ui){
                         if (ui.item === null){
                                 throw new Error("sortable start: ui.item is undefined");
@@ -1154,7 +1195,7 @@ $(function() {
                         carrying = createBlock(programCarrying);
                         return carrying;
                 },
-                connectToSortable: "#List"
+                connectToSortable: "#List, #trash"
         });
 
         //allows for deletion
@@ -1264,11 +1305,15 @@ var addDroppableFeature = function(jQuerySelection) {
 
 /*
 
+ALWAYS CHECK:
+cross-browser compatability 
+        currently not working on Firefox
+
 7/9-7/11
 - Draggable from program to trash
 
 7/11-7/13
-- Draggable blocks into blocks
+Draggable blocks into blocks 
 - Type checking
 - Add functionality for cond
 
