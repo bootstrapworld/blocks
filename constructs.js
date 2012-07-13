@@ -1098,7 +1098,9 @@ $(function() {
                                                                                 "height:30px;" +
                                                                                 "width:40px;"+
                                                                                 "border-color:grey");
-                                      ui.sender.parent().parent().html('Exp');
+                                    var ancestor = ui.sender.parent().parent();
+                                    ancestor.children().detach();
+                                    ancestor.append("Exp");
                                      // ui.item.remove();
                                 }
                         }
