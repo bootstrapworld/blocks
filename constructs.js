@@ -135,10 +135,10 @@ expr is a list of objects (one for each argument)
 */
 var ExprApp = function(funcName, args){
         this.funcName = funcName;
+        this.id = makeID();
         this.funcIDList = makeIDList(functions[containsName(functions, funcName)].input.length);
         this.args = (args != undefined) ? args : [];
         this.outputType = getOutput(funcName);
-        this.id = makeID();
 };
 
 /*
@@ -546,101 +546,6 @@ Has a helper named condHelp.
 //         }
 //         return undefined;
 // }
-
-/*
-* searchForIndex - searches the program for the given index
-*id - the id we are searching for
-*obj - the ExprCond we are searching through
-*@return - the object with the given id
-*/
-function searchForIndex(id, array){
-        var toReturn = undefined;
-        for(var i = 0; i< array.length; i++){
-                if(array[i].id===id){
-                        toReturn = array[i]
-                }else if(isDefine(array[i])){
-                        toReturn = searchForIndex(id, [array[i].expr]);
-                }else if(array[i] instanceof ExprApp){
-                        toReturn = searchForIndex(id, array[i].args);
-                }else if(array[i] instanceof ExprCond){
-                        toReturn = searchForIndex(id, flatten(array[i].listOfBooleanAnswer));
-                }
-                if(toReturn !== undefined){
-                        return toReturn;
-                }
-        }
-        return undefined;
-}
-
-/**
-*flatten : array -> array
-*turns an array of tuples into a single level array
-*/
-function flatten(arr){
-        var toReturn =[];
-        for(var i = 0; i < arr.length; i++){
-                for(var item in arr[i]){
-                        if(arr[i].hasOwnProperty(item) && arr[i][item] !== undefined && arr[i][item] instanceof Object){
-                                toReturn.push(arr[i][item]);
-                        }
-                }
-        }
-        return toReturn;
-}
-
-/*
-addProgram adds a code object (obj) to the program array given the id of the parent (parentId)
-and the id of the child (childId).
-STILL NEEDS TESTING: If obj is undefined, addProg removes the object at childId
-MAYBE: childID won't work and we'll need array position
-*/
-function addProg(parentId, childId, obj){
-        var parent = searchForIndex(parentId, program);
-        if(parent === undefined){
-                throw new Error("addProg failure: parentId not found");
-        }
-        if(isLiteral(parent)){
-                throw new Error("addProg failure: parent was a literal, and cannot be added to");
-        }
-        if(parent.hasOwnProperty("funcIDList")){
-                var index = -1;
-                for(var i = 0; i < parent.funcIDList.length; i++){
-                        if(parent.funcIDList[i] === childId){
-                                index = i;
-                                break;
-                        }
-                }
-                if(index === -1){
-                        throw new Error("addProg failure: childId not found");
-                }else{
-                        if(parent instanceof ExprApp){
-                                parent.args[index] = obj;
-                        }else if(isDefine(parent)){
-                                parent.expr = obj;
-                        }else if(parent instanceof ExprBoolAnswer){
-                                if(index === 0){
-                                        parent.bool = obj;
-                                }else{
-                                        parent.answer = obj;
-                                }
-                        }
-                }
-        }else{
-                throw new Error("addProg failure: parent was top level of cond, that doesn't work");
-        }
-}
-
-//DELETE WHEN DONE WITH REMOVE PROGRAM THIGN
-// $("#trash").droppable({
-//      accept: ".expr, .Define",
-//      drop: function(event, ui){
-//              history[history.length] = program;
-//              $(ui.draggable).remove();
-//              removeFromProgram($(ui.draggable).id);
-//      }
-// })
-
-
 
 
 // //tries to remove id block within program array
@@ -1126,7 +1031,7 @@ function interpreter(obj){
 //What is currently being carried. Type: DOM
 var carrying = undefined;
 //Similar to the variable carrying, except that is stores the corresponding program object
-var programCarrying;
+var programCarrying = undefined;
 
 // .draggable is referring to the options within the drawers
 // .sortable is referring to the list containing the blocks within the program
@@ -1151,13 +1056,16 @@ $(function() {
                                 throw new Error("sortable stop: carrying is undefined");
                         } else{
                                 var replacement = $('<li>').append(carrying);
-                                console.log('before adding drop');
                                 addDroppableFeature(replacement.find(('.droppable')));
-                                console.log('after adding drop');
                                // replacement.children("table").draggable('destroy');
                                 ui.item.replaceWith(replacement);
                                 setLiWidth();
-                                program[replacement.index()] = programCarrying;
+                                if (programCarrying == undefined){
+                                        throw new Error ("sortable stop: programCarrying is undefined/null");
+                                }else {
+                                        program[replacement.index()] = programCarrying;
+                                        console.log(program);
+                                }
                                 programCarrying = null;
                                 carrying = null;
                         }
@@ -1233,7 +1141,6 @@ the outer block and into the sortable list
 var num = 0;
 var addDraggingFeature = function(jQuerySelection) {
         if (jQuerySelection !== null){
-                console.log('during adding drag', jQuerySelection)
                 jQuerySelection.draggable({
                         connectToSortable: "#List",
                         helper:'clone',
@@ -1241,6 +1148,8 @@ var addDraggingFeature = function(jQuerySelection) {
                                 if ($(this) === undefined){
                                         throw new Error ("addDraggingFeature start: $(this) is undefined");
                                 } else {
+                                        programCarrying = searchForIndex($(this).attr("id"), program);
+                                        console.log(programCarrying);
                                         carrying = getHTML($(this));
                                 }
                         }
@@ -1255,7 +1164,6 @@ to that selector
 */
 var addDroppableFeature = function(jQuerySelection) {
         if (jQuerySelection !== null){
-                console.log('during adding drop', jQuerySelection);
                 addDraggingFeature((jQuerySelection).find("table"));
                 jQuerySelection.droppable({
                         hoverClass:"highlight",
@@ -1265,13 +1173,10 @@ var addDroppableFeature = function(jQuerySelection) {
                                 if ($(this) === undefined){
                                         throw new Error ("addDroppableFeature drop: $(this) is undefined");
                                 } 
-                                else if ($(this).children().length !== 0){
-                                        console.log("CHILDREN");
-                                        console.log($(this).children());
-                                } 
                                 else if($(this).children().length === 0){
                                         $(this).html(carrying);
-                                        console.log('here')
+                                        console.log($(this).closest($("table")).attr("id"),$(this).attr("id"));
+                                        addChildtoProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying);
                                         addDroppableFeature($(this).find('.droppable'));
                                         addDraggingFeature($(this).find("table"));
                                         $(this).css("border", "none");
@@ -1281,6 +1186,92 @@ var addDroppableFeature = function(jQuerySelection) {
                 });
         }
 };
+
+
+/*
+* searchForIndex - searches the program for the given index
+*id - the id we are searching for
+*obj - the ExprCond we are searching through
+*@return - the object with the given id
+*/
+function searchForIndex(id, array){
+        var toReturn = undefined;
+        for(var i = 0; i< array.length; i++){
+                if(array[i].id===id){
+                        toReturn = array[i]
+                }else if(isDefine(array[i])){
+                        toReturn = searchForIndex(id, [array[i].expr]);
+                }else if(array[i] instanceof ExprApp){
+                        toReturn = searchForIndex(id, array[i].args);
+                }else if(array[i] instanceof ExprCond){
+                        toReturn = searchForIndex(id, flatten(array[i].listOfBooleanAnswer));
+                }
+                if(toReturn !== undefined){
+                        return toReturn;
+                }
+        }
+        return undefined;
+}
+
+/**
+*flatten : array -> array
+*turns an array of tuples into a single level array
+*/
+function flatten(arr){
+        var toReturn =[];
+        for(var i = 0; i < arr.length; i++){
+                for(var item in arr[i]){
+                        if(arr[i].hasOwnProperty(item) && arr[i][item] !== undefined && arr[i][item] instanceof Object){
+                                toReturn.push(arr[i][item]);
+                        }
+                }
+        }
+        return toReturn;
+}
+
+/*
+addProgram adds a code object (obj) to the program array given the id of the parent (parentId)
+and the id of the child (childId).
+STILL NEEDS TESTING: If obj is undefined, addChildToProgram removes the object at childId
+MAYBE: childID won't work and we'll need array position
+*/
+function addChildtoProgram(parentId, childId, obj){
+        var parent = searchForIndex(parentId, program);
+        if(parent === undefined){
+                throw new Error("addChildtoProgram failure: parentId not found");
+        }
+        if(isLiteral(parent)){
+                throw new Error("addChildtoProgram failure: parent was a literal, and cannot be added to");
+        }
+        if(parent.hasOwnProperty("funcIDList")){
+                var index = -1;
+                for(var i = 0; i < parent.funcIDList.length; i++){
+                        if(parent.funcIDList[i] === childId){
+                                index = i;
+                                break;
+                        }
+                }
+                if(index === -1){
+                        throw new Error("addChildtoProgram failure: childId not found");
+                }else{
+                        if(parent instanceof ExprApp){
+                                parent.args[index] = obj;
+                        }else if(isDefine(parent)){
+                                parent.expr = obj;
+                        }else if(parent instanceof ExprBoolAnswer){
+                                if(index === 0){
+                                        parent.bool = obj;
+                                }else{
+                                        parent.answer = obj;
+                                }
+                        }
+                }
+        }else if(parent instanceof ExprCond){
+                throw new Error("addChildtoProgram failure: parent was top level of cond, that doesn't work");
+        }else{
+                throw new Error("addChildtoProgram failure: parent looked like: " +interpreter(parent));
+        }
+}
 
 
 
@@ -1310,20 +1301,22 @@ cross-browser compatability
         currently not working on Firefox
 
 7/9-7/11
-- Draggable from program to trash
+Draggable from program to trash
 
 7/11-7/13
 Draggable blocks into blocks 
-- Type checking
-- Add functionality for cond
+Add functionality for cond
 
 7/16-7/20
+- update program array with drag & drop (Monday)
 - undo (Monday)
 - full functionality of defines
         - user defined (function, constant) appearing in new drawer. deleting defines
         - Contracts in define full functionality (design check off by Shriram).
+        - make plus buttons work
 
 7/22-27
+- Type checking
 - run, stop
 - save program
 - Add functionality for structs
