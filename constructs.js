@@ -128,6 +128,15 @@ function isDefine (obj){
         return (obj instanceof ExprDefineConst || obj instanceof ExprDefineFunc);
 }
 
+
+function cloneArgs(argArray) {
+        var clonedArray = [];
+        for (var i = 0; i < argArray.length; i++){
+                clonedArray[i] = {name: argsArray[i].name, type: argsArray[i].type};
+        }
+        return clonedArray;
+}
+
 /*
 Constructs an application of an operator given the name, arguments, and output type. The arguments 
 is an array of expressions. Value is initially initialized to null.
@@ -748,13 +757,6 @@ function makeDrawers(allFunctions,allConstants){
 =====================================================================================*/
 
 
-//changes the program array when a draggable element is clicked
-// $("#options span").live('click',function(){
-//      //TODO, change where in the program the block is added
-//      $("#List").append("<li>" + createBlock(makeCodeFromOptions($(this).text())));
-// });
-
-
 /*
 Adds a block to the end of the list given the HTML of the block.
 */
@@ -800,7 +802,11 @@ function makeCodeFromOptions(optionsText){
                 else{
                         for(i = 0; i < functions.length; i++){
                                 if (functions[i].name === optionsText){
-                                        return new ExprApp(optionsText, functions[i].input);
+                                        console.log("function input ", functions[i].input);
+                                        var x = new ExprApp(optionsText, functions[i].input);
+                                        
+                                        console.log("makeCodeFromOptions ", x);
+                                        return x;
                                 }
                         }
                         for(i=0;i<constants.length;i++){
@@ -980,43 +986,43 @@ function parseProgram(){
 The interpreter translates our representation of the program array to Racket code
 */
 function interpreter(obj){
-    var toReturn = "";
+    var toReturn = [];
     var i;
     if(obj == undefined){
-        toReturn += "**UNDEFINED**"
+        toReturn.push("**UNDEFINED**");
     }else if(obj instanceof ExprDefineConst){
-        toReturn += "(define " + obj.constName + " \n" + interpreter(obj.expr) + ")";
+        toReturn.push("(define ", obj.constName, " \n", interpreter(obj.expr), ")");
     }else if(obj instanceof ExprDefineFunc){
-        toReturn += ";" + obj.contract.funcName + ":";
+        toReturn.push(";", obj.contract.funcName, ":");
         for(i = 0; i < obj.contract.argumentTypes.length; i++){
-                    toReturn += " " + obj.contract.argumentTypes[i];
+                    toReturn.push(" ", obj.contract.argumentTypes[i]);
         }
-        toReturn += " -> " + obj.contract.outputType + "\n";
-        toReturn += "(define (" + obj.contract.funcName;
+        toReturn.push(" -> ", obj.contract.outputType, "\n");
+        toReturn.push("(define (", obj.contract.funcName);
         for(i = 0; i < obj.argumentNames.length; i++){
-            toReturn += " " + obj.argumentNames[i];
+            toReturn.push(" ", obj.argumentNames[i]);
         }
-        toReturn += ")\n" + interpreter(obj.expr) + ")";
+        toReturn.push(")\n", interpreter(obj.expr), ")");
     }else if(obj instanceof ExprApp){
-        toReturn += "(" + decode(obj.funcName);
+        toReturn.push("(", decode(obj.funcName));
         for(i=0; i < obj.args.length; i++){    
-            toReturn += " " + interpreter(obj.args[i]);
+            toReturn.push(" ", interpreter(obj.args[i]));
         }
-        toReturn += ")";
+        toReturn.push(")");
     }else if(obj instanceof ExprNumber || obj instanceof ExprBoolean){
-        toReturn += obj.value;
+        toReturn.push(obj.value);
     }else if(obj instanceof ExprString){
-        toReturn += "\"" + obj.value + "\"";
+        toReturn.push("\"", decode(obj.value), "\"");
     }else if(obj instanceof ExprConst){
-        toReturn += decode(obj.constName);
+        toReturn.push(decode(obj.constName));
     }else if(obj instanceof ExprCond){
-        toReturn += "(cond";
+        toReturn.push("(cond");
         for(i = 0; i < obj.listOfBooleanAnswer.length; i++){
-            toReturn += "\n[" + interpreter(obj.listOfBooleanAnswer[i].bool) + " " + interpreter(obj.listOfBooleanAnswer[i].answer) + "]";
+            toReturn.push("\n[", interpreter(obj.listOfBooleanAnswer[i].bool), " ", interpreter(obj.listOfBooleanAnswer[i].answer), "]");
         }
-        toReturn+= ")";
+        toReturn.push(")");
     }
-    return toReturn;
+    return toReturn.join('');
 }
 
 
@@ -1064,7 +1070,7 @@ $(function() {
                                         throw new Error ("sortable stop: programCarrying is undefined/null");
                                 }else {
                                         program[replacement.index()] = programCarrying;
-                                        console.log(program);
+                               //         console.log(program);
                                 }
                                 programCarrying = null;
                                 carrying = null;
@@ -1100,6 +1106,7 @@ $(function() {
         $('.draggable').draggable({
                 helper: function(event, ui){
                         programCarrying = makeCodeFromOptions($(this).text());
+                        console.log(programCarrying);
                         carrying = createBlock(programCarrying);
                         return carrying;
                 },
@@ -1175,8 +1182,8 @@ var addDroppableFeature = function(jQuerySelection) {
                                 } 
                                 else if($(this).children().length === 0){
                                         $(this).html(carrying);
-                                        console.log($(this).closest($("table")).attr("id"),$(this).attr("id"));
-                                        addChildtoProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying);
+                                       // console.log($(this).closest($("table")).attr("id"),$(this).attr("id"));
+                                        setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying);
                                         addDroppableFeature($(this).find('.droppable'));
                                         addDraggingFeature($(this).find("table"));
                                         $(this).css("border", "none");
@@ -1198,19 +1205,18 @@ function searchForIndex(id, array){
         var toReturn = undefined;
         for(var i = 0; i< array.length; i++){
                 if(array[i].id===id){
-                        toReturn = array[i]
+                        toReturn = array[i];
+                        break;
                 }else if(isDefine(array[i])){
                         toReturn = searchForIndex(id, [array[i].expr]);
                 }else if(array[i] instanceof ExprApp){
                         toReturn = searchForIndex(id, array[i].args);
+                       // console.log(toReturn);
                 }else if(array[i] instanceof ExprCond){
                         toReturn = searchForIndex(id, flatten(array[i].listOfBooleanAnswer));
                 }
-                if(toReturn !== undefined){
-                        return toReturn;
-                }
         }
-        return undefined;
+        return toReturn;
 }
 
 /**
@@ -1232,16 +1238,16 @@ function flatten(arr){
 /*
 addProgram adds a code object (obj) to the program array given the id of the parent (parentId)
 and the id of the child (childId).
-STILL NEEDS TESTING: If obj is undefined, addChildToProgram removes the object at childId
+STILL NEEDS TESTING: If obj is undefined, setChildInProgram removes the object at childId
 MAYBE: childID won't work and we'll need array position
 */
-function addChildtoProgram(parentId, childId, obj){
+function setChildInProgram(parentId, childId, obj){
         var parent = searchForIndex(parentId, program);
         if(parent === undefined){
-                throw new Error("addChildtoProgram failure: parentId not found");
+                throw new Error("setChildInProgram failure: parentId not found");
         }
         if(isLiteral(parent)){
-                throw new Error("addChildtoProgram failure: parent was a literal, and cannot be added to");
+                throw new Error("setChildInProgram failure: parent was a literal, and cannot be added to");
         }
         if(parent.hasOwnProperty("funcIDList")){
                 var index = -1;
@@ -1252,7 +1258,7 @@ function addChildtoProgram(parentId, childId, obj){
                         }
                 }
                 if(index === -1){
-                        throw new Error("addChildtoProgram failure: childId not found");
+                        throw new Error("setChildInProgram failure: childId not found");
                 }else{
                         if(parent instanceof ExprApp){
                                 parent.args[index] = obj;
@@ -1267,9 +1273,9 @@ function addChildtoProgram(parentId, childId, obj){
                         }
                 }
         }else if(parent instanceof ExprCond){
-                throw new Error("addChildtoProgram failure: parent was top level of cond, that doesn't work");
+                throw new Error("setChildInProgram failure: parent was top level of cond, that doesn't work");
         }else{
-                throw new Error("addChildtoProgram failure: parent looked like: " +interpreter(parent));
+                throw new Error("setChildInProgram failure: parent looked like: " +interpreter(parent));
         }
 }
 
