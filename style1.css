@@ -138,3 +138,7 @@ DRAWER
 .ui-draggable{
 	z-index: 100;
 }
+
+.noborder{
+	border:none;
+}

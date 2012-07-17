@@ -60,6 +60,139 @@ function makeIDList(num){
         return toReturn;
 }
 
+
+/*
+searchForIndex takes in an a string (id) and and array filled within code Objects (one of which should
+contain an object with the id). 
+
+@return: The object with the corresponding id.
+*/
+function searchForIndex(id, array){
+        var toReturn = undefined;
+        for(var i = 0; i< array.length; i++){
+                if(array[i] === undefined){
+                        //just skip
+                }else if(array[i].id===id){
+                        toReturn = array[i]
+                }else if(isDefine(array[i])){
+                        toReturn = searchForIndex(id, [array[i].expr]);
+                }else if(array[i] instanceof ExprApp){
+                        toReturn = searchForIndex(id, array[i].args);
+                }else if(array[i] instanceof ExprBoolAnswer){
+                        toReturn = searchForIndex(id, flatten(array[i]));
+                }else if(array[i] instanceof ExprCond){
+                        toReturn = searchForIndex(id, array[i].listOfBooleanAnswer);
+                }
+                if(toReturn !== undefined){
+                        return toReturn;
+                }
+        }
+        return undefined;
+}
+
+/*
+cloneProgram takes in an array of code objects (arr) and outputs a clone of arr
+*/
+var cloneProgram = function(arr){
+        var tempArr = [];
+        for (var i = 0; i < arr.length; i++){
+                tempArr[i] = arr[i].clone();
+        }
+        return tempArr;
+};
+
+/**
+*flatten : object -> array
+*turns a ExprBoolAnswer into a single level array
+*/
+function flatten(obj){
+        var toReturn = [];
+        if(obj.bool !== undefined){
+                toReturn.push(obj.bool)
+        }
+        if(obj.answer !== undefined){
+                toReturn.push(obj.answer)
+        }
+        return toReturn;
+}
+
+/*
+addProgram adds a code object (obj) to the program array given the id of the parent (parentId)
+and the id of the child (childId).
+STILL NEEDS TESTING: If obj is undefined, setChildInProgram removes the object at childId
+MAYBE: childID won't work and we'll need array position
+*/
+function setChildInProgram(parentId, childId, obj){
+        var parent = searchForIndex(parentId, program);
+        if(parent === undefined){
+                throw new Error("setChildInProgram failure: parentId not found");
+        }
+        if(isLiteral(parent)){
+                throw new Error("setChildInProgram failure: parent was a literal, and cannot be added to");
+        }
+        if(parent.hasOwnProperty("funcIDList")){
+                var index;
+                if(obj !== undefined){
+                        index = getAddIndex(parent, childId);
+                }else{
+                        index = getRemoveIndex(parent, childId);
+                }
+                if(index === -1){
+                        throw new Error("setChildInProgram failure: childId not found");
+                }else{
+                        if(parent instanceof ExprApp){
+                                parent.args[index] = obj;
+                        }else if(isDefine(parent)){
+                                parent.expr = obj;
+                        }else if(parent instanceof ExprBoolAnswer){
+                                if(index === 0){
+                                        parent.bool = obj;
+                                }else{
+                                        parent.answer = obj;
+                                }
+                        }
+                }
+        }else if(parent instanceof ExprCond){
+                throw new Error("setChildInProgram failure: parent was top level of cond, that doesn't work");
+        }else{
+                throw new Error("setChildInProgram failure: parent looked like: " +interpreter(parent));
+        }
+}
+function getRemoveIndex(parent, childID){
+        var i;
+        var toReturn = -1;
+        if(isDefine(parent)){
+                if(expr.id === childID){
+                        toReturn = 0;
+                }
+        }else if(parent instanceof ExprApp){
+                for(i=0; i<parent.args.length; i++){
+                        if(parent.args[i] !== undefined){
+                                if(parent.args[i].id === childID){
+                                        toReturn = i;
+                                }
+                        }
+                }
+        }else if(parent instanceof ExprBoolAnswer){
+                if(parent.bool !== undefined && parent.bool.id === childID){
+                        toReturn = 0;
+                }
+                if(parent.answer !== undefined && parent.answer.id === childID){
+                        toReturn = 1;
+                }
+        }
+        return toReturn;
+}
+function getAddIndex(parent, childID){
+        for(var i =0; i<parent.funcIDList.length; i++){
+                if(parent.funcIDList[i] === childID){
+                        return i
+                }
+        }
+        return -1;
+}
+
+
 /*
 Constucts the define function block given a contract, a list of arguments (a list of variables), 
 and an expression which is an expression object
@@ -77,6 +210,19 @@ var ExprDefineFunc = function(){
         this.expr = undefined;
         this.id = makeID();
         this.funcIDList = makeIDList(1);
+        this.clone=function(){
+                var temp=new ExprDefineFunc();
+                temp.contract=this.contract.clone();
+               if (this.argumentNames != undefined){
+                        temp.argumentTypes=this.argumentNames.slice(0);
+                }
+                if (this.expr != undefined){
+                        temp.expr=this.expr.clone();
+                }
+                temp.id=this.id;
+                temp.funcIDList=this.funcIDList.slice(0);
+                return temp;
+        };
 };
 
 var ExprContract = function(){
@@ -84,6 +230,16 @@ var ExprContract = function(){
         this.argumentTypes = undefined;
         this.outputType = undefined;
         this.id = makeID();
+        this.clone=function(){
+                var temp=new ExprContract();
+                temp.funcName=this.funcName;
+                if (this.argumentTypes != undefined){
+                        temp.argumentTypes=this.argumentTypes.slice(0);
+                }
+                temp.outputType=this.outputType;
+                temp.id=this.id;
+                return temp;
+        };
 };
 
 /*
@@ -102,6 +258,17 @@ var ExprDefineConst = function(){
         this.outputType = undefined; //MAKE SURE THIS WILL BE DEFINED!!!!
         this.id = makeID();
         this.funcIDList = makeIDList(1);
+        this.clone=function(){
+                var temp=new ExprDefineConst();
+                temp.constName=this.constName;
+                if (this.expr != undefined){
+                        temp.expr=this.expr.clone();
+                }
+                temp.outputType=this.outputType;
+                temp.id=this.id;
+                temp.funcIDList=this.funcIDList.slice(0);
+                return temp;
+        };
 };
 
 /*
@@ -135,6 +302,18 @@ var ExprApp = function(funcName){
         this.funcIDList = makeIDList(functions[containsName(functions, funcName)].input.length);
         this.args = [];
         this.outputType = getOutput(funcName);
+        this.clone=function(){
+                var temp=new ExprApp(this.funcName);
+                temp.id=this.id;
+                temp.funcIDList=this.funcIDList.slice(0);
+                for(var i=0;i<this.args.length;i++){
+                        if (this.args[i] != undefined){
+                                temp.args.push(this.args[i].clone());
+                        }
+                }
+                temp.outputType=this.outputType;
+                return temp;
+        };
 };
 
 /*
@@ -145,6 +324,13 @@ var ExprString= function(){
         this.value = "";
         this.outputType = "Strings";
         this.id = makeID();
+        this.clone=function(){
+                var temp=new ExprString();
+                temp.value=this.value;
+                temp.outputType=this.outputType;
+                temp.id=this.id;
+                return temp;
+        };
 };
 
 /*
@@ -154,6 +340,13 @@ var ExprNumber = function(){
         this.value = undefined;
         this.outputType = "Numbers";
         this.id = makeID();
+        this.clone=function(){
+                var temp=new ExprNumber();
+                temp.value=this.value;
+                temp.outputType=this.outputType;
+                temp.id=this.id;
+                return temp;
+        };
 };
 
 /*
@@ -164,6 +357,11 @@ var ExprConst = function(constName){
         this.constName = constName;
         //this.outputType = getConstantType(constName);
         this.id = makeID();
+        this.clone=function(){
+                var temp=new ExprConst(this.constName);
+                temp.id=this.id;
+                return temp;
+        };
 };
 
 /*
@@ -173,6 +371,12 @@ var ExprBoolean = function(value){
         this.value=value;
         this.outputType = "Booleans";
         this.id = makeID();
+        this.clone=function(){
+                var temp=new ExprBoolean(this.value);
+                temp.outputType=this.outputType;
+                temp.id=this.id;
+                return temp;
+        };
 };
 
 /*
@@ -184,6 +388,19 @@ var ExprBoolAnswer=function(){
         this.outputType = undefined;
         this.id = makeID();
         this.funcIDList = makeIDList(2);
+        this.clone=function(){
+                var temp=new ExprBoolAnswer();
+                if (this.bool != undefined){
+                        temp.bool=this.bool.clone();
+                }
+                if (this.answer != undefined){
+                        temp.answer=this.answer.clone();
+                }
+                temp.outputType=this.outputType;
+                temp.id=this.id;
+                temp.funcIDList=this.funcIDList.slice(0);
+                return temp;
+        };
 };
 
 
@@ -202,8 +419,14 @@ var ExprCond = function(){
         this.listOfBooleanAnswer=[new ExprBoolAnswer()];
         this.outputType = undefined;
         this.id = makeID();
-        
-
+        this.clone=function(){
+                var temp=new ExprCond();
+                for(var i=0;i<this.listOfBooleanAnswer.length;i++){
+                        temp.listOfBooleanAnswer[i]=this.listOfBooleanAnswer[i].clone();
+                }
+                temp.id=this.id;
+                return temp;
+        };
 };
 
 
@@ -452,10 +675,32 @@ $(document).ready(function(){
                     }
                 };
         $(document.body).live('click', formValidation);
+
+        /*
+        Binds undo functionality with undo button
+        */
+        $("#undoButton").bind('click', function(){
+                if (historyarr.length !== 0){
+                        future.unshift(cloneProgram(program));
+                        program = historyarr.pop();
+                        renderProgram(createProgramHTML());
+                }
+        });
+
+        /*
+        Binds redo functionality with redo button
+        */
+        $("#redoButton").bind('click', function(){
+                if (future.length !== 0){
+                        historyarr.push(cloneProgram(program));
+                        program = future.shift();
+                        renderProgram(createProgramHTML());
+                }
+        });
 });
 
 /*
-        adds a stylesheet to <head> such that blocks can be colored according to their type
+adds a stylesheet to <head> such that blocks can be colored according to their type
 */
 function renderTypeColors(){
         var styleCSS = "<style type='text/css'>";
@@ -467,137 +712,6 @@ function renderTypeColors(){
         styleCSS += "</style>";
         $(styleCSS).appendTo("head");
 }
-
-/*
-Given an id from an HTML element, getCodeObject returns the corresponding code Object
-within the programs array.
-*/
-// function getCodeObject(id){
-//      for(var i = 0; i < program.length ; i++){
-//              if (program[i].id == id){
-//                      return program[i];
-//              }
-//      }
-//      throw new Error("Can't find code object");
-// }
-
-//takes in id from DOMelement (#) and returns code object (internal representation of html blocks)
-// function getProgramIndex(id, arr){
-//      for(var i = 0; i < program.length ; i++){
-//              if (program[i].id == id){
-//                      return program[i];
-//              } else if (program[i] instanceof makeDefineFunc){
-
-//              }
-//      }
-//      throw new Error("Can't find code object");
-// }
-
-/*
-A function for Arrays that takes in an id (String) and outputs the code object which has
-the same id
-Has a helper named condHelp.
-*/
-
-// function searchForIndex(id,array){
-//         var toReturn = undefined;
-//         for(var i=0; i<array.length;i++){
-//                 if(array[i].id===id){
-//                         return array[i];
-//                 }
-//                 else if(array[i] instanceof ExprDefineFunc || array[i] instanceof ExprDefineConst){
-//                         if(array[i].expr.id===id){
-//                                 return array[i].expr;
-//                         }
-//                         else if(array[i].expr instanceof ExprApp){
-//                                 toReturn = searchForIndex(id,array[i].expr.args);
-//                         } else if(array[i].expr instanceof ExprCond){
-//                                 toReturn = condHelp(id, array[i].expr)
-//                         }
-//                 }
-//                 else if(array[i] instanceof ExprApp){
-//                         toReturn = searchForIndex(id,array[i].args);
-//                 }else if(array[i] instanceof ExprCond){
-//                         toReturn = condHelp(id, array[i].expr)
-//                 }
-//                 //if breaks, change to !=
-//                 if(toReturn !== undefined){
-//                         return toReturn;
-//                 }
-//         }
-//         return undefined;
-// }
-
-// function condHelp(id, obj){
-//         var toReturn = undefined;
-//         for(var i = 0; i < obj.listOfBooleanAnswer.length; i++){
-//                 if(obj.listOfBooleanAnswer[i].id === id){
-//                         toReturn = obj.listOfBooleanAnswer[i];
-//                 }else if(obj.listOfBooleanAnswer[i].bool.id === id){
-//                         toReturn = obj.listOfBooleanAnswer[i].bool;
-//                 }else if(obj.listOfBooleanAnswer[i].bool instanceof ExprApp){
-//                         toReturn = searchForIndex(id, obj.listOfBooleanAnswer[i].answer.args);
-//                 }
-//                 if(toReturn === undefined){
-//                         if(obj.listOfBooleanAnswer[i].answer.id === id){
-//                                 toReturn = obj.listOfBooleanAnswer[i].answer;
-//                         }else if(obj.listOfBooleanAnswer[i].answer instanceof ExprApp){
-//                                 toReturn = searchForIndex(id, obj.listOfBooleanAnswer[i].answer.args);
-//                         }
-//                 }
-//                 if(toReturn !== undefined){
-//                         return toReturn;
-//                 }
-//         }
-//         return undefined;
-// }
-
-
-// //tries to remove id block within program array
-// function removeFromProgram(id){
-//      for (var i = 0; i < program.length; i++){
-//              if (program[i].id == id){
-//                      program.splice(i, 1);
-//              }
-//               else if (isDefine(program[i])){
-//                      removeExpression(id, program[i])
-//              }
-//              else if(program[i] instanceof ExprCond){
-//                      //removeCond(id,program[i])
-//              }
-//               else if(program[i] instanceof ExprApp){
-//                      removeApp(id,program[i])
-//              }
-//      }
-// }
-
-
-// //tries to remove id block within define block
-// function removeExpression(id, codeObject){
-//      if (codeObject.expr.id == id){
-//              codeObject.expr = null;
-//      } else if (codeObject.expr instanceof ExprApp){
-//              removeApp(id, codeObject.expr)
-//      } else if (arg instanceof ExprCond){
-//              //removeCond(something)
-//      }
-// }
-
-// //tries to remove id block within app
-// function removeApp(id,parent){
-//      for (var i = 0; i < parent.args.length; i++){
-//              if (parent.args[i].id == id){
-//                      parent.args[i] = null;
-//              }
-//              else if (parent.args[i] instanceof ExprApp){
-//                      removeApp(id, parent.args[i])
-//              }
-//              else if (parent.args[i] instanceof ExprCond){
-//                      //removeCond(something)
-//              }
-//      }
-// }
-
 
 //containsName takes in an array of objects and a string and returns the index at which that string is the name property of any of the objects
 function containsName(array_of_obj,stringElement){
@@ -634,6 +748,9 @@ function drawerButton(elt){
 //makeTypesArray will construct an object of kv pairs such that each type's value is an array of all indices to which that type is the output or the exclusive input
 function makeTypesArray(allFunctions,allConstants){
         var types={};
+        types.Booleans=["true","false"];
+        types.Numbers=["Number"];
+        types.Strings=["Text"];
         for(var i=0;i<allFunctions.length;i++){
                 var curOutput=allFunctions[i].output;
                 if(types[curOutput]!==undefined){
@@ -659,14 +776,11 @@ function makeTypesArray(allFunctions,allConstants){
         }
         types.Constants=[];
         for(i=0;i<allConstants.length;i++){
-                types.Constantstypes.Constants.length=i;
+                types.Constants.push(i);
         }
 
         types.Define=["define-constant","define-function","define-struct"];
         types.Expressions=["cond"];
-        types.Booleans.unshift("true","false");
-        types.Numbers.unshift("Number");
-        types.Strings.unshift("Text");
 
         return types;
 
@@ -806,7 +920,7 @@ function makeCodeFromOptions(optionsText){
                                         return new ExprConst(optionsText);
                                 }
                         }
-                        throw new Error("createBlock: internal error");
+                        throw new Error("makeCodeFromOptions: internal error");
                 }
         }
 
@@ -848,6 +962,26 @@ function createBlock(codeObject){
         
  }
 
+
+/*
+createProgramHTML takes the program array and translates it into HTML
+*/
+var createProgramHTML = function(){
+        var pageHTML = "";
+        for (var i = 0; i < program.length; i++){
+                pageHTML += "<li>" + createBlock(program[i]) + "</li>";
+        }
+        return pageHTML;
+};
+
+/*
+renderProgram takes in a string (programHTML) and changes the contents of #List to 
+programHTML
+*/
+var renderProgram = function(programHTML){
+        $("#List").html(programHTML);
+};
+
 /*
 encode takes in a string and encodes it such that bugs resulting from &, ", #, etc are eliminated"
 decode does something similar for the same purpose
@@ -882,12 +1016,11 @@ that function with name, color, and spaces for input blocks
         block += "<tr><th>" + encode(func.name) + "</th>";
         var i;
         for(i = 0; i < func.input.length; i++){
-                block += "<th class=\"" + encode(func.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">";
                 if (codeObject.args[i] != undefined){
-                         block += createBlock(codeObject.args[i]);
+                         block += "<th class=\"" + encode(func.input[i].type) +" noborder droppable\" id=\""+codeObject.funcIDList[i]+"\">" + createBlock(codeObject.args[i]);
                 }
                 else{
-                        block+= func.input[i].name;
+                        block+= "<th class=\"" + encode(func.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">" + func.input[i].name;
                 }
                 block+="</th>";
         }
@@ -909,7 +1042,7 @@ function createDefineBlock(codeObject){
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject){
         var block = "<table class=\"Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
-        block+="<th class=\"expr\"> <input type=\"Name\" id=\"Name\" name=\"Name\"/> <th  class=\"expr\">expr</th>";
+        block+="<th class=\"expr\"> <input/> <th  class=\"expr droppable\">expr</th>";
         return block + "</tr></table>";
 }
 
@@ -1037,14 +1170,32 @@ function interpreter(obj){
 
 //What is currently being carried. Type: DOM
 var carrying = undefined;
+
 //Similar to the variable carrying, except that is stores the corresponding program object
 var programCarrying = undefined;
+
+/*
+dropped is true if an object is dropped, false otherwise. Depending on whether or not an an object is
+dropped, the stop function in #List's sortable will behave differently. This is important for updating
+our model of the user's code.
+*/
 var dropped = false;
+
+/*
+Stores the current state of the program that will later be added to historyarr
+*/
 var tempProgram = undefined;
+
+/*
+Adds draggable to blocks that are inserted within blocks such as the inner blocks can be moved out of
+the outer block and into the sortable list
+*/
+var draggedClone = undefined;
 
 // .draggable is referring to the options within the drawers
 // .sortable is referring to the list containing the blocks within the program
 // .droppable is referring to things within the table that need to be filled and are yet to be actual expressions <e.g. (+ exp1 exp2)>
+
 $(function() {
 
         //implements sortability for the program block
@@ -1056,7 +1207,7 @@ $(function() {
                                 throw new Error("sortable start: ui.item is undefined");
                         } else {
                                 if (ui.item.is('li')){
-                                        tempProgram = program.slice(0);
+                                        tempProgram = cloneProgram(program);
                                         carrying = ui.item.html();
                                         var index = ui.item.index();
                                         programCarrying = program[index];
@@ -1093,15 +1244,7 @@ $(function() {
                                 throw new Error ("sortable receive");
                         }else{
                                 if (!ui.item.is('span.draggable')){
-                                      ui.sender.parent().parent().attr('style','border:3px;'+
-                                                                                "border-style:solid;"+
-                                                                                "border-radius:5px;"+
-                                                                                "height:30px;" +
-                                                                                "width:40px;"+
-                                                                                "border-color:grey");
-                                    var ancestor = ui.sender.parent().parent();
-                                    ancestor.children().detach();
-                                    ancestor.append("Exp");
+                                        eliminateBorder(ui.sender.parent().parent());
                                 }
                         }
                 },
@@ -1114,7 +1257,7 @@ $(function() {
         //Exprs things draggable from the drawer to the code
         $('.draggable').draggable({
                 start: function(event, ui) {
-                        tempProgram = program.slice(0);
+                        tempProgram = cloneProgram(program);
                 },
                 helper: function(event, ui){
                         programCarrying = makeCodeFromOptions($(this).text());
@@ -1130,15 +1273,7 @@ $(function() {
                 drop: function(event, ui){
                         dropped = true;
                         if (draggedClone != undefined){
-                                var ancestor = draggedClone.closest($("th"))
-                                ancestor.attr('style','border:3px;'+
-                                                                "border-style:solid;"+
-                                                                "border-radius:5px;"+
-                                                                "height:30px;" +
-                                                                "width:40px;"+
-                                                                "border-color:grey");
-                                ancestor.children().detach();
-                                ancestor.append("Exp")
+                                eliminateBorder(draggedClone.closest($("th")));
                                 draggedClone = undefined;
                         }
                         $(ui.draggable).remove();
@@ -1149,48 +1284,9 @@ $(function() {
         });
 });
 
-$("#undoButton").bind('click', function(){
-        if (historyarr.length !== 0){
-                future.push(program);
-                program = historyarr.pop();
-                renderProgram(createProgramHTML());
-        }
-});
-
-var createProgramHTML = function(){
-        var pageHTML = "";
-        for (var i = 0; i < program.length; i++){
-                pageHTML += "<li>" + createBlock(program[i]) + "</li>";
-        }
-        return pageHTML;
-};
-
-var renderProgram = function(programHTML){
-        $("#List").html(programHTML);
-};
-
 /*
-Sets the width of list items such that they span only the width of its contents, rather 
-than the entire page
+Adds dragging feature to jQuerySelection. This is applied to blocks within blocks.
 */
-var setLiWidth = function() {
-        $("#List li").each(function() {
-                $(this).width($(this).find("table").width() + 10);
-        });
-};
-
-/*
-Makes the jQuerySelection into an HTMLDom element
-*/
-var getHTML = function(jQuerySelection) {
-        return $(jQuerySelection).wrap("<div>").parent().html();
-};
-
-/*
-Adds draggable to blocks that are inserted within blocks such as the inner blocks can be moved out of
-the outer block and into the sortable list
-*/
-var draggedClone = undefined;
 var addDraggingFeature = function(jQuerySelection) {
         if (jQuerySelection !== null){
                 jQuerySelection.draggable({
@@ -1201,7 +1297,7 @@ var addDraggingFeature = function(jQuerySelection) {
                                 if ($(this) === undefined){
                                         throw new Error ("addDraggingFeature start: $(this) is undefined");
                                 } else {
-                                        tempProgram = program.slice(0);
+                                        tempProgram = cloneProgram(program);
                                         draggedClone = $(this);
                                         programCarrying = searchForIndex($(this).attr("id"), program);
                                         carrying = getHTML($(this));
@@ -1215,7 +1311,7 @@ var addDraggingFeature = function(jQuerySelection) {
 
 /*
 addDroppableFeature is a function that takes in a jQuery selector and applys droppable functionality
-to that selector
+to that selector. This is applied to empty blocks within blocks.
 */
 var addDroppableFeature = function(jQuerySelection) {
         if (jQuerySelection !== null){
@@ -1243,121 +1339,37 @@ var addDroppableFeature = function(jQuerySelection) {
         }
 };
 
-function searchForIndex(id, array){
-        var toReturn = undefined;
-        for(var i = 0; i< array.length; i++){
-                if(array[i] === undefined){
-                        //just skip
-                }else if(array[i].id===id){
-                        toReturn = array[i]
-                }else if(isDefine(array[i])){
-                        toReturn = searchForIndex(id, [array[i].expr]);
-                }else if(array[i] instanceof ExprApp){
-                        toReturn = searchForIndex(id, array[i].args);
-                }else if(array[i] instanceof ExprBoolAnswer){
-                        toReturn = searchForIndex(id, flatten(array[i]));
-                }else if(array[i] instanceof ExprCond){
-                        toReturn = searchForIndex(id, array[i].listOfBooleanAnswer);
-                }
-                if(toReturn !== undefined){
-                        return toReturn;
-                }
-        }
-        return undefined;
-}
-
-/**
-*flatten : object -> array
-*turns a ExprBoolAnswer into a single level array
+/*
+eliminateBorder takes in a jQuerySelection and returns nothing.
+It changes the jQuerySelection by adding a border and appending the word "Exp" inside the cell.
 */
-function flatten(obj){
-        var toReturn = [];
-        if(obj.bool !== undefined){
-                toReturn.push(obj.bool)
-        }
-        if(obj.answer !== undefined){
-                toReturn.push(obj.answer)
-        }
-        return toReturn;
+var eliminateBorder = function(jQuerySelection){
+        jQuerySelection.attr('style','border:3px;'+
+                                        "border-style:solid;"+
+                                        "border-radius:5px;"+
+                                        "height:30px;" +
+                                        "width:40px;"+
+                                        "border-color:grey");
+        jQuerySelection.children().detach();
+        jQuerySelection.append("Exp")
 }
 
 /*
-addProgram adds a code object (obj) to the program array given the id of the parent (parentId)
-and the id of the child (childId).
-STILL NEEDS TESTING: If obj is undefined, setChildInProgram removes the object at childId
-MAYBE: childID won't work and we'll need array position
+Sets the width of list items such that they span only the width of its contents, rather 
+than the entire page
 */
-function setChildInProgram(parentId, childId, obj){
-        var parent = searchForIndex(parentId, program);
-        if(parent === undefined){
-                throw new Error("setChildInProgram failure: parentId not found");
-        }
-        if(isLiteral(parent)){
-                throw new Error("setChildInProgram failure: parent was a literal, and cannot be added to");
-        }
-        if(parent.hasOwnProperty("funcIDList")){
-                var index;
-                if(obj !== undefined){
-                        index = getAddIndex(parent, childId);
-                }else{
-                        index = getRemoveIndex(parent, childId);
-                }
-                if(index === -1){
-                        throw new Error("setChildInProgram failure: childId not found");
-                }else{
-                        if(parent instanceof ExprApp){
-                                parent.args[index] = obj;
-                        }else if(isDefine(parent)){
-                                parent.expr = obj;
-                        }else if(parent instanceof ExprBoolAnswer){
-                                if(index === 0){
-                                        parent.bool = obj;
-                                }else{
-                                        parent.answer = obj;
-                                }
-                        }
-                }
-        }else if(parent instanceof ExprCond){
-                throw new Error("setChildInProgram failure: parent was top level of cond, that doesn't work");
-        }else{
-                throw new Error("setChildInProgram failure: parent looked like: " +interpreter(parent));
-        }
-}
-function getRemoveIndex(parent, childID){
-        var i;
-        var toReturn = -1;
-        if(isDefine(parent)){
-                if(expr.id === childID){
-                        toReturn = 0;
-                }
-        }else if(parent instanceof ExprApp){
-                for(i=0; i<parent.args.length; i++){
-                        if(parent.args[i] !== undefined){
-                                if(parent.args[i].id === childID){
-                                        toReturn = i;
-                                }
-                        }
-                }
-        }else if(parent instanceof ExprBoolAnswer){
-                if(parent.bool !== undefined && parent.bool.id === childID){
-                        toReturn = 0;
-                }
-                if(parent.answer !== undefined && parent.answer.id === childID){
-                        toReturn = 1;
-                }
-        }
-        return toReturn;
-}
-function getAddIndex(parent, childID){
-        for(var i =0; i<parent.funcIDList.length; i++){
-                if(parent.funcIDList[i] === childID){
-                        return i
-                }
-        }
-        return -1;
-}
+var setLiWidth = function() {
+        $("#List li").each(function() {
+                $(this).width($(this).find("table").width() + 10);
+        });
+};
 
-
+/*
+Makes the jQuerySelection into an HTMLDom element
+*/
+var getHTML = function(jQuerySelection) {
+        return $(jQuerySelection).wrap("<div>").parent().html();
+};
 
 
 /*====================================================================================
@@ -1393,7 +1405,7 @@ Add functionality for cond
 
 7/16-7/20
 update program array with drag & drop (Monday)
-- undo (Monday)
+undo (Monday)
 - full functionality of defines
         - user defined (function, constant) appearing in new drawer. deleting defines
         - Contracts in define full functionality (design check off by Shriram).
