@@ -129,17 +129,12 @@ DRAWER
 }
 
 #trash{
-	background: url('trash.png') 0 no-repeat;
-	height:110px;
-	width:70px;
-	overflow: hidden;
 	position: fixed;
 	bottom:100px;
 	right:0px;
+	z-index:-100;
 }
 
-#trash li{
-	height: 0px;
-	width: 0px;
-	overflow: hidden;
+.ui-draggable{
+	z-index: 100;
 }

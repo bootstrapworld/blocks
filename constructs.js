@@ -61,12 +61,6 @@ function makeIDList(num){
 }
 
 /*
-program is an array of makeDefineFunc/makeDefineVar/Expressions that make up the user's program
-on the screen.
-*/
-var program = [];
-
-/*
 Constucts the define function block given a contract, a list of arguments (a list of variables), 
 and an expression which is an expression object
 
@@ -129,24 +123,17 @@ function isDefine (obj){
 }
 
 
-function cloneArgs(argArray) {
-        var clonedArray = [];
-        for (var i = 0; i < argArray.length; i++){
-                clonedArray[i] = {name: argsArray[i].name, type: argsArray[i].type};
-        }
-        return clonedArray;
-}
 
 /*
 Constructs an application of an operator given the name, arguments, and output type. The arguments 
 is an array of expressions. Value is initially initialized to null.
-expr is a list of objects (one for each argument)
+args is a list of objects (one for each argument)
 */
-var ExprApp = function(funcName, args){
+var ExprApp = function(funcName){
         this.funcName = funcName;
         this.id = makeID();
         this.funcIDList = makeIDList(functions[containsName(functions, funcName)].input.length);
-        this.args = (args != undefined) ? args : [];
+        this.args = [];
         this.outputType = getOutput(funcName);
 };
 
@@ -360,10 +347,21 @@ var colors={};
  colors.Constants="#FFFFFF";
 
 /*
-history of the program state. Updated when the user changes something about the program (i.e.
+historyarr of the program state. Updated when the user changes something about the program (i.e.
 adds a block, moves a block, deletes something, etc.)
 */
-var history = [];
+var historyarr = [];
+
+/*
+future is an array of the program states. Updated when the user undos something.
+*/
+var future = [];
+
+/*
+program is an array of makeDefineFunc/makeDefineVar/Expressions that make up the user's program
+on the screen.
+*/
+var program = [];
 
 /*====================================================================================
    ___ _     _          _  __   __        _      _    _        
@@ -438,8 +436,6 @@ $(document).ready(function(){
                                         return;
                                 } 
                                 else{
-                                        console.log(program);
-                                        
                                         codeObject.value = inputtext;
 
                                                 focused.css("background-color", colors.Numbers);
@@ -802,11 +798,7 @@ function makeCodeFromOptions(optionsText){
                 else{
                         for(i = 0; i < functions.length; i++){
                                 if (functions[i].name === optionsText){
-                                        console.log("function input ", functions[i].input);
-                                        var x = new ExprApp(optionsText, functions[i].input);
-                                        
-                                        console.log("makeCodeFromOptions ", x);
-                                        return x;
+                                        return new ExprApp(optionsText);
                                 }
                         }
                         for(i=0;i<constants.length;i++){
@@ -888,9 +880,18 @@ that function with name, color, and spaces for input blocks
         var func = functions[functionIndex];
         var block = "<table class=\"expr " + func.output  +"\"" + " id=\""+codeObject.id+"\">";
         block += "<tr><th>" + encode(func.name) + "</th>";
-        for(var i = 0; i < func.input.length; i++){
-                block += "<th class=\"" + encode(func.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">" + func.input[i].name + "</th>";
+        var i;
+        for(i = 0; i < func.input.length; i++){
+                block += "<th class=\"" + encode(func.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">";
+                if (codeObject.args[i] != undefined){
+                         block += createBlock(codeObject.args[i]);
+                }
+                else{
+                        block+= func.input[i].name;
+                }
+                block+="</th>";
         }
+
         return block + "</tr></table>";
  }
 
@@ -1038,6 +1039,8 @@ function interpreter(obj){
 var carrying = undefined;
 //Similar to the variable carrying, except that is stores the corresponding program object
 var programCarrying = undefined;
+var dropped = false;
+var tempProgram = undefined;
 
 // .draggable is referring to the options within the drawers
 // .sortable is referring to the list containing the blocks within the program
@@ -1053,8 +1056,12 @@ $(function() {
                                 throw new Error("sortable start: ui.item is undefined");
                         } else {
                                 if (ui.item.is('li')){
+                                        tempProgram = program.slice(0);
                                         carrying = ui.item.html();
-                                }
+                                        var index = ui.item.index();
+                                        programCarrying = program[index];
+                                        program.splice(index, 1);
+                                } 
                         }
                 },
                 stop: function(event, ui) {
@@ -1063,15 +1070,17 @@ $(function() {
                         } else{
                                 var replacement = $('<li>').append(carrying);
                                 addDroppableFeature(replacement.find(('.droppable')));
-                               // replacement.children("table").draggable('destroy');
                                 ui.item.replaceWith(replacement);
                                 setLiWidth();
                                 if (programCarrying == undefined){
                                         throw new Error ("sortable stop: programCarrying is undefined/null");
-                                }else {
-                                        program[replacement.index()] = programCarrying;
-                               //         console.log(program);
+                                }else if (!dropped){
+                                        program.splice(replacement.index(), 0, programCarrying);
                                 }
+                                console.log("sortable stop");
+                                historyarr.push(tempProgram);
+                                future = [];
+                                dropped = false;
                                 programCarrying = null;
                                 carrying = null;
                         }
@@ -1104,9 +1113,11 @@ $(function() {
 
         //Exprs things draggable from the drawer to the code
         $('.draggable').draggable({
+                start: function(event, ui) {
+                        tempProgram = program.slice(0);
+                },
                 helper: function(event, ui){
                         programCarrying = makeCodeFromOptions($(this).text());
-                        console.log(programCarrying);
                         carrying = createBlock(programCarrying);
                         return carrying;
                 },
@@ -1116,13 +1127,47 @@ $(function() {
         //allows for deletion
         $("#trash").droppable({
                 tolerance:'touch',
-                over:function(event, ui){
-                },
                 drop: function(event, ui){
+                        dropped = true;
+                        if (draggedClone != undefined){
+                                var ancestor = draggedClone.closest($("th"))
+                                ancestor.attr('style','border:3px;'+
+                                                                "border-style:solid;"+
+                                                                "border-radius:5px;"+
+                                                                "height:30px;" +
+                                                                "width:40px;"+
+                                                                "border-color:grey");
+                                ancestor.children().detach();
+                                ancestor.append("Exp")
+                                draggedClone = undefined;
+                        }
                         $(ui.draggable).remove();
+                        console.log("drop on trash");
+                        historyarr.push(tempProgram);
+                        future = [];
                 }
         });
 });
+
+$("#undoButton").bind('click', function(){
+        if (historyarr.length !== 0){
+                future.push(program);
+                program = historyarr.pop();
+                renderProgram(createProgramHTML());
+        }
+});
+
+var createProgramHTML = function(){
+        var pageHTML = "";
+        for (var i = 0; i < program.length; i++){
+                pageHTML += "<li>" + createBlock(program[i]) + "</li>";
+        }
+        return pageHTML;
+};
+
+var renderProgram = function(programHTML){
+        $("#List").html(programHTML);
+};
 
 /*
 Sets the width of list items such that they span only the width of its contents, rather 
@@ -1145,19 +1190,22 @@ var getHTML = function(jQuerySelection) {
 Adds draggable to blocks that are inserted within blocks such as the inner blocks can be moved out of
 the outer block and into the sortable list
 */
-var num = 0;
+var draggedClone = undefined;
 var addDraggingFeature = function(jQuerySelection) {
         if (jQuerySelection !== null){
                 jQuerySelection.draggable({
-                        connectToSortable: "#List",
+                        connectToSortable: "#List, trash",
                         helper:'clone',
                         start:function(event, ui){
+                                console.log("dragging start");
                                 if ($(this) === undefined){
                                         throw new Error ("addDraggingFeature start: $(this) is undefined");
                                 } else {
+                                        tempProgram = program.slice(0);
+                                        draggedClone = $(this);
                                         programCarrying = searchForIndex($(this).attr("id"), program);
-                                        console.log(programCarrying);
                                         carrying = getHTML($(this));
+                                        setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined);
                                 }
                         }
 
@@ -1182,55 +1230,53 @@ var addDroppableFeature = function(jQuerySelection) {
                                 } 
                                 else if($(this).children().length === 0){
                                         $(this).html(carrying);
-                                       // console.log($(this).closest($("table")).attr("id"),$(this).attr("id"));
                                         setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying);
                                         addDroppableFeature($(this).find('.droppable'));
                                         addDraggingFeature($(this).find("table"));
                                         $(this).css("border", "none");
                                         ui.draggable.detach();
+                                        dropped = true;
+                                        future = [];
                                 }
                         }
                 });
         }
 };
 
-
-/*
-* searchForIndex - searches the program for the given index
-*id - the id we are searching for
-*obj - the ExprCond we are searching through
-*@return - the object with the given id
-*/
 function searchForIndex(id, array){
         var toReturn = undefined;
         for(var i = 0; i< array.length; i++){
-                if(array[i].id===id){
-                        toReturn = array[i];
-                        break;
+                if(array[i] === undefined){
+                        //just skip
+                }else if(array[i].id===id){
+                        toReturn = array[i]
                 }else if(isDefine(array[i])){
                         toReturn = searchForIndex(id, [array[i].expr]);
                 }else if(array[i] instanceof ExprApp){
                         toReturn = searchForIndex(id, array[i].args);
-                       // console.log(toReturn);
+                }else if(array[i] instanceof ExprBoolAnswer){
+                        toReturn = searchForIndex(id, flatten(array[i]));
                 }else if(array[i] instanceof ExprCond){
-                        toReturn = searchForIndex(id, flatten(array[i].listOfBooleanAnswer));
+                        toReturn = searchForIndex(id, array[i].listOfBooleanAnswer);
+                }
+                if(toReturn !== undefined){
+                        return toReturn;
                 }
         }
-        return toReturn;
+        return undefined;
 }
 
 /**
-*flatten : array -> array
-*turns an array of tuples into a single level array
+*flatten : object -> array
+*turns a ExprBoolAnswer into a single level array
 */
-function flatten(arr){
-        var toReturn =[];
-        for(var i = 0; i < arr.length; i++){
-                for(var item in arr[i]){
-                        if(arr[i].hasOwnProperty(item) && arr[i][item] !== undefined && arr[i][item] instanceof Object){
-                                toReturn.push(arr[i][item]);
-                        }
-                }
+function flatten(obj){
+        var toReturn = [];
+        if(obj.bool !== undefined){
+                toReturn.push(obj.bool)
+        }
+        if(obj.answer !== undefined){
+                toReturn.push(obj.answer)
         }
         return toReturn;
 }
@@ -1250,12 +1296,11 @@ function setChildInProgram(parentId, childId, obj){
                 throw new Error("setChildInProgram failure: parent was a literal, and cannot be added to");
         }
         if(parent.hasOwnProperty("funcIDList")){
-                var index = -1;
-                for(var i = 0; i < parent.funcIDList.length; i++){
-                        if(parent.funcIDList[i] === childId){
-                                index = i;
-                                break;
-                        }
+                var index;
+                if(obj !== undefined){
+                        index = getAddIndex(parent, childId);
+                }else{
+                        index = getRemoveIndex(parent, childId);
                 }
                 if(index === -1){
                         throw new Error("setChildInProgram failure: childId not found");
@@ -1277,6 +1322,39 @@ function setChildInProgram(parentId, childId, obj){
         }else{
                 throw new Error("setChildInProgram failure: parent looked like: " +interpreter(parent));
         }
+}
+function getRemoveIndex(parent, childID){
+        var i;
+        var toReturn = -1;
+        if(isDefine(parent)){
+                if(expr.id === childID){
+                        toReturn = 0;
+                }
+        }else if(parent instanceof ExprApp){
+                for(i=0; i<parent.args.length; i++){
+                        if(parent.args[i] !== undefined){
+                                if(parent.args[i].id === childID){
+                                        toReturn = i;
+                                }
+                        }
+                }
+        }else if(parent instanceof ExprBoolAnswer){
+                if(parent.bool !== undefined && parent.bool.id === childID){
+                        toReturn = 0;
+                }
+                if(parent.answer !== undefined && parent.answer.id === childID){
+                        toReturn = 1;
+                }
+        }
+        return toReturn;
+}
+function getAddIndex(parent, childID){
+        for(var i =0; i<parent.funcIDList.length; i++){
+                if(parent.funcIDList[i] === childID){
+                        return i
+                }
+        }
+        return -1;
 }
 
 
@@ -1314,7 +1392,7 @@ Draggable blocks into blocks
 Add functionality for cond
 
 7/16-7/20
-- update program array with drag & drop (Monday)
+update program array with drag & drop (Monday)
 - undo (Monday)
 - full functionality of defines
         - user defined (function, constant) appearing in new drawer. deleting defines
