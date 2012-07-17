@@ -991,6 +991,7 @@ var renderProgram = function(programHTML){
         $("#List table").children().each(function(){
                 addDraggingFeature($(this).find("table"));
         });
+        setLiWidth();
 };
 
 /*
@@ -1250,13 +1251,16 @@ $(function() {
                                 carrying = null;
                         }
                 },
-                remove: function(event, ui){
-                        $(ui.item).detach();
-                },
+                // remove: function(event, ui){
+
+                //         console.log("removed");
+                //         $(ui.item).detach();
+                // },
                 receive:function(event,ui){
                         if(ui.item === null){
                                 throw new Error ("sortable receive");
                         }else{
+                        console.log("received");
                                 if (!ui.item.is('span.draggable')){
                                         eliminateBorder(ui.sender.parent().parent());
                                 }
@@ -1285,6 +1289,7 @@ $(function() {
         $("#trash").droppable({
                 tolerance:'touch',
                 drop: function(event, ui){
+                        console.log("in trash");
                         dropped = true;
                         if (draggedClone != undefined){
                                 eliminateBorder(draggedClone.closest($("th")));
@@ -1312,7 +1317,6 @@ var addDraggingFeature = function(jQuerySelection) {
                                         draggedClone = $(this);
                                         programCarrying = searchForIndex($(this).attr("id"), program);
                                         carrying = getHTML($(this));
-                                        console.log($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"));
                                         setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined);
                                 }
                         },
