@@ -60,6 +60,31 @@ function makeIDList(num){
         return toReturn;
 }
 
+/*
+cloneProgram takes in an array of code objects (arr) and outputs a clone of arr
+*/
+var cloneProgram = function(arr){
+        var tempArr = [];
+        for (var i = 0; i < arr.length; i++){
+                tempArr[i] = arr[i].clone();
+        }
+        return tempArr;
+};
+
+/**
+*flatten : object -> array
+*turns a ExprBoolAnswer into a single level array
+*/
+function flatten(obj){
+        var toReturn = [];
+        if(obj.bool !== undefined){
+                toReturn.push(obj.bool)
+        }
+        if(obj.answer !== undefined){
+                toReturn.push(obj.answer)
+        }
+        return toReturn;
+}
 
 /*
 searchForIndex takes in an a string (id) and and array filled within code Objects (one of which should
@@ -91,35 +116,8 @@ function searchForIndex(id, array){
 }
 
 /*
-cloneProgram takes in an array of code objects (arr) and outputs a clone of arr
-*/
-var cloneProgram = function(arr){
-        var tempArr = [];
-        for (var i = 0; i < arr.length; i++){
-                tempArr[i] = arr[i].clone();
-        }
-        return tempArr;
-};
-
-/**
-*flatten : object -> array
-*turns a ExprBoolAnswer into a single level array
-*/
-function flatten(obj){
-        var toReturn = [];
-        if(obj.bool !== undefined){
-                toReturn.push(obj.bool)
-        }
-        if(obj.answer !== undefined){
-                toReturn.push(obj.answer)
-        }
-        return toReturn;
-}
-
-/*
 addProgram adds a code object (obj) to the program array given the id of the parent (parentId)
 and the id of the child (childId).
-STILL NEEDS TESTING: If obj is undefined, setChildInProgram removes the object at childId
 MAYBE: childID won't work and we'll need array position
 */
 function setChildInProgram(parentId, childId, obj){
@@ -162,7 +160,7 @@ function getRemoveIndex(parent, childID){
         var i;
         var toReturn = -1;
         if(isDefine(parent)){
-                if(expr.id === childID){
+                if(parent.expr != undefined && parent.expr.id === childID){
                         toReturn = 0;
                 }
         }else if(parent instanceof ExprApp){
@@ -1042,8 +1040,13 @@ function createDefineBlock(codeObject){
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject){
         var block = "<table class=\"Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
-        block+="<th class=\"expr\"> <input/> <th  class=\"expr droppable\">expr</th>";
-        return block + "</tr></table>";
+        block+="<th class=\"expr\"> <input/> <th  id=\"" + codeObject.funcIDList[0] + "\" class=\"expr droppable";
+        if (codeObject.expr == undefined){
+                block+= "\"> Exp";
+        } else{
+                block += " noborder\">" + createBlock(codeObject.expr);
+        }
+        return block + "</th></tr></table>";
 }
 
 //createDefineStructBlock outputs the block corresponding to creating a structure
@@ -1228,7 +1231,6 @@ $(function() {
                                 }else if (!dropped){
                                         program.splice(replacement.index(), 0, programCarrying);
                                 }
-                                console.log("sortable stop");
                                 historyarr.push(tempProgram);
                                 future = [];
                                 dropped = false;
@@ -1277,7 +1279,6 @@ $(function() {
                                 draggedClone = undefined;
                         }
                         $(ui.draggable).remove();
-                        console.log("drop on trash");
                         historyarr.push(tempProgram);
                         future = [];
                 }
@@ -1293,7 +1294,6 @@ var addDraggingFeature = function(jQuerySelection) {
                         connectToSortable: "#List, trash",
                         helper:'clone',
                         start:function(event, ui){
-                                console.log("dragging start");
                                 if ($(this) === undefined){
                                         throw new Error ("addDraggingFeature start: $(this) is undefined");
                                 } else {
@@ -1301,6 +1301,7 @@ var addDraggingFeature = function(jQuerySelection) {
                                         draggedClone = $(this);
                                         programCarrying = searchForIndex($(this).attr("id"), program);
                                         carrying = getHTML($(this));
+                                        console.log($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"));
                                         setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined);
                                 }
                         }
