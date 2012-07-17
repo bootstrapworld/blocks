@@ -574,6 +574,15 @@ adds a block, moves a block, deletes something, etc.)
 var historyarr = [];
 
 /*
+addToHistory takes in a program state and adds it to history while setting the future array 
+(connected to the redo button) to an empty array
+*/
+var addToHistory = function(programState) {
+        historyarr.push(programState);
+        future = [];
+};
+
+/*
 future is an array of the program states. Updated when the user undos something.
 */
 var future = [];
@@ -978,6 +987,10 @@ programHTML
 */
 var renderProgram = function(programHTML){
         $("#List").html(programHTML);
+        addDroppableFeature($("#List .droppable"));
+        $("#List table").children().each(function(){
+                addDraggingFeature($(this).find("table"));
+        });
 };
 
 /*
@@ -1231,8 +1244,7 @@ $(function() {
                                 }else if (!dropped){
                                         program.splice(replacement.index(), 0, programCarrying);
                                 }
-                                historyarr.push(tempProgram);
-                                future = [];
+                                addToHistory(tempProgram);
                                 dropped = false;
                                 programCarrying = null;
                                 carrying = null;
@@ -1279,8 +1291,7 @@ $(function() {
                                 draggedClone = undefined;
                         }
                         $(ui.draggable).remove();
-                        historyarr.push(tempProgram);
-                        future = [];
+                        addToHistory(tempProgram);
                 }
         });
 });
@@ -1303,6 +1314,12 @@ var addDraggingFeature = function(jQuerySelection) {
                                         carrying = getHTML($(this));
                                         console.log($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"));
                                         setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined);
+                                }
+                        },
+                        stop:function(event, ui){
+                                if (programCarrying != null && carrying != null){
+                                        program = tempProgram;
+                                        renderProgram(createProgramHTML());
                                 }
                         }
 
@@ -1333,7 +1350,6 @@ var addDroppableFeature = function(jQuerySelection) {
                                         $(this).css("border", "none");
                                         ui.draggable.detach();
                                         dropped = true;
-                                        future = [];
                                 }
                         }
                 });
