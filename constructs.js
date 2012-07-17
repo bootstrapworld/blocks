@@ -674,11 +674,35 @@ $(document).ready(function(){
                         }
 
                         //STRINGS
-                        else if(focused.closest($("table")).attr("class")==="Strings"){
+                        else if(focused.closest($("table")).hasClass("Strings")){
                                 codeObject.value = inputtext;
                                         focused=null;
                         }
-                        //TODO saving values
+                        //DEFINING CONSTANTS
+                        else if(focused.closest($("table")).hasClass("DefineVar")){
+                                var prevName=codeObject.constName;
+                                codeObject.constName=inputtext;
+                                console.log("I am here")
+                                if((prevName !=undefined && prevName != "") && inputtext !== ""){
+                                        console.log("case prev is defined, input is defined");
+                                        console.log("prevName is",prevName)
+                                        var prevIndex=containsName(prevName,constants);
+                                        if(prevIndex != -1){
+                                                constants[prevIndex].name=inputtext;
+                                        }
+                                }
+                                else if ((prevName !=undefined && prevName != "") && inputtext === ""){
+                                        console.log("case prev is defined, input is undefined");
+                                        constants.splice(containsName(prevName,1));
+                                }
+                                else if((prevName ==undefined || prevName == "") && inputtext !== ""){
+                                        console.log("case prev is undefined, input is defined");
+                                        //addTypeToConstant(codeObject);
+                                }
+                                //REDRAW DRAWERS
+                                focused=null
+                        }
+                        //TODO saving values into the program array
                     }
                 };
         $(document.body).live('click', formValidation);
@@ -1042,7 +1066,7 @@ that function with name, color, and spaces for input blocks
 
 //createDefineBlock outputs the block corresponding to defining a function
 function createDefineBlock(codeObject){
-        var block ="<table class=\"Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
+        var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
         //contract
         block+="<tr><th><input id=\"name\"></th><th> : </th><th>"+generateTypeDrop()+"</th><th> <button class=\"buttonPlus\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></th></tr>";
         //define block
@@ -1053,7 +1077,7 @@ function createDefineBlock(codeObject){
 
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject){
-        var block = "<table class=\"Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
+        var block = "<table class=\"DefineVar Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
         block+="<th class=\"expr\"> <input/> <th  id=\"" + codeObject.funcIDList[0] + "\" class=\"expr droppable";
         if (codeObject.expr == undefined){
                 block+= "\"> Exp";
@@ -1065,7 +1089,7 @@ function createDefineVarBlock(codeObject){
 
 //createDefineStructBlock outputs the block corresponding to creating a structure
 function createDefineStructBlock(codeObject){
-        var block ="<table class=\"Define\" " + "id=\""+codeObject.id+"\"><tr><th>define-struct</th>";
+        var block ="<table class=\"DefineStruct Define\" " + "id=\""+codeObject.id+"\"><tr><th>define-struct</th>";
         block+="<th class=\"expr\"><input type=\"Name\" id=\"Name\" name=\"Name\"/><th class=\"expr\">properties";
         return block + "</tr></table>";
 }
@@ -1431,6 +1455,7 @@ undo (Monday)
         - user defined (function, constant) appearing in new drawer. deleting defines
         - Contracts in define full functionality (design check off by Shriram).
         - make plus buttons work
+-Make Expr placeholders better
 
 7/22-27
 - Type checking
