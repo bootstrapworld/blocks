@@ -151,6 +151,7 @@ function setChildInProgram(parentId, childId, obj){
                         }
                 }
         }else if(parent instanceof ExprCond){
+                console.log(parentId,childId)
                 throw new Error("setChildInProgram failure: parent was top level of cond, that doesn't work");
         }else{
                 throw new Error("setChildInProgram failure: parent looked like: " +interpreter(parent));
@@ -201,6 +202,7 @@ makeDefineFunc(contract1, ["x"], makeApp("+", [makeVariable("x"), 2]))
 contract1 = makeContract("add2", ["Numbers"], "Numbers")
 
 expr = the expr, not a list, an object
+funcIDList refers to the expr block
 */
 var ExprDefineFunc = function(){
         this.contract = new ExprContract();
@@ -414,7 +416,7 @@ ExprCond(list1)
 list1 = [ExprBoolAnswer(ExprBoolean(true),ExprNum(2)).ExprBoolAnswer(ExprBoolean(False),ExprNum(1))]
 */
 var ExprCond = function(){
-        this.listOfBooleanAnswer=[new ExprBoolAnswer()];
+        this.listOfBooleanAnswer=[new ExprBoolAnswer(),new ExprBoolAnswer()];
         this.outputType = undefined;
         this.id = makeID();
         this.clone=function(){
@@ -422,6 +424,7 @@ var ExprCond = function(){
                 for(var i=0;i<this.listOfBooleanAnswer.length;i++){
                         temp.listOfBooleanAnswer[i]=this.listOfBooleanAnswer[i].clone();
                 }
+                temp.outputType=this.outputType;
                 temp.id=this.id;
                 return temp;
         };
@@ -699,8 +702,8 @@ $(document).ready(function(){
                                         console.log("case prev is undefined, input is defined");
                                         //addTypeToConstant(codeObject);
                                 }
-                                //REDRAW DRAWERS
-                                focused=null
+                                //makeDrawers(functions,constants);
+                                focused=null;
                         }
                         //TODO saving values into the program array
                     }
@@ -1065,13 +1068,24 @@ that function with name, color, and spaces for input blocks
  }
 
 //createDefineBlock outputs the block corresponding to defining a function
+//LINK THE TWO TEXT BOXES
+//CHANGE THE WAY ARGS WORKS
 function createDefineBlock(codeObject){
         var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
         //contract
-        block+="<tr><th><input id=\"name\"></th><th> : </th><th>"+generateTypeDrop()+"</th><th> <button class=\"buttonPlus\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></th></tr>";
+        block+="<tr><th><input id=\"name\"></th><th> : </th><th>"+generateTypeDrop()+"</th><th> <button class=\"buttonPlus\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></tr>";
         //define block
         block+="<tr><th>define</th>";
-        block+="<th class=\"expr\"> <input type=\"Name\" id=\"Name\" name=\"Name\"/><th class=\"expr\">args <th  class=\"expr\">expr";
+        block+="<th class=\"expr\"> <input type=\"Name\" id=\"Name\" name=\"Name\"/></th>";
+        block+="<th class=\"expr\">args </th>";
+        if(codeObject.expr != undefined){
+                block+="<th class=\"noborder droppable expr\" id="+codeObject.funcIDList[0]+">";
+                block+=createBlock(codeObject.expr);
+                block+="</th>";
+        }
+        else{
+                block+="<th class=\"droppable expr\" id="+codeObject.funcIDList[0]+">expr</th>";
+        }
         return block + "</tr></table>";
 }
 
@@ -1096,9 +1110,28 @@ function createDefineStructBlock(codeObject){
 
 //createCondBlock outputs the block corresponding to creating a conditional
 function createCondBlock(codeObject){
-        var block =  "<table class=\"expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th>cond</tr>";
-        block+="<tr id=\"" + codeObject.id + "\"><th><th id=\"" + codeObject.funcIDList[0] + "\" class=\"Booleans expr\">boolean <th id=\"" + codeObject.funcIDList[1] + "\" class=\"expr\">expr</tr>";
-        block+="<tr><th><th><button class=\"buttonCond\">+</button></th></tr>";
+        var block =  "<table class=\"expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th style=\"float:left\">cond</th></tr>";
+        for(var i=0;i<codeObject.listOfBooleanAnswer.length;i++){
+                block+="<tr><th><table id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>"
+                if(codeObject.listOfBooleanAnswer[i].bool!=undefined){
+                        block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"noborder droppable Booleans expr\">";
+                        block+=createBlock(codeObject.listOfBooleanAnswer[i].bool);
+                        block+="</th>";
+                }
+                else{
+                        block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"droppable Booleans expr\">boolean</th>"
+                }
+                if(codeObject.listOfBooleanAnswer[i].answer!=undefined){
+                        block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"noborder droppable expr\">";
+                        block+=createBlock(codeObject.listOfBooleanAnswer[i].answer);
+                        block+="</table></th></tr>";
+                }
+                else{
+                        block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"droppable expr\">expr</table></th></tr>";
+                }
+        }
+        //CHANGE TO AUTO
+        block+="<tr><th><button class=\"buttonCond\">+</button></th></tr>";
         return block + "</table>";
 }
 
