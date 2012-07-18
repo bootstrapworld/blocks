@@ -213,7 +213,7 @@ var ExprDefineFunc = function(){
         this.clone=function(){
                 var temp=new ExprDefineFunc();
                 temp.contract=this.contract.clone();
-               if (this.argumentNames != undefined){
+                if (this.argumentNames != undefined){
                         temp.argumentTypes=this.argumentNames.slice(0);
                 }
                 if (this.expr != undefined){
@@ -1347,13 +1347,15 @@ $(function() {
                 tolerance:'touch',
                 drop: function(event, ui){
                         console.log("in trash");
-                        dropped = true;
+                        //dropped = true;
                         if (draggedClone != undefined){
                                 eliminateBorder(draggedClone.closest($("th")));
                                 draggedClone = undefined;
                         }
                         $(ui.draggable).remove();
                         addToHistory(tempProgram);
+                        programCarrying=null;
+                        carrying=null;
                 }
         });
 });
