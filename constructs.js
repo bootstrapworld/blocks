@@ -61,10 +61,136 @@ function makeIDList(num){
 }
 
 /*
-program is an array of makeDefineFunc/makeDefineVar/Expressions that make up the user's program
-on the screen.
+cloneProgram takes in an array of code objects (arr) and outputs a clone of arr
 */
-var program = [];
+var cloneProgram = function(arr){
+        var tempArr = [];
+        for (var i = 0; i < arr.length; i++){
+                tempArr[i] = arr[i].clone();
+        }
+        return tempArr;
+};
+
+/**
+*flatten : object -> array
+*turns a ExprBoolAnswer into a single level array
+*/
+function flatten(obj){
+        var toReturn = [];
+        if(obj.bool !== undefined){
+                toReturn.push(obj.bool)
+        }
+        if(obj.answer !== undefined){
+                toReturn.push(obj.answer)
+        }
+        return toReturn;
+}
+
+/*
+searchForIndex takes in an a string (id) and and array filled within code Objects (one of which should
+contain an object with the id). 
+
+@return: The object with the corresponding id.
+*/
+function searchForIndex(id, array){
+        var toReturn = undefined;
+        for(var i = 0; i< array.length; i++){
+                if(array[i] === undefined){
+                        //just skip
+                }else if(array[i].id===id){
+                        toReturn = array[i]
+                }else if(isDefine(array[i])){
+                        toReturn = searchForIndex(id, [array[i].expr]);
+                }else if(array[i] instanceof ExprApp){
+                        toReturn = searchForIndex(id, array[i].args);
+                }else if(array[i] instanceof ExprBoolAnswer){
+                        toReturn = searchForIndex(id, flatten(array[i]));
+                }else if(array[i] instanceof ExprCond){
+                        toReturn = searchForIndex(id, array[i].listOfBooleanAnswer);
+                }
+                if(toReturn !== undefined){
+                        return toReturn;
+                }
+        }
+        return undefined;
+}
+
+/*
+addProgram adds a code object (obj) to the program array given the id of the parent (parentId)
+and the id of the child (childId).
+MAYBE: childID won't work and we'll need array position
+*/
+function setChildInProgram(parentId, childId, obj){
+        var parent = searchForIndex(parentId, program);
+        if(parent === undefined){
+                throw new Error("setChildInProgram failure: parentId not found");
+        }
+        if(isLiteral(parent)){
+                throw new Error("setChildInProgram failure: parent was a literal, and cannot be added to");
+        }
+        if(parent.hasOwnProperty("funcIDList")){
+                var index;
+                if(obj !== undefined){
+                        index = getAddIndex(parent, childId);
+                }else{
+                        index = getRemoveIndex(parent, childId);
+                }
+                if(index === -1){
+                        throw new Error("setChildInProgram failure: childId not found");
+                }else{
+                        if(parent instanceof ExprApp){
+                                parent.args[index] = obj;
+                        }else if(isDefine(parent)){
+                                parent.expr = obj;
+                        }else if(parent instanceof ExprBoolAnswer){
+                                if(index === 0){
+                                        parent.bool = obj;
+                                }else{
+                                        parent.answer = obj;
+                                }
+                        }
+                }
+        }else if(parent instanceof ExprCond){
+                console.log(parentId,childId)
+                throw new Error("setChildInProgram failure: parent was top level of cond, that doesn't work");
+        }else{
+                throw new Error("setChildInProgram failure: parent looked like: " +interpreter(parent));
+        }
+}
+function getRemoveIndex(parent, childID){
+        var i;
+        var toReturn = -1;
+        if(isDefine(parent)){
+                if(parent.expr != undefined && parent.expr.id === childID){
+                        toReturn = 0;
+                }
+        }else if(parent instanceof ExprApp){
+                for(i=0; i<parent.args.length; i++){
+                        if(parent.args[i] !== undefined){
+                                if(parent.args[i].id === childID){
+                                        toReturn = i;
+                                }
+                        }
+                }
+        }else if(parent instanceof ExprBoolAnswer){
+                if(parent.bool !== undefined && parent.bool.id === childID){
+                        toReturn = 0;
+                }
+                if(parent.answer !== undefined && parent.answer.id === childID){
+                        toReturn = 1;
+                }
+        }
+        return toReturn;
+}
+function getAddIndex(parent, childID){
+        for(var i =0; i<parent.funcIDList.length; i++){
+                if(parent.funcIDList[i] === childID){
+                        return i
+                }
+        }
+        return -1;
+}
+
 
 /*
 Constucts the define function block given a contract, a list of arguments (a list of variables), 
@@ -76,6 +202,7 @@ makeDefineFunc(contract1, ["x"], makeApp("+", [makeVariable("x"), 2]))
 contract1 = makeContract("add2", ["Numbers"], "Numbers")
 
 expr = the expr, not a list, an object
+funcIDList refers to the expr block
 */
 var ExprDefineFunc = function(){
         this.contract = new ExprContract();
@@ -83,6 +210,19 @@ var ExprDefineFunc = function(){
         this.expr = undefined;
         this.id = makeID();
         this.funcIDList = makeIDList(1);
+        this.clone=function(){
+                var temp=new ExprDefineFunc();
+                temp.contract=this.contract.clone();
+                if (this.argumentNames != undefined){
+                        temp.argumentTypes=this.argumentNames.slice(0);
+                }
+                if (this.expr != undefined){
+                        temp.expr=this.expr.clone();
+                }
+                temp.id=this.id;
+                temp.funcIDList=this.funcIDList.slice(0);
+                return temp;
+        };
 };
 
 var ExprContract = function(){
@@ -90,6 +230,16 @@ var ExprContract = function(){
         this.argumentTypes = undefined;
         this.outputType = undefined;
         this.id = makeID();
+        this.clone=function(){
+                var temp=new ExprContract();
+                temp.funcName=this.funcName;
+                if (this.argumentTypes != undefined){
+                        temp.argumentTypes=this.argumentTypes.slice(0);
+                }
+                temp.outputType=this.outputType;
+                temp.id=this.id;
+                return temp;
+        };
 };
 
 /*
@@ -108,6 +258,17 @@ var ExprDefineConst = function(){
         this.outputType = undefined; //MAKE SURE THIS WILL BE DEFINED!!!!
         this.id = makeID();
         this.funcIDList = makeIDList(1);
+        this.clone=function(){
+                var temp=new ExprDefineConst();
+                temp.constName=this.constName;
+                if (this.expr != undefined){
+                        temp.expr=this.expr.clone();
+                }
+                temp.outputType=this.outputType;
+                temp.id=this.id;
+                temp.funcIDList=this.funcIDList.slice(0);
+                return temp;
+        };
 };
 
 /*
@@ -129,25 +290,30 @@ function isDefine (obj){
 }
 
 
-function cloneArgs(argArray) {
-        var clonedArray = [];
-        for (var i = 0; i < argArray.length; i++){
-                clonedArray[i] = {name: argsArray[i].name, type: argsArray[i].type};
-        }
-        return clonedArray;
-}
 
 /*
 Constructs an application of an operator given the name, arguments, and output type. The arguments 
 is an array of expressions. Value is initially initialized to null.
-expr is a list of objects (one for each argument)
+args is a list of objects (one for each argument)
 */
-var ExprApp = function(funcName, args){
+var ExprApp = function(funcName){
         this.funcName = funcName;
         this.id = makeID();
         this.funcIDList = makeIDList(functions[containsName(functions, funcName)].input.length);
-        this.args = (args != undefined) ? args : [];
+        this.args = [];
         this.outputType = getOutput(funcName);
+        this.clone=function(){
+                var temp=new ExprApp(this.funcName);
+                temp.id=this.id;
+                temp.funcIDList=this.funcIDList.slice(0);
+                for(var i=0;i<this.args.length;i++){
+                        if (this.args[i] != undefined){
+                                temp.args.push(this.args[i].clone());
+                        }
+                }
+                temp.outputType=this.outputType;
+                return temp;
+        };
 };
 
 /*
@@ -158,6 +324,13 @@ var ExprString= function(){
         this.value = "";
         this.outputType = "Strings";
         this.id = makeID();
+        this.clone=function(){
+                var temp=new ExprString();
+                temp.value=this.value;
+                temp.outputType=this.outputType;
+                temp.id=this.id;
+                return temp;
+        };
 };
 
 /*
@@ -167,6 +340,13 @@ var ExprNumber = function(){
         this.value = undefined;
         this.outputType = "Numbers";
         this.id = makeID();
+        this.clone=function(){
+                var temp=new ExprNumber();
+                temp.value=this.value;
+                temp.outputType=this.outputType;
+                temp.id=this.id;
+                return temp;
+        };
 };
 
 /*
@@ -177,6 +357,11 @@ var ExprConst = function(constName){
         this.constName = constName;
         //this.outputType = getConstantType(constName);
         this.id = makeID();
+        this.clone=function(){
+                var temp=new ExprConst(this.constName);
+                temp.id=this.id;
+                return temp;
+        };
 };
 
 /*
@@ -186,6 +371,12 @@ var ExprBoolean = function(value){
         this.value=value;
         this.outputType = "Booleans";
         this.id = makeID();
+        this.clone=function(){
+                var temp=new ExprBoolean(this.value);
+                temp.outputType=this.outputType;
+                temp.id=this.id;
+                return temp;
+        };
 };
 
 /*
@@ -197,6 +388,19 @@ var ExprBoolAnswer=function(){
         this.outputType = undefined;
         this.id = makeID();
         this.funcIDList = makeIDList(2);
+        this.clone=function(){
+                var temp=new ExprBoolAnswer();
+                if (this.bool != undefined){
+                        temp.bool=this.bool.clone();
+                }
+                if (this.answer != undefined){
+                        temp.answer=this.answer.clone();
+                }
+                temp.outputType=this.outputType;
+                temp.id=this.id;
+                temp.funcIDList=this.funcIDList.slice(0);
+                return temp;
+        };
 };
 
 
@@ -212,11 +416,18 @@ ExprCond(list1)
 list1 = [ExprBoolAnswer(ExprBoolean(true),ExprNum(2)).ExprBoolAnswer(ExprBoolean(False),ExprNum(1))]
 */
 var ExprCond = function(){
-        this.listOfBooleanAnswer=[new ExprBoolAnswer()];
+        this.listOfBooleanAnswer=[new ExprBoolAnswer(),new ExprBoolAnswer()];
         this.outputType = undefined;
         this.id = makeID();
-        
-
+        this.clone=function(){
+                var temp=new ExprCond();
+                for(var i=0;i<this.listOfBooleanAnswer.length;i++){
+                        temp.listOfBooleanAnswer[i]=this.listOfBooleanAnswer[i].clone();
+                }
+                temp.outputType=this.outputType;
+                temp.id=this.id;
+                return temp;
+        };
 };
 
 
@@ -360,10 +571,30 @@ var colors={};
  colors.Constants="#FFFFFF";
 
 /*
-history of the program state. Updated when the user changes something about the program (i.e.
+historyarr of the program state. Updated when the user changes something about the program (i.e.
 adds a block, moves a block, deletes something, etc.)
 */
-var history = [];
+var historyarr = [];
+
+/*
+addToHistory takes in a program state and adds it to history while setting the future array 
+(connected to the redo button) to an empty array
+*/
+var addToHistory = function(programState) {
+        historyarr.push(programState);
+        future = [];
+};
+
+/*
+future is an array of the program states. Updated when the user undos something.
+*/
+var future = [];
+
+/*
+program is an array of makeDefineFunc/makeDefineVar/Expressions that make up the user's program
+on the screen.
+*/
+var program = [];
 
 /*====================================================================================
    ___ _     _          _  __   __        _      _    _        
@@ -438,8 +669,6 @@ $(document).ready(function(){
                                         return;
                                 } 
                                 else{
-                                        console.log(program);
-                                        
                                         codeObject.value = inputtext;
 
                                                 focused.css("background-color", colors.Numbers);
@@ -448,18 +677,64 @@ $(document).ready(function(){
                         }
 
                         //STRINGS
-                        else if(focused.closest($("table")).attr("class")==="Strings"){
+                        else if(focused.closest($("table")).hasClass("Strings")){
                                 codeObject.value = inputtext;
                                         focused=null;
                         }
-                        //TODO saving values
+                        //DEFINING CONSTANTS
+                        else if(focused.closest($("table")).hasClass("DefineVar")){
+                                var prevName=codeObject.constName;
+                                codeObject.constName=inputtext;
+                                console.log("I am here")
+                                if((prevName !=undefined && prevName != "") && inputtext !== ""){
+                                        console.log("case prev is defined, input is defined");
+                                        console.log("prevName is",prevName)
+                                        var prevIndex=containsName(prevName,constants);
+                                        if(prevIndex != -1){
+                                                constants[prevIndex].name=inputtext;
+                                        }
+                                }
+                                else if ((prevName !=undefined && prevName != "") && inputtext === ""){
+                                        console.log("case prev is defined, input is undefined");
+                                        constants.splice(containsName(prevName,1));
+                                }
+                                else if((prevName ==undefined || prevName == "") && inputtext !== ""){
+                                        console.log("case prev is undefined, input is defined");
+                                        //addTypeToConstant(codeObject);
+                                }
+                                //makeDrawers(functions,constants);
+                                focused=null;
+                        }
+                        //TODO saving values into the program array
                     }
                 };
         $(document.body).live('click', formValidation);
+
+        /*
+        Binds undo functionality with undo button
+        */
+        $("#undoButton").bind('click', function(){
+                if (historyarr.length !== 0){
+                        future.unshift(cloneProgram(program));
+                        program = historyarr.pop();
+                        renderProgram(createProgramHTML());
+                }
+        });
+
+        /*
+        Binds redo functionality with redo button
+        */
+        $("#redoButton").bind('click', function(){
+                if (future.length !== 0){
+                        historyarr.push(cloneProgram(program));
+                        program = future.shift();
+                        renderProgram(createProgramHTML());
+                }
+        });
 });
 
 /*
-        adds a stylesheet to <head> such that blocks can be colored according to their type
+adds a stylesheet to <head> such that blocks can be colored according to their type
 */
 function renderTypeColors(){
         var styleCSS = "<style type='text/css'>";
@@ -471,137 +746,6 @@ function renderTypeColors(){
         styleCSS += "</style>";
         $(styleCSS).appendTo("head");
 }
-
-/*
-Given an id from an HTML element, getCodeObject returns the corresponding code Object
-within the programs array.
-*/
-// function getCodeObject(id){
-//      for(var i = 0; i < program.length ; i++){
-//              if (program[i].id == id){
-//                      return program[i];
-//              }
-//      }
-//      throw new Error("Can't find code object");
-// }
-
-//takes in id from DOMelement (#) and returns code object (internal representation of html blocks)
-// function getProgramIndex(id, arr){
-//      for(var i = 0; i < program.length ; i++){
-//              if (program[i].id == id){
-//                      return program[i];
-//              } else if (program[i] instanceof makeDefineFunc){
-
-//              }
-//      }
-//      throw new Error("Can't find code object");
-// }
-
-/*
-A function for Arrays that takes in an id (String) and outputs the code object which has
-the same id
-Has a helper named condHelp.
-*/
-
-// function searchForIndex(id,array){
-//         var toReturn = undefined;
-//         for(var i=0; i<array.length;i++){
-//                 if(array[i].id===id){
-//                         return array[i];
-//                 }
-//                 else if(array[i] instanceof ExprDefineFunc || array[i] instanceof ExprDefineConst){
-//                         if(array[i].expr.id===id){
-//                                 return array[i].expr;
-//                         }
-//                         else if(array[i].expr instanceof ExprApp){
-//                                 toReturn = searchForIndex(id,array[i].expr.args);
-//                         } else if(array[i].expr instanceof ExprCond){
-//                                 toReturn = condHelp(id, array[i].expr)
-//                         }
-//                 }
-//                 else if(array[i] instanceof ExprApp){
-//                         toReturn = searchForIndex(id,array[i].args);
-//                 }else if(array[i] instanceof ExprCond){
-//                         toReturn = condHelp(id, array[i].expr)
-//                 }
-//                 //if breaks, change to !=
-//                 if(toReturn !== undefined){
-//                         return toReturn;
-//                 }
-//         }
-//         return undefined;
-// }
-
-// function condHelp(id, obj){
-//         var toReturn = undefined;
-//         for(var i = 0; i < obj.listOfBooleanAnswer.length; i++){
-//                 if(obj.listOfBooleanAnswer[i].id === id){
-//                         toReturn = obj.listOfBooleanAnswer[i];
-//                 }else if(obj.listOfBooleanAnswer[i].bool.id === id){
-//                         toReturn = obj.listOfBooleanAnswer[i].bool;
-//                 }else if(obj.listOfBooleanAnswer[i].bool instanceof ExprApp){
-//                         toReturn = searchForIndex(id, obj.listOfBooleanAnswer[i].answer.args);
-//                 }
-//                 if(toReturn === undefined){
-//                         if(obj.listOfBooleanAnswer[i].answer.id === id){
-//                                 toReturn = obj.listOfBooleanAnswer[i].answer;
-//                         }else if(obj.listOfBooleanAnswer[i].answer instanceof ExprApp){
-//                                 toReturn = searchForIndex(id, obj.listOfBooleanAnswer[i].answer.args);
-//                         }
-//                 }
-//                 if(toReturn !== undefined){
-//                         return toReturn;
-//                 }
-//         }
-//         return undefined;
-// }
-
-
-// //tries to remove id block within program array
-// function removeFromProgram(id){
-//      for (var i = 0; i < program.length; i++){
-//              if (program[i].id == id){
-//                      program.splice(i, 1);
-//              }
-//               else if (isDefine(program[i])){
-//                      removeExpression(id, program[i])
-//              }
-//              else if(program[i] instanceof ExprCond){
-//                      //removeCond(id,program[i])
-//              }
-//               else if(program[i] instanceof ExprApp){
-//                      removeApp(id,program[i])
-//              }
-//      }
-// }
-
-
-// //tries to remove id block within define block
-// function removeExpression(id, codeObject){
-//      if (codeObject.expr.id == id){
-//              codeObject.expr = null;
-//      } else if (codeObject.expr instanceof ExprApp){
-//              removeApp(id, codeObject.expr)
-//      } else if (arg instanceof ExprCond){
-//              //removeCond(something)
-//      }
-// }
-
-// //tries to remove id block within app
-// function removeApp(id,parent){
-//      for (var i = 0; i < parent.args.length; i++){
-//              if (parent.args[i].id == id){
-//                      parent.args[i] = null;
-//              }
-//              else if (parent.args[i] instanceof ExprApp){
-//                      removeApp(id, parent.args[i])
-//              }
-//              else if (parent.args[i] instanceof ExprCond){
-//                      //removeCond(something)
-//              }
-//      }
-// }
-
 
 //containsName takes in an array of objects and a string and returns the index at which that string is the name property of any of the objects
 function containsName(array_of_obj,stringElement){
@@ -638,6 +782,9 @@ function drawerButton(elt){
 //makeTypesArray will construct an object of kv pairs such that each type's value is an array of all indices to which that type is the output or the exclusive input
 function makeTypesArray(allFunctions,allConstants){
         var types={};
+        types.Booleans=["true","false"];
+        types.Numbers=["Number"];
+        types.Strings=["Text"];
         for(var i=0;i<allFunctions.length;i++){
                 var curOutput=allFunctions[i].output;
                 if(types[curOutput]!==undefined){
@@ -663,14 +810,11 @@ function makeTypesArray(allFunctions,allConstants){
         }
         types.Constants=[];
         for(i=0;i<allConstants.length;i++){
-                types.Constantstypes.Constants.length=i;
+                types.Constants.push(i);
         }
 
         types.Define=["define-constant","define-function","define-struct"];
         types.Expressions=["cond"];
-        types.Booleans.unshift("true","false");
-        types.Numbers.unshift("Number");
-        types.Strings.unshift("Text");
 
         return types;
 
@@ -802,11 +946,7 @@ function makeCodeFromOptions(optionsText){
                 else{
                         for(i = 0; i < functions.length; i++){
                                 if (functions[i].name === optionsText){
-                                        console.log("function input ", functions[i].input);
-                                        var x = new ExprApp(optionsText, functions[i].input);
-                                        
-                                        console.log("makeCodeFromOptions ", x);
-                                        return x;
+                                        return new ExprApp(optionsText);
                                 }
                         }
                         for(i=0;i<constants.length;i++){
@@ -814,7 +954,7 @@ function makeCodeFromOptions(optionsText){
                                         return new ExprConst(optionsText);
                                 }
                         }
-                        throw new Error("createBlock: internal error");
+                        throw new Error("makeCodeFromOptions: internal error");
                 }
         }
 
@@ -856,6 +996,31 @@ function createBlock(codeObject){
         
  }
 
+
+/*
+createProgramHTML takes the program array and translates it into HTML
+*/
+var createProgramHTML = function(){
+        var pageHTML = "";
+        for (var i = 0; i < program.length; i++){
+                pageHTML += "<li>" + createBlock(program[i]) + "</li>";
+        }
+        return pageHTML;
+};
+
+/*
+renderProgram takes in a string (programHTML) and changes the contents of #List to 
+programHTML
+*/
+var renderProgram = function(programHTML){
+        $("#List").html(programHTML);
+        addDroppableFeature($("#List .droppable"));
+        $("#List table").children().each(function(){
+                addDraggingFeature($(this).find("table"));
+        });
+        setLiWidth();
+};
+
 /*
 encode takes in a string and encodes it such that bugs resulting from &, ", #, etc are eliminated"
 decode does something similar for the same purpose
@@ -888,42 +1053,85 @@ that function with name, color, and spaces for input blocks
         var func = functions[functionIndex];
         var block = "<table class=\"expr " + func.output  +"\"" + " id=\""+codeObject.id+"\">";
         block += "<tr><th>" + encode(func.name) + "</th>";
-        for(var i = 0; i < func.input.length; i++){
-                block += "<th class=\"" + encode(func.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">" + func.input[i].name + "</th>";
+        var i;
+        for(i = 0; i < func.input.length; i++){
+                if (codeObject.args[i] != undefined){
+                         block += "<th class=\"" + encode(func.input[i].type) +" noborder droppable\" id=\""+codeObject.funcIDList[i]+"\">" + createBlock(codeObject.args[i]);
+                }
+                else{
+                        block+= "<th class=\"" + encode(func.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">" + func.input[i].name;
+                }
+                block+="</th>";
         }
+
         return block + "</tr></table>";
  }
 
 //createDefineBlock outputs the block corresponding to defining a function
+//LINK THE TWO TEXT BOXES
+//CHANGE THE WAY ARGS WORKS
 function createDefineBlock(codeObject){
-        var block ="<table class=\"Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
+        var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
         //contract
-        block+="<tr><th><input id=\"name\"></th><th> : </th><th>"+generateTypeDrop()+"</th><th> <button class=\"buttonPlus\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></th></tr>";
+        block+="<tr><th><input id=\"name\"></th><th> : </th><th>"+generateTypeDrop()+"</th><th> <button class=\"buttonPlus\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></tr>";
         //define block
         block+="<tr><th>define</th>";
-        block+="<th class=\"expr\"> <input type=\"Name\" id=\"Name\" name=\"Name\"/><th class=\"expr\">args <th  class=\"expr\">expr";
+        block+="<th class=\"expr\"> <input type=\"Name\" id=\"Name\" name=\"Name\"/></th>";
+        block+="<th class=\"expr\">args </th>";
+        if(codeObject.expr != undefined){
+                block+="<th class=\"noborder droppable expr\" id="+codeObject.funcIDList[0]+">";
+                block+=createBlock(codeObject.expr);
+                block+="</th>";
+        }
+        else{
+                block+="<th class=\"droppable expr\" id="+codeObject.funcIDList[0]+">expr</th>";
+        }
         return block + "</tr></table>";
 }
 
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject){
-        var block = "<table class=\"Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
-        block+="<th class=\"expr\"> <input type=\"Name\" id=\"Name\" name=\"Name\"/> <th  class=\"expr\">expr</th>";
-        return block + "</tr></table>";
+        var block = "<table class=\"DefineVar Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
+        block+="<th class=\"expr\"> <input/> <th  id=\"" + codeObject.funcIDList[0] + "\" class=\"expr droppable";
+        if (codeObject.expr == undefined){
+                block+= "\"> Exp";
+        } else{
+                block += " noborder\">" + createBlock(codeObject.expr);
+        }
+        return block + "</th></tr></table>";
 }
 
 //createDefineStructBlock outputs the block corresponding to creating a structure
 function createDefineStructBlock(codeObject){
-        var block ="<table class=\"Define\" " + "id=\""+codeObject.id+"\"><tr><th>define-struct</th>";
+        var block ="<table class=\"DefineStruct Define\" " + "id=\""+codeObject.id+"\"><tr><th>define-struct</th>";
         block+="<th class=\"expr\"><input type=\"Name\" id=\"Name\" name=\"Name\"/><th class=\"expr\">properties";
         return block + "</tr></table>";
 }
 
 //createCondBlock outputs the block corresponding to creating a conditional
 function createCondBlock(codeObject){
-        var block =  "<table class=\"expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th>cond</tr>";
-        block+="<tr id=\"" + codeObject.id + "\"><th><th id=\"" + codeObject.funcIDList[0] + "\" class=\"Booleans expr\">boolean <th id=\"" + codeObject.funcIDList[1] + "\" class=\"expr\">expr</tr>";
-        block+="<tr><th><th><button class=\"buttonCond\">+</button></th></tr>";
+        var block =  "<table class=\"expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th style=\"float:left\">cond</th></tr>";
+        for(var i=0;i<codeObject.listOfBooleanAnswer.length;i++){
+                block+="<tr><th><table id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>"
+                if(codeObject.listOfBooleanAnswer[i].bool!=undefined){
+                        block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"noborder droppable Booleans expr\">";
+                        block+=createBlock(codeObject.listOfBooleanAnswer[i].bool);
+                        block+="</th>";
+                }
+                else{
+                        block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"droppable Booleans expr\">boolean</th>"
+                }
+                if(codeObject.listOfBooleanAnswer[i].answer!=undefined){
+                        block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"noborder droppable expr\">";
+                        block+=createBlock(codeObject.listOfBooleanAnswer[i].answer);
+                        block+="</table></th></tr>";
+                }
+                else{
+                        block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"droppable expr\">expr</table></th></tr>";
+                }
+        }
+        //CHANGE TO AUTO
+        block+="<tr><th><button class=\"buttonCond\">+</button></th></tr>";
         return block + "</table>";
 }
 
@@ -1036,12 +1244,32 @@ function interpreter(obj){
 
 //What is currently being carried. Type: DOM
 var carrying = undefined;
+
 //Similar to the variable carrying, except that is stores the corresponding program object
 var programCarrying = undefined;
+
+/*
+dropped is true if an object is dropped, false otherwise. Depending on whether or not an an object is
+dropped, the stop function in #List's sortable will behave differently. This is important for updating
+our model of the user's code.
+*/
+var dropped = false;
+
+/*
+Stores the current state of the program that will later be added to historyarr
+*/
+var tempProgram = undefined;
+
+/*
+Adds draggable to blocks that are inserted within blocks such as the inner blocks can be moved out of
+the outer block and into the sortable list
+*/
+var draggedClone = undefined;
 
 // .draggable is referring to the options within the drawers
 // .sortable is referring to the list containing the blocks within the program
 // .droppable is referring to things within the table that need to be filled and are yet to be actual expressions <e.g. (+ exp1 exp2)>
+
 $(function() {
 
         //implements sortability for the program block
@@ -1053,8 +1281,12 @@ $(function() {
                                 throw new Error("sortable start: ui.item is undefined");
                         } else {
                                 if (ui.item.is('li')){
+                                        tempProgram = cloneProgram(program);
                                         carrying = ui.item.html();
-                                }
+                                        var index = ui.item.index();
+                                        programCarrying = program[index];
+                                        program.splice(index, 1);
+                                } 
                         }
                 },
                 stop: function(event, ui) {
@@ -1063,36 +1295,31 @@ $(function() {
                         } else{
                                 var replacement = $('<li>').append(carrying);
                                 addDroppableFeature(replacement.find(('.droppable')));
-                               // replacement.children("table").draggable('destroy');
                                 ui.item.replaceWith(replacement);
                                 setLiWidth();
                                 if (programCarrying == undefined){
                                         throw new Error ("sortable stop: programCarrying is undefined/null");
-                                }else {
-                                        program[replacement.index()] = programCarrying;
-                               //         console.log(program);
+                                }else if (!dropped){
+                                        program.splice(replacement.index(), 0, programCarrying);
                                 }
+                                addToHistory(tempProgram);
+                                dropped = false;
                                 programCarrying = null;
                                 carrying = null;
                         }
                 },
-                remove: function(event, ui){
-                        $(ui.item).detach();
-                },
+                // remove: function(event, ui){
+
+                //         console.log("removed");
+                //         $(ui.item).detach();
+                // },
                 receive:function(event,ui){
                         if(ui.item === null){
                                 throw new Error ("sortable receive");
                         }else{
+                        console.log("received");
                                 if (!ui.item.is('span.draggable')){
-                                      ui.sender.parent().parent().attr('style','border:3px;'+
-                                                                                "border-style:solid;"+
-                                                                                "border-radius:5px;"+
-                                                                                "height:30px;" +
-                                                                                "width:40px;"+
-                                                                                "border-color:grey");
-                                    var ancestor = ui.sender.parent().parent();
-                                    ancestor.children().detach();
-                                    ancestor.append("Exp");
+                                        eliminateBorder(ui.sender.parent().parent());
                                 }
                         }
                 },
@@ -1104,9 +1331,11 @@ $(function() {
 
         //Exprs things draggable from the drawer to the code
         $('.draggable').draggable({
+                start: function(event, ui) {
+                        tempProgram = cloneProgram(program);
+                },
                 helper: function(event, ui){
                         programCarrying = makeCodeFromOptions($(this).text());
-                        console.log(programCarrying);
                         carrying = createBlock(programCarrying);
                         return carrying;
                 },
@@ -1116,13 +1345,94 @@ $(function() {
         //allows for deletion
         $("#trash").droppable({
                 tolerance:'touch',
-                over:function(event, ui){
-                },
                 drop: function(event, ui){
+                        console.log("in trash");
+                        //dropped = true;
+                        if (draggedClone != undefined){
+                                eliminateBorder(draggedClone.closest($("th")));
+                                draggedClone = undefined;
+                        }
                         $(ui.draggable).remove();
+                        addToHistory(tempProgram);
+                        programCarrying=null;
+                        carrying=null;
                 }
         });
 });
+
+/*
+Adds dragging feature to jQuerySelection. This is applied to blocks within blocks.
+*/
+var addDraggingFeature = function(jQuerySelection) {
+        if (jQuerySelection !== null){
+                jQuerySelection.draggable({
+                        connectToSortable: "#List, trash",
+                        helper:'clone',
+                        start:function(event, ui){
+                                if ($(this) === undefined){
+                                        throw new Error ("addDraggingFeature start: $(this) is undefined");
+                                } else {
+                                        tempProgram = cloneProgram(program);
+                                        draggedClone = $(this);
+                                        programCarrying = searchForIndex($(this).attr("id"), program);
+                                        carrying = getHTML($(this));
+                                        setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined);
+                                }
+                        },
+                        stop:function(event, ui){
+                                if (programCarrying != null && carrying != null){
+                                        program = tempProgram;
+                                        renderProgram(createProgramHTML());
+                                }
+                        }
+
+                });
+        }
+};
+
+/*
+addDroppableFeature is a function that takes in a jQuery selector and applys droppable functionality
+to that selector. This is applied to empty blocks within blocks.
+*/
+var addDroppableFeature = function(jQuerySelection) {
+        if (jQuerySelection !== null){
+                addDraggingFeature((jQuerySelection).find("table"));
+                jQuerySelection.droppable({
+                        hoverClass:"highlight",
+                        tolerance:"pointer",
+                        greedy:true,
+                        drop: function(event, ui){
+                                if ($(this) === undefined){
+                                        throw new Error ("addDroppableFeature drop: $(this) is undefined");
+                                } 
+                                else if($(this).children().length === 0){
+                                        $(this).html(carrying);
+                                        setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying);
+                                        addDroppableFeature($(this).find('.droppable'));
+                                        addDraggingFeature($(this).find("table"));
+                                        $(this).css("border", "none");
+                                        ui.draggable.detach();
+                                        dropped = true;
+                                }
+                        }
+                });
+        }
+};
+
+/*
+eliminateBorder takes in a jQuerySelection and returns nothing.
+It changes the jQuerySelection by adding a border and appending the word "Exp" inside the cell.
+*/
+var eliminateBorder = function(jQuerySelection){
+        jQuerySelection.attr('style','border:3px;'+
+                                        "border-style:solid;"+
+                                        "border-radius:5px;"+
+                                        "height:30px;" +
+                                        "width:40px;"+
+                                        "border-color:grey");
+        jQuerySelection.children().detach();
+        jQuerySelection.append("Exp")
+}
 
 /*
 Sets the width of list items such that they span only the width of its contents, rather 
@@ -1140,146 +1450,6 @@ Makes the jQuerySelection into an HTMLDom element
 var getHTML = function(jQuerySelection) {
         return $(jQuerySelection).wrap("<div>").parent().html();
 };
-
-/*
-Adds draggable to blocks that are inserted within blocks such as the inner blocks can be moved out of
-the outer block and into the sortable list
-*/
-var num = 0;
-var addDraggingFeature = function(jQuerySelection) {
-        if (jQuerySelection !== null){
-                jQuerySelection.draggable({
-                        connectToSortable: "#List",
-                        helper:'clone',
-                        start:function(event, ui){
-                                if ($(this) === undefined){
-                                        throw new Error ("addDraggingFeature start: $(this) is undefined");
-                                } else {
-                                        programCarrying = searchForIndex($(this).attr("id"), program);
-                                        console.log(programCarrying);
-                                        carrying = getHTML($(this));
-                                }
-                        }
-
-                });
-        }
-};
-
-/*
-addDroppableFeature is a function that takes in a jQuery selector and applys droppable functionality
-to that selector
-*/
-var addDroppableFeature = function(jQuerySelection) {
-        if (jQuerySelection !== null){
-                addDraggingFeature((jQuerySelection).find("table"));
-                jQuerySelection.droppable({
-                        hoverClass:"highlight",
-                        tolerance:"pointer",
-                        greedy:true,
-                        drop: function(event, ui){
-                                if ($(this) === undefined){
-                                        throw new Error ("addDroppableFeature drop: $(this) is undefined");
-                                } 
-                                else if($(this).children().length === 0){
-                                        $(this).html(carrying);
-                                       // console.log($(this).closest($("table")).attr("id"),$(this).attr("id"));
-                                        setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying);
-                                        addDroppableFeature($(this).find('.droppable'));
-                                        addDraggingFeature($(this).find("table"));
-                                        $(this).css("border", "none");
-                                        ui.draggable.detach();
-                                }
-                        }
-                });
-        }
-};
-
-
-/*
-* searchForIndex - searches the program for the given index
-*id - the id we are searching for
-*obj - the ExprCond we are searching through
-*@return - the object with the given id
-*/
-function searchForIndex(id, array){
-        var toReturn = undefined;
-        for(var i = 0; i< array.length; i++){
-                if(array[i].id===id){
-                        toReturn = array[i];
-                        break;
-                }else if(isDefine(array[i])){
-                        toReturn = searchForIndex(id, [array[i].expr]);
-                }else if(array[i] instanceof ExprApp){
-                        toReturn = searchForIndex(id, array[i].args);
-                       // console.log(toReturn);
-                }else if(array[i] instanceof ExprCond){
-                        toReturn = searchForIndex(id, flatten(array[i].listOfBooleanAnswer));
-                }
-        }
-        return toReturn;
-}
-
-/**
-*flatten : array -> array
-*turns an array of tuples into a single level array
-*/
-function flatten(arr){
-        var toReturn =[];
-        for(var i = 0; i < arr.length; i++){
-                for(var item in arr[i]){
-                        if(arr[i].hasOwnProperty(item) && arr[i][item] !== undefined && arr[i][item] instanceof Object){
-                                toReturn.push(arr[i][item]);
-                        }
-                }
-        }
-        return toReturn;
-}
-
-/*
-addProgram adds a code object (obj) to the program array given the id of the parent (parentId)
-and the id of the child (childId).
-STILL NEEDS TESTING: If obj is undefined, setChildInProgram removes the object at childId
-MAYBE: childID won't work and we'll need array position
-*/
-function setChildInProgram(parentId, childId, obj){
-        var parent = searchForIndex(parentId, program);
-        if(parent === undefined){
-                throw new Error("setChildInProgram failure: parentId not found");
-        }
-        if(isLiteral(parent)){
-                throw new Error("setChildInProgram failure: parent was a literal, and cannot be added to");
-        }
-        if(parent.hasOwnProperty("funcIDList")){
-                var index = -1;
-                for(var i = 0; i < parent.funcIDList.length; i++){
-                        if(parent.funcIDList[i] === childId){
-                                index = i;
-                                break;
-                        }
-                }
-                if(index === -1){
-                        throw new Error("setChildInProgram failure: childId not found");
-                }else{
-                        if(parent instanceof ExprApp){
-                                parent.args[index] = obj;
-                        }else if(isDefine(parent)){
-                                parent.expr = obj;
-                        }else if(parent instanceof ExprBoolAnswer){
-                                if(index === 0){
-                                        parent.bool = obj;
-                                }else{
-                                        parent.answer = obj;
-                                }
-                        }
-                }
-        }else if(parent instanceof ExprCond){
-                throw new Error("setChildInProgram failure: parent was top level of cond, that doesn't work");
-        }else{
-                throw new Error("setChildInProgram failure: parent looked like: " +interpreter(parent));
-        }
-}
-
-
 
 
 /*====================================================================================
@@ -1314,12 +1484,13 @@ Draggable blocks into blocks
 Add functionality for cond
 
 7/16-7/20
-- update program array with drag & drop (Monday)
-- undo (Monday)
+update program array with drag & drop (Monday)
+undo (Monday)
 - full functionality of defines
         - user defined (function, constant) appearing in new drawer. deleting defines
         - Contracts in define full functionality (design check off by Shriram).
         - make plus buttons work
+-Make Expr placeholders better
 
 7/22-27
 - Type checking
