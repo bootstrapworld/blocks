@@ -1393,9 +1393,11 @@ $(function() {
 
         //allows for deletion
         $("#trash").droppable({
-                tolerance:'touch',
+                tolerance:'pointer',
+	    greedy:true,
                 drop: function(event, ui){
                         //droppedInDroppable = true;
+		    if (carrying!=null && programCarrying != null){
                         if (draggedClone != undefined){
                                 eliminateBorder(draggedClone.closest($("th")));
                                 draggedClone = undefined;
@@ -1404,6 +1406,10 @@ $(function() {
                         addToHistory(tempProgram);
                         programCarrying=null;
                         carrying=null;
+			setLiWidth();
+		    } else{
+			throw new Error("tried to trash null");		    
+		    }
                 }
         });
 });
@@ -1432,7 +1438,7 @@ var addDraggingFeature = function(jQuerySelection) {
         if (jQuerySelection !== null){
                 if(!jQuerySelection.hasClass('noDrag')){
                         jQuerySelection.draggable({
-                                connectToSortable: "#List, trash",
+                                connectToSortable: "#List",
                                 helper:'clone',
                                 start:function(event, ui){
                                         if ($(this) === undefined){
