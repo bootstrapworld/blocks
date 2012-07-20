@@ -247,10 +247,10 @@ Constucts the define variable block given a name (string), an expression which i
 object, and an output type
 
 (define x 3) =>
-ExprDefinevar("x", ExprNum(3), "Numbers")
+ExprDefineConst("x", ExprNum(3), "Numbers")
 
 (define y (+ 2 x)) =>
-ExprDefineVar("y", (ExprApp("+", [ExprNum("2"), ExprVar("x")))
+ExprDefineConst("y", (ExprApp("+", [ExprNum("2"), ExprConst("x")))
 */
 var ExprDefineConst = function(){
         this.constName = undefined;
@@ -554,8 +554,11 @@ functions[28].name="place-image";
 functions[28].input=[{type:"Images",name:"Image"}, {type:"Numbers",name:"x"},{type:"Numbers",name:"y"},{type:"Images",name:"Background"}];
 functions[28].output="Images";
 
+var initFunctions=functions.length;
 //constants is an array of user defined variables containing their name and type
 var constants=[];
+
+var initConstants=constants.length
 
 //restricted contains a list of key words in racket that we aren't allowing the user to redefine
 var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map","let","local"];
@@ -711,13 +714,12 @@ $(document).ready(function(){
                                         console.log("case prev is defined, input is undefined");
                                         constants.splice(containsName(prevName,1));
                                         addToHistory(cloneProgram(program));
-                                        codeObject.constName=inputtext;
+                                        codeObject.constName=undefined;
                                 }
                                 else if((prevName ==undefined || prevName == "") && inputtext !== ""){
                                         console.log("case prev is undefined, input is defined");
                                         addToHistory(cloneProgram(program));
                                         codeObject.constName=inputtext;
-                                        //addTypeToConstant(codeObject);
                                 }
                                 makeDrawers(functions,constants);
                                 drawerButton(activated);
@@ -1047,9 +1049,19 @@ createProgramHTML takes the program array and translates it into HTML
 */
 var createProgramHTML = function(){
         var pageHTML = "";
+        functions.splice(initFunctions,functions.length-initFunctions);
+        constants.splice(initConstants,constants.length-initConstants);
         for (var i = 0; i < program.length; i++){
                 pageHTML += "<li>" + createBlock(program[i]) + "</li>";
+                if(program[i] instanceof ExprDefineConst){
+                        //constants.push({name:program[i].name;type:program[i].outputType})
+                }
+                else if(program[i] instanceof ExprDefineFunc){
+                        //ADD
+                }
         }
+        //makeDrawers();
+        //drawerButton(activated);
         return pageHTML;
 };
 
@@ -1382,6 +1394,18 @@ $(function() {
                                 if (!ui.item.is('span.draggable')){
                                         eliminateBorder(ui.sender.parent().parent());
                                 }
+                                // if(ui.sender.hasClass("DefineVar")){
+                                //         var constdefinition=searchForIndex(ui.sender.attr('id'),program);
+                                //         if(constdefinition.value!=undefined){
+                                //                 var removeIndex=containsName(constdefinition.constName,constants);
+                                //                 if(removeIndex != -1){
+                                //                         constants.splice(removeIndex,1);
+                                //                         makeDrawers();
+                                //                         drawerButton(activated);
+                                //                 }
+                                //                 //throw error here
+                                //         }
+                                // }
                         }
                 },
                 tolerance:'pointer',
@@ -1394,22 +1418,23 @@ $(function() {
         //allows for deletion
         $("#trash").droppable({
                 tolerance:'pointer',
-	    greedy:true,
+                greedy:true,
                 drop: function(event, ui){
                         //droppedInDroppable = true;
-		    if (carrying!=null && programCarrying != null){
-                        if (draggedClone != undefined){
-                                eliminateBorder(draggedClone.closest($("th")));
-                                draggedClone = undefined;
+                        if(carrying!=null && programCarrying !=null){
+                                if (draggedClone != undefined){
+                                   eliminateBorder(draggedClone.closest($("th")));
+                                   draggedClone = undefined;
+                                }
+                                $(ui.draggable).remove();
+                                addToHistory(tempProgram);
+                                programCarrying=null;
+                                carrying=null;
+                                setLiWidth();
                         }
-                        $(ui.draggable).remove();
-                        addToHistory(tempProgram);
-                        programCarrying=null;
-                        carrying=null;
-			setLiWidth();
-		    } else{
-			throw new Error("tried to trash null");		    
-		    }
+                        else{
+                                throw new Error("tried to trash null")
+                        }
                 }
         });
 });
@@ -1426,7 +1451,7 @@ var makeDrawersDraggable = function(){
                         carrying = createBlock(programCarrying);
                         return carrying;
                 },
-                connectToSortable: "#List, #trash"
+                connectToSortable: "#List"
         });
 }
 
@@ -1438,7 +1463,7 @@ var addDraggingFeature = function(jQuerySelection) {
         if (jQuerySelection !== null){
                 if(!jQuerySelection.hasClass('noDrag')){
                         jQuerySelection.draggable({
-                                connectToSortable: "#List",
+                                connectToSortable: "#List, trash",
                                 helper:'clone',
                                 start:function(event, ui){
                                         if ($(this) === undefined){
