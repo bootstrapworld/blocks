@@ -309,6 +309,8 @@ var ExprApp = function(funcName){
                 for(var i=0;i<this.args.length;i++){
                         if (this.args[i] != undefined){
                                 temp.args.push(this.args[i].clone());
+                        } else{
+                                temp.args.push(undefined);
                         }
                 }
                 temp.outputType=this.outputType;
@@ -416,7 +418,7 @@ ExprCond(list1)
 list1 = [ExprBoolAnswer(ExprBoolean(true),ExprNum(2)).ExprBoolAnswer(ExprBoolean(False),ExprNum(1))]
 */
 var ExprCond = function(){
-        this.listOfBooleanAnswer=[new ExprBoolAnswer(),new ExprBoolAnswer()];
+        this.listOfBooleanAnswer=[new ExprBoolAnswer()];
         this.outputType = undefined;
         this.id = makeID();
         this.clone=function(){
@@ -429,6 +431,7 @@ var ExprCond = function(){
                 return temp;
         };
 };
+
 
 
 
@@ -638,8 +641,8 @@ $(document).ready(function(){
         makeDrawers(functions,constants);
 
         // activated is initially set to "Numbers"
-        activated = $("#options #Numbers");
-        activated.css("visibility", "visible");
+        // activated = $("#options #Numbers");
+        // activated.css("visibility", "visible");
 
         /*
         adds a stylesheet to <head> such that blocks can be colored according to their type
@@ -669,23 +672,31 @@ $(document).ready(function(){
                                         return;
                                 } 
                                 else{
-                                        codeObject.value = inputtext;
-
-                                                focused.css("background-color", colors.Numbers);
+                                        var prevValue=codeObject.value;
+                                        focused.css("background-color", colors.Numbers);
+                                        if( (prevValue==undefined && inputtext!="") || (prevValue !== inputtext)){
+                                             addToHistory(cloneProgram(program));
+                                             codeObject.value=inputtext;
+                                             focused.attr('value',inputtext);
+                                        }
                                         focused=null;
                                 }
                         }
 
                         //STRINGS
                         else if(focused.closest($("table")).hasClass("Strings")){
-                                codeObject.value = inputtext;
-                                        focused=null;
+                                var prevValue=codeObject.value;
+                                if( (prevValue==undefined && inputtext!="") || (prevValue !== inputtext)){
+                                             addToHistory(cloneProgram(program));
+                                             codeObject.value=inputtext;
+                                             focused.attr('value',inputtext);
+   
+                                }
+                                focused=null;
                         }
                         //DEFINING CONSTANTS
                         else if(focused.closest($("table")).hasClass("DefineVar")){
                                 var prevName=codeObject.constName;
-                                codeObject.constName=inputtext;
-                                console.log("I am here")
                                 if((prevName !=undefined && prevName != "") && inputtext !== ""){
                                         console.log("case prev is defined, input is defined");
                                         console.log("prevName is",prevName)
@@ -693,19 +704,26 @@ $(document).ready(function(){
                                         if(prevIndex != -1){
                                                 constants[prevIndex].name=inputtext;
                                         }
+                                        addToHistory(cloneProgram(program));
+                                        codeObject.constName=inputtext;
                                 }
                                 else if ((prevName !=undefined && prevName != "") && inputtext === ""){
                                         console.log("case prev is defined, input is undefined");
                                         constants.splice(containsName(prevName,1));
+                                        addToHistory(cloneProgram(program));
+                                        codeObject.constName=inputtext;
                                 }
                                 else if((prevName ==undefined || prevName == "") && inputtext !== ""){
                                         console.log("case prev is undefined, input is defined");
+                                        addToHistory(cloneProgram(program));
+                                        codeObject.constName=inputtext;
                                         //addTypeToConstant(codeObject);
                                 }
-                                //makeDrawers(functions,constants);
+                                makeDrawers(functions,constants);
+                                drawerButton(activated);
+                                focused.attr('value',inputtext);
                                 focused=null;
                         }
-                        //TODO saving values into the program array
                     }
                 };
         $(document.body).live('click', formValidation);
@@ -731,6 +749,27 @@ $(document).ready(function(){
                         renderProgram(createProgramHTML());
                 }
         });
+
+        $(".addCond").live('click',function(){
+                addToHistory(cloneProgram(program));
+                searchForIndex($(this).closest('table').attr('id'),program).listOfBooleanAnswer.push(new ExprBoolAnswer());
+                renderProgram(createProgramHTML())
+        })
+
+        $(".removeCond").live('click',function(){
+                var listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),program).listOfBooleanAnswer
+                if(listOfTuples.length!=1){
+                     addToHistory(cloneProgram(program));
+                     for(var i=0;i<listOfTuples.length;i++){
+                        if(listOfTuples[i].id===$(this).closest('table').attr('id')){
+                                listOfTuples.splice(i,1)
+                        }
+                     }  
+                     renderProgram(createProgramHTML());
+                }    
+        })
+
+
 });
 
 /*
@@ -769,14 +808,15 @@ function containsName(array_of_obj,stringElement){
 
 //During the course of the whole session, drawers can be opened and closed to reveal all of the buttons (functions) that they contain
 $(".bottomNav").live('click', function(e){
-    drawerButton($(this));
+    drawerButton($(this).attr('id'));
 });
 
 //DrawerButton takes in an element and either activates (shows) or deactivates (hides) the current element to show the new one
 function drawerButton(elt){
-                activated.css("visibility","hidden");
-                activated = $("#options #" + elt.attr('id'));
-                activated.css("visibility", "visible");
+        $("#options #" + activated).css("visibility","hidden");
+        activated=elt
+        $("#options #" + activated).css("visibility","visible");
+
 }
 
 //makeTypesArray will construct an object of kv pairs such that each type's value is an array of all indices to which that type is the output or the exclusive input
@@ -889,6 +929,11 @@ function makeDrawers(allFunctions,allConstants){
         Drawers+="</div>";
         Selector+="</div>";
         document.getElementById("Drawer").innerHTML=Drawers+"\n"+Selector;
+        makeDrawersDraggable();
+        if (activated == undefined){
+                activated = "Numbers";
+        }
+        drawerButton(activated);
 }
 
 
@@ -1015,9 +1060,9 @@ programHTML
 var renderProgram = function(programHTML){
         $("#List").html(programHTML);
         addDroppableFeature($("#List .droppable"));
-        $("#List table").children().each(function(){
-                addDraggingFeature($(this).find("table"));
-        });
+        // $("#List table").children().each(function(){
+        //         addDraggingFeature($(this).find("table"));
+        // });
         setLiWidth();
 };
 
@@ -1092,7 +1137,11 @@ function createDefineBlock(codeObject){
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject){
         var block = "<table class=\"DefineVar Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
-        block+="<th class=\"expr\"> <input/> <th  id=\"" + codeObject.funcIDList[0] + "\" class=\"expr droppable";
+        block+="<th class=\"expr\"><input class=\"constName\""
+        if(codeObject.constName != undefined){
+                block+=" value=\""+encode(codeObject.constName)+"\"";
+        }
+        block+="><th  id=\"" + codeObject.funcIDList[0] + "\" class=\"expr droppable";
         if (codeObject.expr == undefined){
                 block+= "\"> Exp";
         } else{
@@ -1109,10 +1158,16 @@ function createDefineStructBlock(codeObject){
 }
 
 //createCondBlock outputs the block corresponding to creating a conditional
+//add stuff to make empty work and have new rows append to ExprCond
 function createCondBlock(codeObject){
-        var block =  "<table class=\"expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th style=\"float:left\">cond</th></tr>";
+        var block =  "<table class=\"Cond expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th style=\"float:left\">cond</th></tr>";
         for(var i=0;i<codeObject.listOfBooleanAnswer.length;i++){
-                block+="<tr><th><table id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>"
+                if(i===codeObject.listOfBooleanAnswer.length-1){
+                        block+="<tr class=\"BoolAnswer empty\"><th><table class=\"noDrag\" id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>"
+                }
+                else{
+                        block+="<tr><th><table id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>"
+                }       
                 if(codeObject.listOfBooleanAnswer[i].bool!=undefined){
                         block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"noborder droppable Booleans expr\">";
                         block+=createBlock(codeObject.listOfBooleanAnswer[i].bool);
@@ -1124,14 +1179,13 @@ function createCondBlock(codeObject){
                 if(codeObject.listOfBooleanAnswer[i].answer!=undefined){
                         block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"noborder droppable expr\">";
                         block+=createBlock(codeObject.listOfBooleanAnswer[i].answer);
-                        block+="</table></th></tr>";
                 }
                 else{
-                        block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"droppable expr\">expr</table></th></tr>";
+                        block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"droppable expr\">expr";
                 }
+                block+="<th><button class=\"removeCond\">x</button></th></table></th></tr>"
         }
-        //CHANGE TO AUTO
-        block+="<tr><th><button class=\"buttonCond\">+</button></th></tr>";
+        block +="<tr><th></th><th><button class=\"addCond\">+</button></th></tr>"
         return block + "</table>";
 }
 
@@ -1145,11 +1199,19 @@ function createBooleanBlock(codeObject){
         return block + "</table>";
 }
 function createNumBlock(codeObject){
-        var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input style=\"width:50px;\"></tr>";
+        var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input style=\"width:50px;\""
+        if(codeObject.value != undefined){
+                block+=" value=\""+codeObject.value+"\"";
+        }
+        block+="></tr>";
         return block + "</table>";
 }
 function createStringBlock(codeObject){
-        var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"<input class=\"Strings\">\"</tr>";
+        var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"<input class=\"Strings\""
+        if(codeObject.value!=undefined || codeObject.value !== ""){
+                block +=" value=\""+encode(codeObject.value)+"\""
+        }
+        block+=">\"</tr>";
         return block + "</table>";
 }
 
@@ -1249,11 +1311,11 @@ var carrying = undefined;
 var programCarrying = undefined;
 
 /*
-dropped is true if an object is dropped, false otherwise. Depending on whether or not an an object is
-dropped, the stop function in #List's sortable will behave differently. This is important for updating
+droppedInDroppable is true if an object is droppedInDroppable, false otherwise. Depending on whether or not an an object is
+droppedInDroppable, the stop function in #List's sortable will behave differently. This is important for updating
 our model of the user's code.
 */
-var dropped = false;
+var droppedInDroppable = false;
 
 /*
 Stores the current state of the program that will later be added to historyarr
@@ -1299,11 +1361,11 @@ $(function() {
                                 setLiWidth();
                                 if (programCarrying == undefined){
                                         throw new Error ("sortable stop: programCarrying is undefined/null");
-                                }else if (!dropped){
+                                }else if (!droppedInDroppable){
                                         program.splice(replacement.index(), 0, programCarrying);
                                 }
                                 addToHistory(tempProgram);
-                                dropped = false;
+                                droppedInDroppable = false;
                                 programCarrying = null;
                                 carrying = null;
                         }
@@ -1317,7 +1379,6 @@ $(function() {
                         if(ui.item === null){
                                 throw new Error ("sortable receive");
                         }else{
-                        console.log("received");
                                 if (!ui.item.is('span.draggable')){
                                         eliminateBorder(ui.sender.parent().parent());
                                 }
@@ -1328,7 +1389,33 @@ $(function() {
                 scroll:false
         });
 
+        
 
+        //allows for deletion
+        $("#trash").droppable({
+                tolerance:'pointer',
+	    greedy:true,
+                drop: function(event, ui){
+                        //droppedInDroppable = true;
+		    if (carrying!=null && programCarrying != null){
+                        if (draggedClone != undefined){
+                                eliminateBorder(draggedClone.closest($("th")));
+                                draggedClone = undefined;
+                        }
+                        $(ui.draggable).remove();
+                        addToHistory(tempProgram);
+                        programCarrying=null;
+                        carrying=null;
+			setLiWidth();
+		    } else{
+			throw new Error("tried to trash null");		    
+		    }
+                }
+        });
+});
+
+
+var makeDrawersDraggable = function(){
         //Exprs things draggable from the drawer to the code
         $('.draggable').draggable({
                 start: function(event, ui) {
@@ -1341,52 +1428,38 @@ $(function() {
                 },
                 connectToSortable: "#List, #trash"
         });
+}
 
-        //allows for deletion
-        $("#trash").droppable({
-                tolerance:'touch',
-                drop: function(event, ui){
-                        console.log("in trash");
-                        //dropped = true;
-                        if (draggedClone != undefined){
-                                eliminateBorder(draggedClone.closest($("th")));
-                                draggedClone = undefined;
-                        }
-                        $(ui.draggable).remove();
-                        addToHistory(tempProgram);
-                        programCarrying=null;
-                        carrying=null;
-                }
-        });
-});
 
 /*
 Adds dragging feature to jQuerySelection. This is applied to blocks within blocks.
 */
 var addDraggingFeature = function(jQuerySelection) {
         if (jQuerySelection !== null){
-                jQuerySelection.draggable({
-                        connectToSortable: "#List, trash",
-                        helper:'clone',
-                        start:function(event, ui){
-                                if ($(this) === undefined){
-                                        throw new Error ("addDraggingFeature start: $(this) is undefined");
-                                } else {
-                                        tempProgram = cloneProgram(program);
-                                        draggedClone = $(this);
-                                        programCarrying = searchForIndex($(this).attr("id"), program);
-                                        carrying = getHTML($(this));
-                                        setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined);
+                if(!jQuerySelection.hasClass('noDrag')){
+                        jQuerySelection.draggable({
+                                connectToSortable: "#List",
+                                helper:'clone',
+                                start:function(event, ui){
+                                        if ($(this) === undefined){
+                                                throw new Error ("addDraggingFeature start: $(this) is undefined");
+                                        } else {
+                                                tempProgram = cloneProgram(program);
+                                                draggedClone = $(this);
+                                                programCarrying = searchForIndex($(this).attr("id"), program);
+                                                carrying = getHTML($(this));
+                                                setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined);
+                                        }
+                                },
+                                stop:function(event, ui){
+                                        if (programCarrying != null && carrying != null){
+                                                program = tempProgram;
+                                                renderProgram(createProgramHTML());
+                                        }
                                 }
-                        },
-                        stop:function(event, ui){
-                                if (programCarrying != null && carrying != null){
-                                        program = tempProgram;
-                                        renderProgram(createProgramHTML());
-                                }
-                        }
 
-                });
+                        });
+                }
         }
 };
 
@@ -1412,12 +1485,13 @@ var addDroppableFeature = function(jQuerySelection) {
                                         addDraggingFeature($(this).find("table"));
                                         $(this).css("border", "none");
                                         ui.draggable.detach();
-                                        dropped = true;
+                                        droppedInDroppable = true;
                                 }
                         }
                 });
         }
 };
+
 
 /*
 eliminateBorder takes in a jQuerySelection and returns nothing.
@@ -1490,12 +1564,14 @@ undo (Monday)
         - user defined (function, constant) appearing in new drawer. deleting defines
         - Contracts in define full functionality (design check off by Shriram).
         - make plus buttons work
--Make Expr placeholders better
+-Make Cond work
+-Form Validation on Strings and Numbers
 
 7/22-27
 - Type checking
 - run, stop
 - save program
+- Make Expr placeholders better
 - Add functionality for structs
 
 
