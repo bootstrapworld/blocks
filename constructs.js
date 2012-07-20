@@ -206,7 +206,7 @@ funcIDList: first id refers to the expr block, all others refer to aruguments in
 */
 var ExprDefineFunc = function(){
         this.contract = new ExprContract();
-        this.argumentNames = undefined;
+        this.argumentNames = [""];
         this.expr = undefined;
         this.id = makeID();
         this.funcIDList = makeIDList(2);
@@ -214,7 +214,7 @@ var ExprDefineFunc = function(){
                 var temp=new ExprDefineFunc();
                 temp.contract=this.contract.clone();
                 if (this.argumentNames != undefined){
-                        temp.argumentTypes=this.argumentNames.slice(0);
+                        temp.argumentNames=this.argumentNames.slice(0);
                 }
                 if (this.expr != undefined){
                         temp.expr=this.expr.clone();
@@ -226,7 +226,7 @@ var ExprDefineFunc = function(){
 };
 
 var ExprContract = function(){
-        this.funcName = undefined;
+        this.funcName = "";
         this.argumentTypes = undefined;
         this.outputType = undefined;
         this.id = makeID();
@@ -247,10 +247,10 @@ Constucts the define variable block given a name (string), an expression which i
 object, and an output type
 
 (define x 3) =>
-ExprDefineConst("x", ExprNum(3), "Numbers")
+ExprDefineConst("x", ExprNumber(3), "Numbers")
 
 (define y (+ 2 x)) =>
-ExprDefineConst("y", (ExprApp("+", [ExprNum("2"), ExprConst("x")))
+ExprDefineConst("y", (ExprApp("+", [ExprNumber("2"), ExprConst("x")))
 */
 var ExprDefineConst = function(){
         this.constName = undefined;
@@ -415,7 +415,7 @@ The first expression has to be a boolean
         [(false) 1]
 ) =>
 ExprCond(list1)
-list1 = [ExprBoolAnswer(ExprBoolean(true),ExprNum(2)).ExprBoolAnswer(ExprBoolean(False),ExprNum(1))]
+list1 = [ExprBoolAnswer(ExprBoolean(true),ExprNumber(2)).ExprBoolAnswer(ExprBoolean(False),ExprNumber(1))]
 */
 var ExprCond = function(){
         this.listOfBooleanAnswer=[new ExprBoolAnswer()];
@@ -620,6 +620,7 @@ var codeWidth;
 var activated;
 // which text block in the #code div is currently being focused
 var focused=null;
+var initvalue=null;
 // ID that matches together a code object and an HTML element
 var ID =0;
 
@@ -656,7 +657,9 @@ $(document).ready(function(){
         sets focus equal to the input that is focused. 
         */
         $("#List input").live('focus',function(){
-            focused=$(this);
+            focused=$(this)
+            initvalue=focused.value;
+            tempProgram=cloneProgram(program);
         });
 
         var formValidation = function(e){
@@ -675,12 +678,12 @@ $(document).ready(function(){
                                         return;
                                 } 
                                 else{
-                                        var prevValue=codeObject.value;
                                         focused.css("background-color", colors.Numbers);
-                                        if( (prevValue==undefined && inputtext!="") || (prevValue !== inputtext)){
-                                             addToHistory(cloneProgram(program));
-                                             codeObject.value=inputtext;
-                                             focused.attr('value',inputtext);
+                                        if( initvalue != inputtext){
+                                             addToHistory(tempProgram);
+					    focused.attr('value',inputtext);
+                                             initvalue=null;
+                                             tempProgram=null;
                                         }
                                         focused=null;
                                 }
@@ -688,42 +691,50 @@ $(document).ready(function(){
 
                         //STRINGS
                         else if(focused.closest($("table")).hasClass("Strings")){
-                                var prevValue=codeObject.value;
-                                if( (prevValue==undefined && inputtext!="") || (prevValue !== inputtext)){
-                                             addToHistory(cloneProgram(program));
-                                             codeObject.value=inputtext;
-                                             focused.attr('value',inputtext);
-   
+                                if( initvalue != inputtext ){
+                                             addToHistory(tempProgram);
+                                                initvalue=null;
+                                                tempProgram=null;
                                 }
                                 focused=null;
                         }
                         //DEFINING CONSTANTS
                         else if(focused.closest($("table")).hasClass("DefineVar")){
-                                var prevName=codeObject.constName;
-                                if((prevName !=undefined && prevName != "") && inputtext !== ""){
+                                if((initvalue !=undefined && initvalue != "") && inputtext !== ""){
                                         console.log("case prev is defined, input is defined");
                                         console.log("prevName is",prevName)
                                         var prevIndex=containsName(prevName,constants);
                                         if(prevIndex != -1){
                                                 constants[prevIndex].name=inputtext;
                                         }
-                                        addToHistory(cloneProgram(program));
-                                        codeObject.constName=inputtext;
+                                        addToHistory(tempProgram);
+                                        initvalue=null
+                                        tempProgram=null;
                                 }
-                                else if ((prevName !=undefined && prevName != "") && inputtext === ""){
+                                else if ((initvalue !=undefined && initvalue != "") && inputtext === ""){
                                         console.log("case prev is defined, input is undefined");
                                         constants.splice(containsName(prevName,1));
-                                        addToHistory(cloneProgram(program));
-                                        codeObject.constName=undefined;
+                                        addToHistory(tempProgram);
+                                        initvalue=null;
+                                        tempProgram=null;
                                 }
-                                else if((prevName ==undefined || prevName == "") && inputtext !== ""){
+                                else if((initvalue ==undefined || prevName == "") && inputtext !== ""){
                                         console.log("case prev is undefined, input is defined");
-                                        addToHistory(cloneProgram(program));
-                                        codeObject.constName=inputtext;
+                                        addToHistory(tempProgram);
+                                        initvalue=null;
+                                        tempProgram=null;
                                 }
                                 makeDrawers(functions,constants);
                                 drawerButton(activated);
                                 focused.attr('value',inputtext);
+                                focused=null;
+                        }
+                        else if(focused.closest($("table")).hasClass("DefineFun")){
+                                if( initvalue != inputtext){
+                                        addToHistory(tempProgram);
+                                        initvalue=null;
+                                        tempProgram=null;
+                                }
                                 focused=null;
                         }
                     }
@@ -769,6 +780,13 @@ $(document).ready(function(){
                      }  
                      renderProgram(createProgramHTML());
                 }    
+        })
+
+        $(".addArgument").live('click',function(){
+                addToHistory(cloneProgram(program));
+                var block=searchForIndex($(this).closest('table').attr('id'),program)
+                block.argumentNames.push("");
+                renderProgram(createProgramHTML());
         })
 
 
@@ -1100,6 +1118,36 @@ function decode(string){
 }
 
 
+function sync(objectID){
+        var block=searchForIndex(objectID+"",program);
+        var DOMBlock=$(document.getElementById(objectID));
+        if(block instanceof ExprNumber || block instanceof ExprString){
+                block.value=DOMBlock.find(".input").attr('value');
+        }
+        else if(block instanceof ExprDefineConst){
+                block.constName=DOMBlock.find('.constName').attr('value');
+        }
+        else if(block instanceof ExprDefineFunc){
+                var prevName=block.contract.funcName;
+                if(DOMBlock.find('.contractName').attr('value')===prevName){
+                        block.contract.funcName=DOMBlock.find('.definitionName').attr('value');
+                        DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
+                }
+                else if(DOMBlock.find('.definitionName').attr('value')===prevName){
+                        block.contract.funcName=DOMBlock.find('.contractName').attr('value');
+                        DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
+                }
+                var i=0;
+                DOMBlock.find('.argName').each(function(){
+                          block.argumentNames[i]=$(this).attr('value');
+                            i++;
+                });
+        }
+        else{
+                throw new Error("block type not found");
+        }
+}
+
 
 /*
 createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to 
@@ -1130,11 +1178,44 @@ that function with name, color, and spaces for input blocks
 function createDefineBlock(codeObject){
         var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
         //contract
-        block+="<tr><th><input id=\"name\"></th><th> : </th><th>"+generateTypeDrop()+"</th><th> <button class=\"buttonPlus\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></tr>";
+        block+="<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+")\" ";
+        if(codeObject.contract.funcName!=undefined){
+                block+="value=\""+encode(codeObject.contract.funcName)+"\"";
+        }
+        block+=" />"
+
+        block+="</th><th> : </th>";
+
+        if(codeObject.argumentNames.length===0){
+                block+=" <th>"+generateTypeDrop()+"</th>";
+        }
+        for(var i=0;i<codeObject.argumentNames.length;i++){
+                block+=" <th>"+generateTypeDrop()+"</th>";
+        }
+        block+="<th> <button class=\"addArgument\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></tr>";
+        
         //define block
         block+="<tr><th>define</th>";
-        block+="<th class=\"expr\"> <input type=\"Name\" id=\"Name\" name=\"Name\"/></th>";
-        block+="<th class=\"expr\">args </th>";
+        
+        block+="<th class=\"expr\"> <input class=\"definitionName\" onkeyup=\"sync("+codeObject.id+")\" ";
+        if(codeObject.contract.funcName!=undefined){
+                block+="value=\""+encode(codeObject.contract.funcName)+"\"";
+        }
+        block+=" /></th>";
+
+        if(codeObject.argumentNames.length===0){
+                block+="<th width=\"10px\" class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"argName\"/>";
+        }
+        for(var i=0;i<codeObject.argumentNames.length;i++){
+                block+="<th width=\"10px\" class=\"expr\"><input onkeyup=\"sync("+codeObject.id+") class=\"argName\" ";
+                if(codeObject.argumentNames[i]!=undefined){
+                        block+="value=\""+codeObject.argumentNames[i]+"\"";
+                }
+                block+=" />"
+        }
+        //block+="<th class=\"expr\">args </th>";
+
+
         if(codeObject.expr != undefined){
                 block+="<th class=\"noborder droppable expr\" id="+codeObject.funcIDList[0]+">";
                 block+=createBlock(codeObject.expr);
@@ -1149,7 +1230,7 @@ function createDefineBlock(codeObject){
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject){
         var block = "<table class=\"DefineVar Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
-        block+="<th class=\"expr\"><input class=\"constName\""
+        block+="<th class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"constName\""
         if(codeObject.constName != undefined){
                 block+=" value=\""+encode(codeObject.constName)+"\"";
         }
@@ -1211,7 +1292,7 @@ function createBooleanBlock(codeObject){
         return block + "</table>";
 }
 function createNumBlock(codeObject){
-        var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input style=\"width:50px;\""
+        var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\""
         if(codeObject.value != undefined){
                 block+=" value=\""+codeObject.value+"\"";
         }
@@ -1219,7 +1300,7 @@ function createNumBlock(codeObject){
         return block + "</table>";
 }
 function createStringBlock(codeObject){
-        var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"<input class=\"Strings\""
+        var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"<input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" class=\"Strings\""
         if(codeObject.value!=undefined || codeObject.value !== ""){
                 block +=" value=\""+encode(codeObject.value)+"\""
         }
@@ -1485,6 +1566,27 @@ var addDraggingFeature = function(jQuerySelection) {
                 }
         }
 };
+/*
+addClickableLiteralBox creates a literal block when a blue or orange droppable is clicked
+*/
+var addClickableLiteralBox = function(jQuerySelection, parent, child){
+    console.log("WHYYY");
+    if (jQuerySelection.children().length === 0){
+	if(jQuerySelection.hasClass("Numbers")){
+	    addClickableLiteralBoxHelper(jQuerySelection, new ExprNumber(), parent, child);
+	}
+	else if (jQuerySelection.hasClass("Strings")){
+	    addClickableLiteralBoxHelper(jQuerySelection, new ExprString(), parent, child);
+	}
+    }
+}
+
+var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent, child) {
+	setChildInProgram(parent, child, codeObject);
+        var html = createBlock(codeObject);
+        $(jQuerySelection).css('border','none');
+	jQuerySelection.html(html);
+};
 
 /*
 addDroppableFeature is a function that takes in a jQuery selector and applys droppable functionality
@@ -1493,6 +1595,11 @@ to that selector. This is applied to empty blocks within blocks.
 var addDroppableFeature = function(jQuerySelection) {
         if (jQuerySelection !== null){
                 addDraggableToTable((jQuerySelection).find("table"));
+	        jQuerySelection.mousedown(function(e) {
+		    if (e.which === 1){
+			addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"));
+		    }
+		});
                 jQuerySelection.droppable({
                         hoverClass:"highlight",
                         tolerance:"pointer",
