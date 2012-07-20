@@ -202,14 +202,14 @@ makeDefineFunc(contract1, ["x"], makeApp("+", [makeVariable("x"), 2]))
 contract1 = makeContract("add2", ["Numbers"], "Numbers")
 
 expr = the expr, not a list, an object
-funcIDList refers to the expr block
+funcIDList: first id refers to the expr block, all others refer to aruguments in order
 */
 var ExprDefineFunc = function(){
         this.contract = new ExprContract();
         this.argumentNames = undefined;
         this.expr = undefined;
         this.id = makeID();
-        this.funcIDList = makeIDList(1);
+        this.funcIDList = makeIDList(2);
         this.clone=function(){
                 var temp=new ExprDefineFunc();
                 temp.contract=this.contract.clone();
@@ -1364,9 +1364,7 @@ $(function() {
                         }
                 },
                 stop: function(event, ui) {
-                        if (carrying === null || ui.item === null){
-                                throw new Error("sortable stop: carrying is undefined");
-                        } else{
+                        if (carrying != undefined && programCarrying !=undefined){
                                 var replacement = $('<li>').append(carrying);
                                 addDroppableFeature(replacement.find(('.droppable')));
                                 ui.item.replaceWith(replacement);
@@ -1463,7 +1461,7 @@ var addDraggingFeature = function(jQuerySelection) {
         if (jQuerySelection !== null){
                 if(!jQuerySelection.hasClass('noDrag')){
                         jQuerySelection.draggable({
-                                connectToSortable: "#List, trash",
+                                connectToSortable: "#List",
                                 helper:'clone',
                                 start:function(event, ui){
                                         if ($(this) === undefined){
@@ -1494,7 +1492,7 @@ to that selector. This is applied to empty blocks within blocks.
 */
 var addDroppableFeature = function(jQuerySelection) {
         if (jQuerySelection !== null){
-                addDraggingFeature((jQuerySelection).find("table"));
+                addDraggableToTable((jQuerySelection).find("table"));
                 jQuerySelection.droppable({
                         hoverClass:"highlight",
                         tolerance:"pointer",
@@ -1507,7 +1505,7 @@ var addDroppableFeature = function(jQuerySelection) {
                                         $(this).html(carrying);
                                         setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying);
                                         addDroppableFeature($(this).find('.droppable'));
-                                        addDraggingFeature($(this).find("table"));
+                                        addDraggableToTable($(this).find("table"));
                                         $(this).css("border", "none");
                                         ui.draggable.detach();
                                         droppedInDroppable = true;
@@ -1517,6 +1515,14 @@ var addDroppableFeature = function(jQuerySelection) {
         }
 };
 
+
+var addDraggableToTable = function (jQuerySelection){
+        if(jQuerySelection !=undefined){
+                jQuerySelection.each(function (){
+                        addDraggingFeature($(this));
+                });
+        }
+};
 
 /*
 eliminateBorder takes in a jQuerySelection and returns nothing.
