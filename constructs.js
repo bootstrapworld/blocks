@@ -226,7 +226,7 @@ var ExprDefineFunc = function(){
 };
 
 var ExprContract = function(){
-        this.funcName = undefined;
+        this.funcName = "";
         this.argumentTypes = undefined;
         this.outputType = undefined;
         this.id = makeID();
@@ -247,10 +247,10 @@ Constucts the define variable block given a name (string), an expression which i
 object, and an output type
 
 (define x 3) =>
-ExprDefineConst("x", ExprNum(3), "Numbers")
+ExprDefineConst("x", ExprNumber(3), "Numbers")
 
 (define y (+ 2 x)) =>
-ExprDefineConst("y", (ExprApp("+", [ExprNum("2"), ExprConst("x")))
+ExprDefineConst("y", (ExprApp("+", [ExprNumber("2"), ExprConst("x")))
 */
 var ExprDefineConst = function(){
         this.constName = undefined;
@@ -415,7 +415,7 @@ The first expression has to be a boolean
         [(false) 1]
 ) =>
 ExprCond(list1)
-list1 = [ExprBoolAnswer(ExprBoolean(true),ExprNum(2)).ExprBoolAnswer(ExprBoolean(False),ExprNum(1))]
+list1 = [ExprBoolAnswer(ExprBoolean(true),ExprNumber(2)).ExprBoolAnswer(ExprBoolean(False),ExprNumber(1))]
 */
 var ExprCond = function(){
         this.listOfBooleanAnswer=[new ExprBoolAnswer()];
@@ -1100,6 +1100,34 @@ function decode(string){
 }
 
 
+function sync(objectID){
+        var block=searchForIndex(objectID+"",program);
+        var DOMBlock=$(document.getElementById(objectID));
+        if(block instanceof ExprNumber || block instanceof ExprString){
+                block.value=DOMBlock.find(".input").attr('value');
+        }
+        else if(block instanceof ExprDefineConst){
+                block.constName=DOMBlock.find('.constName').attr('value');
+        }
+        else if(block instanceof ExprDefineFunc){
+                var prevName=block.contract.funcName;
+                if(DOMBlock.find('.contractName').attr('value')===prevName){
+                        block.contract.funcName=DOMBlock.find('.definitionName').attr('value');
+                        DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
+                }
+                else if(DOMBlock.find('.definitionName').attr('value')===prevName){
+                        block.contract.funcName=DOMBlock.find('.contractName').attr('value');
+                        DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
+                }
+                else{
+                        console.log("neither branch")
+                }
+        }
+        else{
+                throw new Error("block type not found");
+        }
+}
+
 
 /*
 createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to 
@@ -1130,10 +1158,23 @@ that function with name, color, and spaces for input blocks
 function createDefineBlock(codeObject){
         var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
         //contract
-        block+="<tr><th><input id=\"name\"></th><th> : </th><th>"+generateTypeDrop()+"</th><th> <button class=\"buttonPlus\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></tr>";
+        block+="<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+")\" ";
+        if(codeObject.contract.funcName!=undefined){
+                block+="value=\""+encode(codeObject.contract.funcName)+"\"";
+        }
+        block+=" />"
+
+        block+="</th><th> : </th><th>"+generateTypeDrop()+"</th><th> <button class=\"buttonPlus\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></tr>";
+        
         //define block
         block+="<tr><th>define</th>";
-        block+="<th class=\"expr\"> <input type=\"Name\" id=\"Name\" name=\"Name\"/></th>";
+        
+        block+="<th class=\"expr\"> <input class=\"definitionName\" onkeyup=\"sync("+codeObject.id+")\" ";
+        if(codeObject.contract.funcName!=undefined){
+                block+="value=\""+encode(codeObject.contract.funcName)+"\"";
+        }
+        block+=" /></th>";
+
         block+="<th class=\"expr\">args </th>";
         if(codeObject.expr != undefined){
                 block+="<th class=\"noborder droppable expr\" id="+codeObject.funcIDList[0]+">";
@@ -1149,7 +1190,7 @@ function createDefineBlock(codeObject){
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject){
         var block = "<table class=\"DefineVar Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
-        block+="<th class=\"expr\"><input class=\"constName\""
+        block+="<th class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"constName\""
         if(codeObject.constName != undefined){
                 block+=" value=\""+encode(codeObject.constName)+"\"";
         }
@@ -1211,7 +1252,7 @@ function createBooleanBlock(codeObject){
         return block + "</table>";
 }
 function createNumBlock(codeObject){
-        var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input style=\"width:50px;\""
+        var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\""
         if(codeObject.value != undefined){
                 block+=" value=\""+codeObject.value+"\"";
         }
@@ -1219,7 +1260,7 @@ function createNumBlock(codeObject){
         return block + "</table>";
 }
 function createStringBlock(codeObject){
-        var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"<input class=\"Strings\""
+        var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"<input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" class=\"Strings\""
         if(codeObject.value!=undefined || codeObject.value !== ""){
                 block +=" value=\""+encode(codeObject.value)+"\""
         }
