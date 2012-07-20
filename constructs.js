@@ -620,6 +620,7 @@ var codeWidth;
 var activated;
 // which text block in the #code div is currently being focused
 var focused=null;
+var initvalue=null;
 // ID that matches together a code object and an HTML element
 var ID =0;
 
@@ -656,7 +657,9 @@ $(document).ready(function(){
         sets focus equal to the input that is focused. 
         */
         $("#List input").live('focus',function(){
-            focused=$(this);
+            focused=$(this)
+            initvalue=focused.value;
+            tempProgram=cloneProgram(program);
         });
 
         var formValidation = function(e){
@@ -675,12 +678,12 @@ $(document).ready(function(){
                                         return;
                                 } 
                                 else{
-                                        var prevValue=codeObject.value;
                                         focused.css("background-color", colors.Numbers);
-                                        if( (prevValue==undefined && inputtext!="") || (prevValue !== inputtext)){
-                                             addToHistory(cloneProgram(program));
-                                             codeObject.value=inputtext;
-                                             focused.attr('value',inputtext);
+                                        if( initvalue != inputtext){
+                                             console.log("I am here")
+                                             addToHistory(tempProgram);
+                                             initvalue=null;
+                                             tempProgram=null;
                                         }
                                         focused=null;
                                 }
@@ -688,42 +691,51 @@ $(document).ready(function(){
 
                         //STRINGS
                         else if(focused.closest($("table")).hasClass("Strings")){
-                                var prevValue=codeObject.value;
-                                if( (prevValue==undefined && inputtext!="") || (prevValue !== inputtext)){
-                                             addToHistory(cloneProgram(program));
-                                             codeObject.value=inputtext;
-                                             focused.attr('value',inputtext);
-   
+                                if( initvalue != inputtext ){
+                                             addToHistory(tempProgram);
+                                                initvalue=null;
+                                                tempProgram=null;
                                 }
                                 focused=null;
                         }
                         //DEFINING CONSTANTS
                         else if(focused.closest($("table")).hasClass("DefineVar")){
-                                var prevName=codeObject.constName;
-                                if((prevName !=undefined && prevName != "") && inputtext !== ""){
+                                if((initvalue !=undefined && initvalue != "") && inputtext !== ""){
                                         console.log("case prev is defined, input is defined");
                                         console.log("prevName is",prevName)
                                         var prevIndex=containsName(prevName,constants);
                                         if(prevIndex != -1){
                                                 constants[prevIndex].name=inputtext;
                                         }
-                                        addToHistory(cloneProgram(program));
-                                        codeObject.constName=inputtext;
+                                        addToHistory(tempProgram);
+                                        initvalue=null
+                                        tempProgram=null;
                                 }
-                                else if ((prevName !=undefined && prevName != "") && inputtext === ""){
+                                else if ((initvalue !=undefined && initvalue != "") && inputtext === ""){
                                         console.log("case prev is defined, input is undefined");
                                         constants.splice(containsName(prevName,1));
-                                        addToHistory(cloneProgram(program));
-                                        codeObject.constName=undefined;
+                                        addToHistory(tempProgram);
+                                        initvalue=null;
+                                        tempProgram=null;
                                 }
-                                else if((prevName ==undefined || prevName == "") && inputtext !== ""){
+                                else if((initvalue ==undefined || prevName == "") && inputtext !== ""){
                                         console.log("case prev is undefined, input is defined");
-                                        addToHistory(cloneProgram(program));
-                                        codeObject.constName=inputtext;
+                                        addToHistory(tempProgram);
+                                        initvalue=null;
+                                        tempProgram=null;
                                 }
                                 makeDrawers(functions,constants);
                                 drawerButton(activated);
                                 focused.attr('value',inputtext);
+                                focused=null;
+                        }
+                        else if(focused.closest($("table")).hasClass("DefineFun")){
+                                if( initvalue != inputtext){
+                                        console.log("I am here")
+                                        addToHistory(tempProgram);
+                                        initvalue=null;
+                                        tempProgram=null;
+                                }
                                 focused=null;
                         }
                     }
