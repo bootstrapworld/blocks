@@ -681,6 +681,7 @@ $(document).ready(function(){
                                         focused.css("background-color", colors.Numbers);
                                         if( initvalue != inputtext){
                                              addToHistory(tempProgram);
+					    focused.attr('value',inputtext);
                                              initvalue=null;
                                              tempProgram=null;
                                         }
@@ -1565,6 +1566,25 @@ var addDraggingFeature = function(jQuerySelection) {
                 }
         }
 };
+/*
+addClickableLiteralBox creates a literal block when a blue or orange droppable is clicked
+*/
+var addClickableLiteralBox = function(jQuerySelection, parent, child){
+    console.log("WHYYY");
+    if(jQuerySelection.hasClass("Numbers") && jQuerySelection.children().length === 0){
+	addClickableLiteralBoxHelper(jQuerySelection, new ExprNumber(), parent, child);
+    }
+    else if (jQuerySelection.hasClass("Strings")){
+	addClickableLiteralBoxHelper(jQuerySelection, new ExprString(), parent, child);
+    }
+}
+
+var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent, child) {
+	setChildInProgram(parent, child, codeObject);
+        var html = createBlock(codeObject);
+	$(html).css('border','none');
+	jQuerySelection.html(html);
+};
 
 /*
 addDroppableFeature is a function that takes in a jQuery selector and applys droppable functionality
@@ -1573,6 +1593,11 @@ to that selector. This is applied to empty blocks within blocks.
 var addDroppableFeature = function(jQuerySelection) {
         if (jQuerySelection !== null){
                 addDraggableToTable((jQuerySelection).find("table"));
+	        jQuerySelection.mousedown(function(e) {
+		    if (e.which === 1){
+			addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"));
+		    }
+		});
                 jQuerySelection.droppable({
                         hoverClass:"highlight",
                         tolerance:"pointer",
