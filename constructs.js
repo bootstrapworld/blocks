@@ -206,7 +206,7 @@ funcIDList: first id refers to the expr block, all others refer to aruguments in
 */
 var ExprDefineFunc = function(){
         this.contract = new ExprContract();
-        this.argumentNames = undefined;
+        this.argumentNames = [""];
         this.expr = undefined;
         this.id = makeID();
         this.funcIDList = makeIDList(2);
@@ -214,7 +214,7 @@ var ExprDefineFunc = function(){
                 var temp=new ExprDefineFunc();
                 temp.contract=this.contract.clone();
                 if (this.argumentNames != undefined){
-                        temp.argumentTypes=this.argumentNames.slice(0);
+                        temp.argumentNames=this.argumentNames.slice(0);
                 }
                 if (this.expr != undefined){
                         temp.expr=this.expr.clone();
@@ -680,7 +680,6 @@ $(document).ready(function(){
                                 else{
                                         focused.css("background-color", colors.Numbers);
                                         if( initvalue != inputtext){
-                                             console.log("I am here")
                                              addToHistory(tempProgram);
                                              initvalue=null;
                                              tempProgram=null;
@@ -731,7 +730,6 @@ $(document).ready(function(){
                         }
                         else if(focused.closest($("table")).hasClass("DefineFun")){
                                 if( initvalue != inputtext){
-                                        console.log("I am here")
                                         addToHistory(tempProgram);
                                         initvalue=null;
                                         tempProgram=null;
@@ -781,6 +779,13 @@ $(document).ready(function(){
                      }  
                      renderProgram(createProgramHTML());
                 }    
+        })
+
+        $(".addArgument").live('click',function(){
+                addToHistory(cloneProgram(program));
+                var block=searchForIndex($(this).closest('table').attr('id'),program)
+                block.argumentNames.push("");
+                renderProgram(createProgramHTML());
         })
 
 
@@ -1131,9 +1136,11 @@ function sync(objectID){
                         block.contract.funcName=DOMBlock.find('.contractName').attr('value');
                         DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
                 }
-                else{
-                        console.log("neither branch")
-                }
+                var i=0;
+                DOMBlock.find('.argName').each(function(){
+                          block.argumentNames[i]=$(this).attr('value');
+                            i++;
+                });
         }
         else{
                 throw new Error("block type not found");
@@ -1176,7 +1183,15 @@ function createDefineBlock(codeObject){
         }
         block+=" />"
 
-        block+="</th><th> : </th><th>"+generateTypeDrop()+"</th><th> <button class=\"buttonPlus\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></tr>";
+        block+="</th><th> : </th>";
+
+        if(codeObject.argumentNames.length===0){
+                block+=" <th>"+generateTypeDrop()+"</th>";
+        }
+        for(var i=0;i<codeObject.argumentNames.length;i++){
+                block+=" <th>"+generateTypeDrop()+"</th>";
+        }
+        block+="<th> <button class=\"addArgument\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></tr>";
         
         //define block
         block+="<tr><th>define</th>";
@@ -1187,7 +1202,19 @@ function createDefineBlock(codeObject){
         }
         block+=" /></th>";
 
-        block+="<th class=\"expr\">args </th>";
+        if(codeObject.argumentNames.length===0){
+                block+="<th width=\"10px\" class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"argName\"/>";
+        }
+        for(var i=0;i<codeObject.argumentNames.length;i++){
+                block+="<th width=\"10px\" class=\"expr\"><input onkeyup=\"sync("+codeObject.id+") class=\"argName\" ";
+                if(codeObject.argumentNames[i]!=undefined){
+                        block+="value=\""+codeObject.argumentNames[i]+"\"";
+                }
+                block+=" />"
+        }
+        //block+="<th class=\"expr\">args </th>";
+
+
         if(codeObject.expr != undefined){
                 block+="<th class=\"noborder droppable expr\" id="+codeObject.funcIDList[0]+">";
                 block+=createBlock(codeObject.expr);
