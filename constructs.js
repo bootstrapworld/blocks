@@ -1152,21 +1152,20 @@ function sync(objectID){
         }
         else if(block instanceof ExprDefineFunc){
                 var prevName=block.contract.funcName;
-                if(prevName===DOMBlock.find('.contractName').attr('value') && prevName===DOMBlock.find('.definitionName').attr('value')){
-                        return;
-                }
-                if(DOMBlock.find('.contractName').attr('value')===prevName){
-                        block.contract.funcName=decode(DOMBlock.find('.definitionName').attr('value'));
-                        DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
-                }
-                else if(DOMBlock.find('.definitionName').attr('value')===prevName){
-                        block.contract.funcName=decode(DOMBlock.find('.contractName').attr('value'));
-                        DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
+                if(!(prevName===DOMBlock.find('.contractName').attr('value') && prevName===DOMBlock.find('.definitionName').attr('value'))){
+                        if(DOMBlock.find('.contractName').attr('value')===prevName){
+                                block.contract.funcName=decode(DOMBlock.find('.definitionName').attr('value'));
+                                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
+                        }
+                        else if(DOMBlock.find('.definitionName').attr('value')===prevName){
+                                block.contract.funcName=decode(DOMBlock.find('.contractName').attr('value'));
+                                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
+                        }
                 }
                 var i=0;
                 DOMBlock.find('.argName').each(function(){
                           block.argumentNames[i]=$(this).attr('value');
-                            i++;
+                          i++;
                 });
         }
         else{
@@ -1234,7 +1233,7 @@ function createDefineBlock(codeObject){
                 if(codeObject.contract.argumentTypes[i]!=undefined){
                         block+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
                 }
-                block+="><input id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+") class=\"argName\" ";
+                block+="><input id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+")\" class=\"argName\" ";
                 if(codeObject.argumentNames[i]!=undefined){
                         block+="value=\""+encode(codeObject.argumentNames[i])+"\"";
                 }
