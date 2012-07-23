@@ -321,7 +321,7 @@ Constructs a string given the contents of the string (str).
 The value of the string is initialized as an empty string "". <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 */
 var ExprString= function(){
-        this.value = "";
+    this.value="insert string here";
         this.outputType = "Strings";
         this.id = makeID();
         this.clone=function(){
@@ -337,7 +337,7 @@ var ExprString= function(){
 Constructs a number given a number num.
 */
 var ExprNumber = function(){
-        this.value = undefined;
+    this.value = 0;
         this.outputType = "Numbers";
         this.id = makeID();
         this.clone=function(){
@@ -1166,7 +1166,6 @@ function sync(objectID){
         }
 }
 
-
 /*
 createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to 
 that function with name, color, and spaces for input blocks
@@ -1174,8 +1173,8 @@ that function with name, color, and spaces for input blocks
  */
  function createFunctionBlock(functionIndex, codeObject){
         var func = functions[functionIndex];
-        var block = "<table class=\"expr " + func.output  +"\"" + " id=\""+codeObject.id+"\">";
-        block += "<tr><th>" + encode(func.name) + "</th>";
+        var block = "<table class=\"expr " + func.output  +"\"" + " id=\""+codeObject.id+"\" border>";
+        block += "<tr><th colspan=\"" + func.input.length  + "\">" + encode(func.name) + "</th></tr><tr>";
         var i;
         for(i = 0; i < func.input.length; i++){
                 if (codeObject.args[i] != undefined){
@@ -1317,6 +1316,19 @@ function createBooleanBlock(codeObject){
         var block =  "<table class=\"Booleans expr\" " + "id=\""+codeObject.id+"\"><tr><th>"+codeObject.value+"</tr>";
         return block + "</table>";
 }
+
+function createNumBlock(codeObject){
+    var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\""
+    block+=" value=\""+codeObject.value+"\">";
+    return block + "</th></tr></table>";
+}
+
+function createStringBlock(codeObject){
+    var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"</th><th><input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" class=\"Strings\"";
+    block += " value=\"" + encode(codeObject.value) + "\">";
+    return block + "</th><th>\"</th></tr></table>";
+}
+
 function createNumBlock(codeObject){
         var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\""
         if(codeObject.value != undefined){
@@ -1655,6 +1667,7 @@ var addClickableLiteralBox = function(jQuerySelection, parent, child){
 }
 
 var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent, child) {
+    addToHistory(cloneProgram(program));
 	setChildInProgram(parent, child, codeObject);
         var html = createBlock(codeObject);
         $(jQuerySelection).css('border','none');
