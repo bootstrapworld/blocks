@@ -1398,46 +1398,6 @@ function deleteArg(selectID,codeObjectID){
 }
 
 
-// var ExprDefineFunc = function(){
-//         this.contract = new ExprContract();
-//         this.argumentNames = [""];
-//         this.expr = undefined;
-//         this.id = makeID();
-//         this.funcIDList = makeIDList(2);
-//         this.clone=function(){
-//                 var temp=new ExprDefineFunc();
-//                 temp.contract=this.contract.clone();
-//                 if (this.argumentNames != undefined){
-//                         temp.argumentNames=this.argumentNames.slice(0);
-//                 }
-//                 if (this.expr != undefined){
-//                         temp.expr=this.expr.clone();
-//                 }
-//                 temp.id=this.id;
-//                 temp.funcIDList=this.funcIDList.slice(0);
-//                 return temp;
-//         };
-// };
-
-// var ExprContract = function(){
-//         this.funcName = "";
-//         this.argumentTypes = undefined;
-//         this.outputType = undefined;
-//         this.id = makeID();
-//         this.funcIDList=makeIDList(2)
-//         this.clone=function(){
-//                 var temp=new ExprContract();
-//                 temp.funcName=this.funcName;
-//                 if (this.argumentTypes != undefined){
-//                         temp.argumentTypes=this.argumentTypes.slice(0);
-//                 }
-//                 temp.funcIDList=this.funcIDList.slice(0);
-//                 temp.outputType=this.outputType;
-//                 temp.id=this.id;
-//                 return temp;
-//         };
-// };
-
 /*====================================================================================
   ___     _                        _           
  |_ _|_ _| |_ ___ _ _ _ __ _ _ ___| |_ ___ _ _ 
