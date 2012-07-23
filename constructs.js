@@ -437,87 +437,87 @@ var ExprCond = function(){
 var functions=[];
 functions[0]={};
 functions[0].name="+";
-functions[0].input=[{type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"}];
+functions[0].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
 functions[0].output="Numbers";
 functions[1]={};
 functions[1].name="-";
-functions[1].input=[{type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"}];
+functions[1].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
 functions[1].output="Numbers";
 functions[2]={};
 functions[2].name="*";
-functions[2].input=[{type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"}];
+functions[2].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
 functions[2].output="Numbers";
 functions[3]={};
 functions[3].name="/";
-functions[3].input=[{type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"}];
+functions[3].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
 functions[3].output="Numbers";
 functions[4]={};
 functions[4].name="remainder";
-functions[4].input=[{type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"}];
+functions[4].input=[{type:"Numbers",name:"Dividend"},{type:"Numbers",name:"Divisor"}];
 functions[4].output="Numbers";
 functions[5]={};
 functions[5].name="sqrt";
-functions[5].input=[{type:"Numbers",name:"Exp1"}];
+functions[5].input=[{type:"Numbers",name:"Number"}];
 functions[5].output="Numbers";
 functions[6]={};
 functions[6].name="sqr";
-functions[6].input=[{type:"Numbers",name:"Exp1"}];
+functions[6].input=[{type:"Numbers",name:"Number"}];
 functions[6].output="Numbers";
 functions[7]={};
 functions[7].name="expt";
-functions[7].input=[{type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"}];
+functions[7].input=[{type:"Numbers",name:"Base"},{type:"Numbers",name:"Exponent"}];
 functions[7].output="Numbers";
 functions[8]={};
 functions[8].name="=";
-functions[8].input=[{type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"}];
+functions[8].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
 functions[8].output="Booleans";
 functions[9]={};
 functions[9].name=">";
-functions[9].input=[{type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"}];
+functions[9].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
 functions[9].output="Booleans";
 functions[10]={};
 functions[10].name="<";
-functions[10].input=[{type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"}];
+functions[10].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
 functions[10].output="Booleans";
 functions[11]={};
 functions[11].name="<=";
-functions[11].input=[{type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"}];
+functions[11].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
 functions[11].output="Booleans";
 functions[12]={};
 functions[12].name=">=";
-functions[12].input=[{type:"Numbers",name:"Exp1"},{type:"Numbers",name:"Exp2"}];
+functions[12].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
 functions[12].output="Booleans";
 functions[13]={};
 functions[13].name="even?";
-functions[13].input=[{type:"Numbers",name:"Exp1"}];
+functions[13].input=[{type:"Numbers",name:"Number"}];
 functions[13].output="Booleans";
 functions[14]={};
 functions[14].name="odd?";
-functions[14].input=[{type:"Numbers",name:"Exp1"}];
+functions[14].input=[{type:"Numbers",name:"Number"}];
 functions[14].output="Booleans";
 functions[15]={};
 functions[15].name="string-append";
-functions[15].input=[{type:"Strings",name:"String1"},{type:"Strings",name:"String2"}];
+functions[15].input=[{type:"Strings",name:"String"},{type:"Strings",name:"String"}];
 functions[15].output="Strings";
 functions[16]={};
 functions[16].name="string-length";
-functions[16].input=[{type:"Strings",name:"String1"}];
+functions[16].input=[{type:"Strings",name:"String"}];
 functions[16].output="Numbers";
 functions[17]={};
 functions[17].name="string=?";
-functions[17].input=[{type:"Strings",name:"String1"},{type:"Strings",name:"String2"}];
+functions[17].input=[{type:"Strings",name:"String"},{type:"Strings",name:"String"}];
 functions[17].output="Booleans";
 functions[18]={};
 functions[18].name="and";
-functions[18].input=[{type:"Booleans",name:"Boolean Exp1"},{type:"Booleans",name:"Boolean Exp2"}];
+functions[18].input=[{type:"Booleans",name:"Boolean"},{type:"Booleans",name:"Boolean"}];
 functions[18].output="Booleans";
 functions[19]={};
 functions[19].name="or";
-functions[19].input=[{type:"Booleans",name:"Boolean Exp1"},{type:"Booleans",name:"Boolean Exp2"}];
+functions[19].input=[{type:"Booleans",name:"Boolean"},{type:"Booleans",name:"Boolean"}];
 functions[19].output="Booleans";
 functions[20]={};
 functions[20].name="not";
-functions[20].input=[{type:"Booleans",name:"Boolean Exp1"}];
+functions[20].input=[{type:"Booleans",name:"Boolean"}];
 functions[20].output="Booleans";
 functions[21]={};
 functions[21].name="rectangle";
@@ -615,8 +615,8 @@ var program = [];
 =====================================================================================*/
 
 // These variables store what the height and width of the code div should be
-var codeHeight;
-var codeWidth;
+var contentHeight;
+var contentWidth;
 // Which Drawer type is currently being displayed
 var activated;
 // which text block in the #code div is currently being focused
@@ -628,12 +628,14 @@ var ID =0;
 
 //resizes code div when the window is resized
 function onResize(){
-        codeHeight = $(window).height() - $("#header").height() - $("#Drawer").height();
-        codeWidth = $(window).width();
-        $("#code").height(codeHeight);
-        $("#code").width(codeWidth);
-        $("#List").height(codeHeight - 150);
-        $("#List").width(codeWidth - 150);
+    contentHeight = $(window).height() - $("#header").height();
+    contentWidth = $(window).width();
+    $("#content").height(contentHeight);
+    $("#content").width(contentWidth);
+    $("#code").height(contentHeight);
+    $("#code").width(contentWidth-$("#Drawers").width());
+    $("#List").height(contentHeight);
+    $("#List").width($("#code").width()-150);
 }
 
 
@@ -653,7 +655,6 @@ $(document).ready(function(){
         adds a stylesheet to <head> such that blocks can be colored according to their type
         */
         renderTypeColors();
-    
         /*
         sets focus equal to the input that is focused. 
         */
@@ -841,10 +842,17 @@ function containsName(array_of_obj,stringElement){
                        
 =====================================================================================*/
 
-//During the course of the whole session, drawers can be opened and closed to reveal all of the buttons (functions) that they contain
-$(".bottomNav").live('click', function(e){
-    drawerButton($(this).attr('id'));
-});
+/*
+drawerToggle allows the drawer to slide toggle
+*/
+function drawerToggle() {
+
+    $("#options .toggleHeader").click(function() {
+	var toToggle = $(this).attr("class").split(" ")[1];
+	console.log(toToggle);
+	$("#options #" + toToggle).slideToggle("slow");
+    });
+}
 
 //DrawerButton takes in an element and either activates (shows) or deactivates (hides) the current element to show the new one
 function drawerButton(elt){
@@ -914,61 +922,61 @@ function unique(array_inputs){
 //all of the functions corresponding to that type are displayed
 // INJECTION ATTACK FIXME
 function makeDrawers(allFunctions,allConstants){
-        var typeDrawers=makeTypesArray(allFunctions,allConstants);
+        var typeDrawers = makeTypesArray(allFunctions,allConstants);
         var Drawers="<div id=\"options\">\n";
-        var Selector="<div id=\"selectors\">\n";
         var i;
         for(var Type in typeDrawers){
                 if(typeDrawers.hasOwnProperty(Type)){
-                Drawers+="<div id=\""+encode(Type)+"\">\n";
-                if(Type==="Constants"){
+                    Drawers+="<h1 class=\"toggleHeader " + encode(Type) + "\">"+encode(Type)+"</h1>";
+		    Drawers += "<div id=\""+encode(Type)+"\">";
+                    if(Type==="Constants"){
                         for(i=0;i<typeDrawers[Type].length;i++){
-                                Drawers+="<span class=\"draggable "+encode(Type)+"\">"+encode(allConstants[typeDrawers[Type][i]].name)+"</span>\n";
-                        }
-                }
-                else if(Type==="Define"){
-                        for(i=0;i<typeDrawers[Type].length;i++){
-                                Drawers+="<span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span>\n";
-                        }
-                }
-                else if(Type==="Expressions"){
-                        for(i=0;i<typeDrawers[Type].length;i++){
-                                Drawers+="<span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span>\n";
-                        }
-                }
-                else{
-                        for(i=0;i<typeDrawers[Type].length;i++){
-                                if(typeDrawers[Type][i]==="true"){
-                                        Drawers+="<span class=\"Booleans draggable\">true</span>\n";
-                                }
-                                else if(typeDrawers[Type][i]==="false"){
-                                        Drawers+="<span class=\"Booleans draggable\">false</span>\n";
-                                }
-                                else if(typeDrawers[Type][i]==="Text"){
-                                        Drawers+="<span class=\"Strings draggable\">Text</span>\n";
-                                }
-                                else if(typeDrawers[Type][i]==="Number"){
-                                        Drawers+="<span class=\"Numbers draggable\">Number</span>\n";
-                                }
-                                else{
-                                Drawers+="<span class=\"draggable "+encode(allFunctions[typeDrawers[Type][i]].output)+"\">"+encode(allFunctions[typeDrawers[Type][i]].name)+"</span>\n";
-                        }
-                        }
-                }
+                            Drawers+="<span class=\"draggable "+encode(Type)+"\">"+encode(allConstants[typeDrawers[Type][i]].name)+"</span><br>";
+			}
+		    }
+		    
+else if(Type==="Define"){
+			for(i=0;i<typeDrawers[Type].length;i++){
+			    Drawers+="<span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span><br>";
+			}
+		    }
+		    else if(Type==="Expressions"){
+			for(i=0;i<typeDrawers[Type].length;i++){
+			    Drawers+="<span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span><br>";
+			}
+		    }
+		    else{
+			for(i=0;i<typeDrawers[Type].length;i++){
+			    if(typeDrawers[Type][i]==="true"){
+				Drawers+="<span class=\"Booleans draggable\">true</span><br>";
+			    }
+			    else if(typeDrawers[Type][i]==="false"){
+				Drawers+="<span class=\"Booleans draggable\">false</span><br>";
+			    }
+			    else if(typeDrawers[Type][i]==="Text"){
+				Drawers+="<span class=\"Strings draggable\">Text</span><br>";
+			    }
+			    else if(typeDrawers[Type][i]==="Number"){
+				Drawers+="<span class=\"Numbers draggable\">Number</span><br>";
+			    }
+			    else{
+				Drawers+="<span class=\"draggable "+encode(allFunctions[typeDrawers[Type][i]].output)+"\">"+encode(allFunctions[typeDrawers[Type][i]].name)+"</span><br>";
+			    }
+			}
+		    }
+		    
+		    Drawers+="</div>";
+		}
+	}
 
-                Drawers+="</div>\n";
-                Selector+="<div class=\""+encode(Type)+" bottomNav\" id=\""+encode(Type)+"\">"+encode(Type)+"</div>\n";
-        }
-        }
-
-        Drawers+="</div>";
-        Selector+="</div>";
-        document.getElementById("Drawer").innerHTML=Drawers+"\n"+Selector;
-        makeDrawersDraggable();
-        if (activated == undefined){
-                activated = "Numbers";
-        }
-        drawerButton(activated);
+    Drawers+="</div>";
+    $("#Drawer").html(Drawers);
+    drawerToggle();
+    makeDrawersDraggable();
+    if (activated == undefined){
+	activated = "Numbers";
+    }
+    drawerButton(activated);
 }
 
 
@@ -1329,23 +1337,6 @@ function createStringBlock(codeObject){
     return block + "</th><th>\"</th></tr></table>";
 }
 
-function createNumBlock(codeObject){
-        var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\""
-        if(codeObject.value != undefined){
-                block+=" value=\""+codeObject.value+"\"";
-        }
-        block+="></tr>";
-        return block + "</table>";
-}
-function createStringBlock(codeObject){
-        var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"<input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" class=\"Strings\""
-        if(codeObject.value!=undefined || codeObject.value !== ""){
-                block +=" value=\""+encode(codeObject.value)+"\""
-        }
-        block+=">\"</tr>";
-        return block + "</table>";
-}
-
 function stringToElement(string){
         var wrapper= document.createElement('div');
         wrapper.innerHTML=string;
@@ -1514,7 +1505,7 @@ $(function() {
 
         //implements sortability for the program block
         $("#List").sortable({
-                connectWith: "#trash, .droppable",
+                connectWith: "#options, .droppable",
                 placeholder:'placeholder',
                 start: function(event, ui){
                         if (ui.item === null){
@@ -1580,7 +1571,7 @@ $(function() {
         
 
         //allows for deletion
-        $("#trash").droppable({
+        $("#options").droppable({
                 tolerance:'pointer',
                 greedy:true,
                 drop: function(event, ui){

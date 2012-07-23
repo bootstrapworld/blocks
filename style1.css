@@ -1,124 +1,133 @@
 body{
-	background-color:#000;
-	font-family:Arial;
-	font-size:11pt;
-	position:absolute;
-	left:0px;
-	margin: 0px;
-	overflow:hidden;
-	-webkit-user-select: none;
-	-moz-user-select: none;
-	-o-user-select: none;
-	-khtml-user-select: none;
-	user-select: none;
+    background-color:#000;
+    font-family:Arial;
+    font-size:11pt;
+    position:absolute;
+    left:0px;
+    margin: 0px;
+    overflow:hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    -khtml-user-select: none;
+    user-select: none;
 }
 
 
 /*****************************
 GENERAL
-*****************************/
+ *****************************/
 
 #header{
-	position:fixed;
-	top:0px;
-	width:100%;
-	height:50px;
-	background-color:gray;
+    position:fixed;
+    top:0px;
+    width:100%;
+    height:50px;
+    background-color:gray;
+}
+
+#content{
+    position:absolute;
+    top:50px;
+    left:0px;
+    overflow:hidden;
 }
 
 #Drawer{
-	position: fixed;
-	bottom: 0px;
-	background: green;
-	height: 100px;
-	width: 100%;
+    position:aboslute;
+    left:0px;
+    height: 100%;
+    width: 200px;
+    z-index:-1;
 }
 
-#code{
-	position:relative;
-	top:50px;
-	left:0px;
-	overflow: auto;
 
+#code{
+    position:absolute;
+    top:0px;
+    left:200px;
+    overflow: auto;
 }
 
 /*****************************
-CODE / HEADER
-*****************************/
+ CODE / HEADER
+ *****************************/
 
 
 .header {
-	float: right;
-	margin: 15px;
+    float: right;
+    margin: 15px;
 }
 
 
 table{
-	 border-style: solid; 
-	 border-radius: 5px;
+    border-style: solid; 
+    border-radius: 5px;
 }
 th table{
-	border: none;
+    border: none;
 }
 
 .expr{
-	border: gray; 
-	border-style: solid; 
-	border-radius: 10px;
-	padding: 2px;
+    border: gray; 
+    border-style: solid; 
+    border-radius: 10px;
+    padding: 2px;
 }
 #List{
-	list-style:none;
+    list-style:none;
 }
 #List li{
-	cursor:mover;
-	//background-color:red;
+    cursor:mover;
+    z-index:100;
 }
 form{
-	height: 10px;
+    height: 10px;
 }
 .droppable{
-	border: gray; 
-	border-style: solid; 
-	border-radius: 10px;
-	padding: 2px;
+    border: gray; 
+    border-style: solid; 
+    border-radius: 10px;
+    padding: 2px;
 }
 .placeholder{
-	width:100%;
-	height:15px;
+    width:100%;
+    height:15px;
 }
 /*****************************
-DRAWER
-*****************************/
+ DRAWER
+ *****************************/
 
-.bottomNav{
-	float:left;
-	text-align:center;
-	width:100px;
-	margin: 5px;
-	margin-top:7px;
-	border: 1px solid white;
-	padding: 10px;
-}
 #options{
-	position:fixed;
-	width:100%;
-	bottom:50px;
-	height:50px;
-	overflow: none;
-	background-color:purple;
-	word-spacing:10px;
+    width:200px;
+    height:100%;
+    overflow: auto;
+    background-color:darkslateblue;
+    z-index:-1;
 }
-#options div{
-	visibility: hidden;
-	position: absolute;
-	margin: 3px;
-	margin-top: 10px;
-}
+
 #options span {
-	padding: 5px;
-	border: 1px solid black;
-	border-radius: 5px;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    line-height:30px;
+}
+
+#options .toggleHeader{
+    width:100%;
+    text-align:center;
+    border-bottom: 1px solid #000;
+    border-top:1px solid #000;
+}
+
+#options  div{
+	margin: 3px;
+	display:none;
+}
+
+#options h1{
+margin-top:0px;
+margin-bottom:0px;
 }
 
 #selectors{
@@ -127,13 +136,6 @@ DRAWER
 	width:100%;
 	bottom:0px;
 	height:50px;
-}
-
-#trash{
-	position: fixed;
-	bottom:100px;
-	right:0px;
-	z-index:-100;
 }
 
 .ui-draggable{
