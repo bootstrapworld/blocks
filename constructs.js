@@ -580,14 +580,17 @@ adds a block, moves a block, deletes something, etc.)
 */
 var historyarr = [];
 
+
 /*
-addToHistory takes in a program state and adds it to history while setting the future array 
-(connected to the redo button) to an empty array
+  addToHistory takes in a program state and adds it to history while setting the future array 
+  (connected to the redo button) to an empty array
 */
 var addToHistory = function(programState) {
-        historyarr.push(programState);
-        future = [];
+    historyarr.push(programState);
+    $("#undoButton").removeAttr('disabled');
+    future = [];
 };
+
 
 /*
 future is an array of the program states. Updated when the user undos something.
@@ -728,27 +731,40 @@ $(document).ready(function(){
                 };
         $(document.body).live('click', formValidation);
 
-        /*
-        Binds undo functionality with undo button
-        */
-        $("#undoButton").bind('click', function(){
-                if (historyarr.length !== 0){
-                        future.unshift(cloneProgram(program));
-                        program = historyarr.pop();
-                        renderProgram(createProgramHTML());
-                }
-        });
+    //Sets undo and redo buttons to disabled on startup
+    $("#undoButton").attr('disabled','disabled');
+    $("#redoButton").attr('disabled','disabled');
 
-        /*
-        Binds redo functionality with redo button
-        */
-        $("#redoButton").bind('click', function(){
-                if (future.length !== 0){
-                        historyarr.push(cloneProgram(program));
-                        program = future.shift();
-                        renderProgram(createProgramHTML());
-                }
-        });
+    /*
+      Binds undo functionality with undo button
+    */
+    $("#undoButton").bind('click', function(){
+        if (historyarr.length !== 0){
+            future.unshift(cloneProgram(program));
+	    $("#redoButton").removeAttr('disabled');
+            program = historyarr.pop();
+            renderProgram(createProgramHTML());
+	    if (historyarr.length === 0){
+		$(this).attr('disabled','disabled');
+	    }
+        }
+    });  
+
+         /*
+      Binds redo functionality with redo button
+    */
+    $("#redoButton").bind('click', function(){
+        if (future.length !== 0){
+            historyarr.push(cloneProgram(program));
+            program = future.shift();
+            renderProgram(createProgramHTML());
+	    if (future.length === 0){
+		$("#redoButton").attr('disabled','disabled');
+	    }
+        }
+	$("#undoButton").removeAttr('disabled');
+    }); 
+
 
         $(".addCond").live('click',function(){
                 addToHistory(cloneProgram(program));
