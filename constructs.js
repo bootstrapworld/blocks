@@ -1222,20 +1222,29 @@ function createDefineBlock(codeObject){
         //         block+="<th width=\"10px\" class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"argName\"/>";
         // }
         for(var i=0;i<codeObject.argumentNames.length;i++){
-                block+="<th width=\"10px\" class=\"expr\"><input id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+") class=\"argName\" ";
+                block+="<th width=\"10px\" class=\"expr\"";
+                if(codeObject.contract.argumentTypes[i]!=undefined){
+                        block+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
+                }
+                block+="><input id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+") class=\"argName\" ";
                 if(codeObject.argumentNames[i]!=undefined){
                         block+="value=\""+codeObject.argumentNames[i]+"\"";
                 }
                 block+=" />"
         }
         block+="<th></th><th></th>"
+
+        block+="<th ";
+        if(codeObject.contract.outputType!=undefined){
+                block+=" style=\"background:"+colors[codeObject.contract.outputType]+"\" ";
+        }
         if(codeObject.expr != undefined){
-                block+="<th class=\"noborder droppable expr\" id="+codeObject.funcIDList[0]+">";
+                block+="class=\"noborder droppable expr\" id="+codeObject.funcIDList[0]+">";
                 block+=createBlock(codeObject.expr);
                 block+="</th>";
         }
         else{
-                block+="<th class=\"droppable expr\" id="+codeObject.funcIDList[0]+">expr</th>";
+                block+="class=\"droppable expr\" id="+codeObject.funcIDList[0]+">expr</th>";
         }
         return block + "</tr></table>";
 }
@@ -1368,6 +1377,7 @@ function changeType(curValue,selectID,codeObjectID){
                         codeObject.contract.outputType= (curValue==="Type") ? undefined : curValue;
                 }
         }
+        renderProgram(createProgramHTML(program));
 }
 
 function deleteArg(selectID,codeObjectID){
