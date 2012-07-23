@@ -213,9 +213,7 @@ var ExprDefineFunc = function(){
         this.clone=function(){
                 var temp=new ExprDefineFunc();
                 temp.contract=this.contract.clone();
-                if (this.argumentNames != undefined){
-                        temp.argumentNames=this.argumentNames.slice(0);
-                }
+                temp.argumentNames=this.argumentNames.slice(0);
                 if (this.expr != undefined){
                         temp.expr=this.expr.clone();
                 }
@@ -227,15 +225,15 @@ var ExprDefineFunc = function(){
 
 var ExprContract = function(){
         this.funcName = "";
-        this.argumentTypes = undefined;
+        this.argumentTypes = [];
         this.outputType = undefined;
         this.id = makeID();
+        this.funcIDList=makeIDList(2)
         this.clone=function(){
                 var temp=new ExprContract();
                 temp.funcName=this.funcName;
-                if (this.argumentTypes != undefined){
-                        temp.argumentTypes=this.argumentTypes.slice(0);
-                }
+                temp.argumentTypes=this.argumentTypes.slice(0);
+                temp.funcIDList=this.funcIDList.slice(0);
                 temp.outputType=this.outputType;
                 temp.id=this.id;
                 return temp;
@@ -679,24 +677,13 @@ $(document).ready(function(){
                                 } 
                                 else{
                                         focused.css("background-color", colors.Numbers);
-                                        if( initvalue != inputtext){
-                                             addToHistory(tempProgram);
-					    focused.attr('value',inputtext);
-                                             initvalue=null;
-                                             tempProgram=null;
-                                        }
-                                        focused=null;
+                                        changeValue(inputtext);
                                 }
                         }
 
                         //STRINGS
                         else if(focused.closest($("table")).hasClass("Strings")){
-                                if( initvalue != inputtext ){
-                                             addToHistory(tempProgram);
-                                                initvalue=null;
-                                                tempProgram=null;
-                                }
-                                focused=null;
+                                changeValue(inputtext);
                         }
                         //DEFINING CONSTANTS
                         else if(focused.closest($("table")).hasClass("DefineVar")){
@@ -785,12 +772,24 @@ $(document).ready(function(){
         $(".addArgument").live('click',function(){
                 addToHistory(cloneProgram(program));
                 var block=searchForIndex($(this).closest('table').attr('id'),program)
+                block.funcIDList.push(makeID())
+                block.contract.funcIDList.push(makeID())
                 block.argumentNames.push("");
                 renderProgram(createProgramHTML());
         })
 
 
 });
+
+function changeValue(inputtext){
+        if( initvalue != inputtext ){
+                addToHistory(tempProgram);
+                initvalue=null;
+                focused.attr('value',inputtext);
+                tempProgram=null;
+        }
+        focused=null;
+}
 
 /*
 adds a stylesheet to <head> such that blocks can be colored according to their type
@@ -1161,10 +1160,10 @@ that function with name, color, and spaces for input blocks
         var i;
         for(i = 0; i < func.input.length; i++){
                 if (codeObject.args[i] != undefined){
-                         block += "<th class=\"" + encode(func.input[i].type) +" noborder droppable\" id=\""+codeObject.funcIDList[i]+"\">" + createBlock(codeObject.args[i]);
+                         block += "<th name=\""+func.input[i].name+"\" class=\"" + encode(func.input[i].type) +" noborder droppable\" id=\""+codeObject.funcIDList[i]+"\">" + createBlock(codeObject.args[i]);
                 }
                 else{
-                        block+= "<th class=\"" + encode(func.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">" + func.input[i].name;
+                        block+= "<th name=\""+func.input[i].name+"\" class=\"" + encode(func.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">" + func.input[i].name;
                 }
                 block+="</th>";
         }
@@ -1186,13 +1185,13 @@ function createDefineBlock(codeObject){
 
         block+="</th><th> : </th>";
 
-        if(codeObject.argumentNames.length===0){
-                block+=" <th>"+generateTypeDrop()+"</th>";
-        }
+        // if(codeObject.argumentNames.length===0){
+        //         block+=" <th>"+generateTypeDrop()+"</th>";
+        // }
         for(var i=0;i<codeObject.argumentNames.length;i++){
-                block+=" <th>"+generateTypeDrop()+"</th>";
+                block+=" <th>"+generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject)+"</th>";
         }
-        block+="<th> <button class=\"addArgument\">+</button> </th><th> -> </th><th>"+generateTypeDrop()+"</th></tr>";
+        block+="<th> <button class=\"addArgument\">+</button> </th><th> -> </th><th>"+generateTypeDrop(codeObject.contract.funcIDList[0],codeObject)+"</th></tr>";
         
         //define block
         block+="<tr><th>define</th>";
@@ -1203,19 +1202,17 @@ function createDefineBlock(codeObject){
         }
         block+=" /></th>";
 
-        if(codeObject.argumentNames.length===0){
-                block+="<th width=\"10px\" class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"argName\"/>";
-        }
+        // if(codeObject.argumentNames.length===0){
+        //         block+="<th width=\"10px\" class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"argName\"/>";
+        // }
         for(var i=0;i<codeObject.argumentNames.length;i++){
-                block+="<th width=\"10px\" class=\"expr\"><input onkeyup=\"sync("+codeObject.id+") class=\"argName\" ";
+                block+="<th width=\"10px\" class=\"expr\"><input id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+") class=\"argName\" ";
                 if(codeObject.argumentNames[i]!=undefined){
                         block+="value=\""+codeObject.argumentNames[i]+"\"";
                 }
                 block+=" />"
         }
-        //block+="<th class=\"expr\">args </th>";
-
-
+        block+="<th></th><th></th>"
         if(codeObject.expr != undefined){
                 block+="<th class=\"noborder droppable expr\" id="+codeObject.funcIDList[0]+">";
                 block+=createBlock(codeObject.expr);
@@ -1317,14 +1314,100 @@ function stringToElement(string){
 /*
 Creates a drop down menu for use in the contract in order to select types.
 */
-function generateTypeDrop(){
-        var HTML = "<select name=\"TypeDrop\"><option value=\"select\">select</option>";
+function generateTypeDrop(newID,codeObject){
+        var HTML = "<select id=\""+newID+"\" name=\"TypeDrop\" onchange=\"changeType(this.value,"+newID+","+codeObject.id+")\"><option value=\"Type\">Type</option>";
+        var typeIndex=codeObject.contract.funcIDList.indexOf(newID)-1;
         for(var i=0;i<types.length;i++){
-                HTML+="<option value=\""+ types[i] +"\" class=\""+ types[i]+"\">"+ types[i] +"</option>";
+                HTML+="<option value=\""+ types[i] +"\" class=\""+ types[i]+"\"";
+                if(typeIndex===-1){
+                        if(codeObject.contract.outputType===types[i]){
+                                HTML+=" selected ";
+                        }
+                }
+                else{
+                        if(codeObject.contract.argumentTypes[typeIndex]===types[i]){
+                                HTML+=" selected ";
+                        }
+                }
+                HTML+=">"+ types[i] +"</option>";
         }
-        return HTML+"<option value=\"delete\">delete</option></select>";
+        HTML+="</select>";
+        HTML+= (typeIndex!==-1 && codeObject.contract.funcIDList.length !== 2) ? "<button onclick=\"deleteArg("+newID+","+codeObject.id+")\">x</button>" : "";
+        return HTML
 }
 
+function changeType(curValue,selectID,codeObjectID){
+        selectID+="";
+        var codeObject=searchForIndex(codeObjectID+"",program);
+        for(var i=0;i<codeObject.contract.funcIDList.length;i++){
+                if(selectID===codeObject.contract.funcIDList[i] && i!==0){
+                        addToHistory(cloneProgram(program));
+                        codeObject.contract.argumentTypes[i-1]= (curValue==="Type") ? undefined : curValue;
+                }
+                else if(selectID===codeObject.contract.funcIDList[i] && i===0){
+                        addToHistory(cloneProgram(program));
+                        codeObject.contract.outputType= (curValue==="Type") ? undefined : curValue;
+                }
+        }
+}
+
+function deleteArg(selectID,codeObjectID){
+        selectID+="";
+        var codeObject=searchForIndex(codeObjectID+"",program);
+        if(codeObject.contract.funcIDList.length>2){
+                for(var i=0;i<codeObject.contract.funcIDList.length;i++){
+                        if(selectID===codeObject.contract.funcIDList[i] && i!==0){
+                                addToHistory(cloneProgram(program));
+                                codeObject.argumentNames.splice(i-1,1);
+                                codeObject.funcIDList.splice(i,1);
+                                codeObject.contract.argumentTypes.splice(i-1,1);
+                                codeObject.contract.funcIDList.splice(i,1);
+                                renderProgram(createProgramHTML(program));
+                        }
+                }      
+        }
+}
+
+
+// var ExprDefineFunc = function(){
+//         this.contract = new ExprContract();
+//         this.argumentNames = [""];
+//         this.expr = undefined;
+//         this.id = makeID();
+//         this.funcIDList = makeIDList(2);
+//         this.clone=function(){
+//                 var temp=new ExprDefineFunc();
+//                 temp.contract=this.contract.clone();
+//                 if (this.argumentNames != undefined){
+//                         temp.argumentNames=this.argumentNames.slice(0);
+//                 }
+//                 if (this.expr != undefined){
+//                         temp.expr=this.expr.clone();
+//                 }
+//                 temp.id=this.id;
+//                 temp.funcIDList=this.funcIDList.slice(0);
+//                 return temp;
+//         };
+// };
+
+// var ExprContract = function(){
+//         this.funcName = "";
+//         this.argumentTypes = undefined;
+//         this.outputType = undefined;
+//         this.id = makeID();
+//         this.funcIDList=makeIDList(2)
+//         this.clone=function(){
+//                 var temp=new ExprContract();
+//                 temp.funcName=this.funcName;
+//                 if (this.argumentTypes != undefined){
+//                         temp.argumentTypes=this.argumentTypes.slice(0);
+//                 }
+//                 temp.funcIDList=this.funcIDList.slice(0);
+//                 temp.outputType=this.outputType;
+//                 temp.id=this.id;
+//                 return temp;
+//         };
+// };
 
 /*====================================================================================
   ___     _                        _           
@@ -1586,6 +1669,7 @@ var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent,
         var html = createBlock(codeObject);
         $(jQuerySelection).css('border','none');
 	jQuerySelection.html(html);
+        addDroppableFeature(jQuerySelection);
 };
 
 /*
@@ -1643,7 +1727,7 @@ var eliminateBorder = function(jQuerySelection){
                                         "width:40px;"+
                                         "border-color:grey");
         jQuerySelection.children().detach();
-        jQuerySelection.append("Exp")
+        jQuerySelection.append(jQuerySelection.attr('name'));
 }
 
 /*
