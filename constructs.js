@@ -1144,6 +1144,9 @@ function sync(objectID){
         }
         else if(block instanceof ExprDefineFunc){
                 var prevName=block.contract.funcName;
+                if(prevName===DOMBlock.find('.contractName').attr('value') && prevName===DOMBlock.find('.definitionName').attr('value')){
+                        return;
+                }
                 if(DOMBlock.find('.contractName').attr('value')===prevName){
                         block.contract.funcName=decode(DOMBlock.find('.definitionName').attr('value'));
                         DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
