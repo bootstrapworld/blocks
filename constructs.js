@@ -920,20 +920,20 @@ function makeDrawers(allFunctions,allConstants){
         var i;
         for(var Type in typeDrawers){
                 if(typeDrawers.hasOwnProperty(Type)){
-                Drawers+="<div id=\""+Type+"\">\n";
+                Drawers+="<div id=\""+encode(Type)+"\">\n";
                 if(Type==="Constants"){
                         for(i=0;i<typeDrawers[Type].length;i++){
-                                Drawers+="<span class=\"draggable "+Type+"\">"+allConstants[typeDrawers[Type][i]].name+"</span>\n";
+                                Drawers+="<span class=\"draggable "+encode(Type)+"\">"+encode(allConstants[typeDrawers[Type][i]].name)+"</span>\n";
                         }
                 }
                 else if(Type==="Define"){
                         for(i=0;i<typeDrawers[Type].length;i++){
-                                Drawers+="<span class=\"draggable "+Type+"\">"+typeDrawers[Type][i]+"</span>\n";
+                                Drawers+="<span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span>\n";
                         }
                 }
                 else if(Type==="Expressions"){
                         for(i=0;i<typeDrawers[Type].length;i++){
-                                Drawers+="<span class=\"draggable "+Type+"\">"+typeDrawers[Type][i]+"</span>\n";
+                                Drawers+="<span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span>\n";
                         }
                 }
                 else{
@@ -951,13 +951,13 @@ function makeDrawers(allFunctions,allConstants){
                                         Drawers+="<span class=\"Numbers draggable\">Number</span>\n";
                                 }
                                 else{
-                                Drawers+="<span class=\"draggable "+allFunctions[typeDrawers[Type][i]].output+"\">"+allFunctions[typeDrawers[Type][i]].name+"</span>\n";
+                                Drawers+="<span class=\"draggable "+encode(allFunctions[typeDrawers[Type][i]].output)+"\">"+encode(allFunctions[typeDrawers[Type][i]].name)+"</span>\n";
                         }
                         }
                 }
 
                 Drawers+="</div>\n";
-                Selector+="<div class=\""+Type+" bottomNav\" id=\""+Type+"\">"+Type+"</div>\n";
+                Selector+="<div class=\""+encode(Type)+" bottomNav\" id=\""+encode(Type)+"\">"+encode(Type)+"</div>\n";
         }
         }
 
@@ -1137,19 +1137,19 @@ function sync(objectID){
         var block=searchForIndex(objectID+"",program);
         var DOMBlock=$(document.getElementById(objectID));
         if(block instanceof ExprNumber || block instanceof ExprString){
-                block.value=DOMBlock.find(".input").attr('value');
+                block.value=decode(DOMBlock.find(".input").attr('value'));
         }
         else if(block instanceof ExprDefineConst){
-                block.constName=DOMBlock.find('.constName').attr('value');
+                block.constName=decode(DOMBlock.find('.constName').attr('value'));
         }
         else if(block instanceof ExprDefineFunc){
                 var prevName=block.contract.funcName;
                 if(DOMBlock.find('.contractName').attr('value')===prevName){
-                        block.contract.funcName=DOMBlock.find('.definitionName').attr('value');
+                        block.contract.funcName=decode(DOMBlock.find('.definitionName').attr('value'));
                         DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
                 }
                 else if(DOMBlock.find('.definitionName').attr('value')===prevName){
-                        block.contract.funcName=DOMBlock.find('.contractName').attr('value');
+                        block.contract.funcName=decode(DOMBlock.find('.contractName').attr('value'));
                         DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
                 }
                 var i=0;
@@ -1188,8 +1188,6 @@ that function with name, color, and spaces for input blocks
  }
 
 //createDefineBlock outputs the block corresponding to defining a function
-//LINK THE TWO TEXT BOXES
-//CHANGE THE WAY ARGS WORKS
 function createDefineBlock(codeObject){
         var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
         //contract
@@ -1228,7 +1226,7 @@ function createDefineBlock(codeObject){
                 }
                 block+="><input id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+") class=\"argName\" ";
                 if(codeObject.argumentNames[i]!=undefined){
-                        block+="value=\""+codeObject.argumentNames[i]+"\"";
+                        block+="value=\""+encode(codeObject.argumentNames[i])+"\"";
                 }
                 block+=" />"
         }
@@ -1346,7 +1344,7 @@ function generateTypeDrop(newID,codeObject){
         var HTML = "<select id=\""+newID+"\" name=\"TypeDrop\" onchange=\"changeType(this.value,"+newID+","+codeObject.id+")\"><option value=\"Type\">Type</option>";
         var typeIndex=codeObject.contract.funcIDList.indexOf(newID)-1;
         for(var i=0;i<types.length;i++){
-                HTML+="<option value=\""+ types[i] +"\" class=\""+ types[i]+"\"";
+                HTML+="<option value=\""+ encode(types[i]) +"\" class=\""+ encode(types[i])+"\"";
                 if(typeIndex===-1){
                         if(codeObject.contract.outputType===types[i]){
                                 HTML+=" selected ";
@@ -1357,7 +1355,7 @@ function generateTypeDrop(newID,codeObject){
                                 HTML+=" selected ";
                         }
                 }
-                HTML+=">"+ types[i] +"</option>";
+                HTML+=">"+ encode(types[i]) +"</option>";
         }
         HTML+="</select>";
         HTML+= (typeIndex!==-1 && codeObject.contract.funcIDList.length !== 2) ? "<button onclick=\"deleteArg("+newID+","+codeObject.id+")\">x</button>" : "";
@@ -1370,11 +1368,11 @@ function changeType(curValue,selectID,codeObjectID){
         for(var i=0;i<codeObject.contract.funcIDList.length;i++){
                 if(selectID===codeObject.contract.funcIDList[i] && i!==0){
                         addToHistory(cloneProgram(program));
-                        codeObject.contract.argumentTypes[i-1]= (curValue==="Type") ? undefined : curValue;
+                        codeObject.contract.argumentTypes[i-1]= (curValue==="Type") ? undefined : decode(curValue);
                 }
                 else if(selectID===codeObject.contract.funcIDList[i] && i===0){
                         addToHistory(cloneProgram(program));
-                        codeObject.contract.outputType= (curValue==="Type") ? undefined : curValue;
+                        codeObject.contract.outputType= (curValue==="Type") ? undefined : decode(curValue);
                 }
         }
         renderProgram(createProgramHTML(program));
