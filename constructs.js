@@ -1273,7 +1273,10 @@ function createCondBlock(codeObject){
                 else{
                         block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"droppable expr\">expr";
                 }
-                block+="<th><button class=\"removeCond\">x</button></th></table></th></tr>"
+                if(codeObject.listOfBooleanAnswer.length!==1){
+                        block+="<th><button class=\"removeCond\">x</button></th>";
+                }
+                block+="</table></th></tr>"
         }
         block +="<tr><th></th><th><button class=\"addCond\">+</button></th></tr>"
         return block + "</table>";
