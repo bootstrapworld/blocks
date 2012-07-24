@@ -225,7 +225,7 @@ var ExprDefineFunc = function(){
 
 var ExprContract = function(){
         this.funcName = "";
-        this.argumentTypes = [];
+        this.argumentTypes = [undefined];
         this.outputType = undefined;
         this.id = makeID();
         this.funcIDList=makeIDList(2)
@@ -355,7 +355,7 @@ Constructs a variable object given a name of type string.
 */
 var ExprConst = function(constName){
         this.constName = constName;
-        //this.outputType = getConstantType(constName);
+        this.outputType = undefined;
         this.id = makeID();
         this.clone=function(){
                 var temp=new ExprConst(this.constName);
@@ -1050,39 +1050,48 @@ function makeCodeFromOptions(optionsText){
 createBlock takes in a code object and outputs the corresponding DOMElement block to that function
 createBlock: code object -> element
 */
-function createBlock(codeObject){
+function createBlock(codeObject,constantEnvironment,functionEnvironment){
         var i;
         if(codeObject instanceof ExprDefineFunc){
-                return createDefineBlock(codeObject);
+                var newConstantEnvironment=constantEnvironment.concat(createNewConstants(codeObject));
+                return createDefineBlock(codeObject,newConstantEnvironment,functionEnvironment);
         } else if (codeObject instanceof ExprDefineConst){
-                return createDefineVarBlock(codeObject);
+                return createDefineVarBlock(codeObject,constantEnvironment,functionEnvironment);
         }/* else if (codeObject instanceof ExprDefineStruct){
                 return stringToElement(createDefineStructBlock());
         }*/ else if (codeObject instanceof ExprCond){
-                return createCondBlock(codeObject);
+                return createCondBlock(codeObject,constantEnvironment,functionEnvironment);
         } else if (codeObject instanceof ExprConst){
                 for(i = 0; i < constants.length; i++){
-                        if (encode(constants[i].name) === encode(codeObject.constName)){
-                                return createConstantBlock(constants[i], codeObject);
+                        if (encode(constantEnvironment[i].name) === encode(codeObject.constName)){
+                                return createConstantBlock(codeObject,constantEnvironment,functionEnvironment);
                         }
                 }
                 throw new Error("createBlock: internal error");
         } else if (codeObject instanceof ExprApp){
                 for(i = 0; i < functions.length; i++){
-                        if (encode(functions[i].name) === encode(codeObject.funcName)){
-                                return createFunctionBlock(i, codeObject);
+                        if (encode(functionEnvironment[i].name) === encode(codeObject.funcName)){
+                                return createFunctionBlock(functionEnvironment[i], codeObject,constantEnvironment,functionEnvironment);
                         }
                 }
                 throw new Error("createBlock: internal error");
         } else if (codeObject instanceof ExprNumber){
-                return createNumBlock(codeObject);
+                return createNumBlock(codeObject,constantEnvironment,functionEnvironment);
         } else if (codeObject instanceof ExprString){
-                return createStringBlock(codeObject);
+                return createStringBlock(codeObject,constantEnvironment,functionEnvironment);
         } else if (codeObject instanceof ExprBoolean){
-                return createBooleanBlock(codeObject);
+                return createBooleanBlock(codeObject,constantEnvironment,functionEnvironment);
         }
         
  }
+
+function createNewConstants(codeObject){
+        var newConstants=[];
+        for(var i=0;i<codeObject.argumentNames.length;i++){
+                newConstants.push({name:codeObject.argumentNames[i],type:codeObject.contract.argumentTypes[i]})
+        }
+        return newConstants;
+}
 
 
 /*
@@ -1093,7 +1102,7 @@ var createProgramHTML = function(){
         functions.splice(initFunctions,functions.length-initFunctions);
         constants.splice(initConstants,constants.length-initConstants);
         for (var i = 0; i < program.length; i++){
-                pageHTML += "<li>" + createBlock(program[i]) + "</li>";
+                pageHTML += "<li>" + createBlock(program[i],constants,functions) + "</li>";
                 if(program[i] instanceof ExprDefineConst){
                         //constants.push({name:program[i].name;type:program[i].outputType})
                 }
@@ -1146,9 +1155,11 @@ function sync(objectID){
         var DOMBlock=$(document.getElementById(objectID));
         if(block instanceof ExprNumber || block instanceof ExprString){
                 block.value=decode(DOMBlock.find(".input").attr('value'));
+                DOMBlock.find(".input").attr('value',DOMBlock.find(".input").attr('value'));
         }
         else if(block instanceof ExprDefineConst){
                 block.constName=decode(DOMBlock.find('.constName').attr('value'));
+                DOMBlock.find('.constName').attr('value',DOMBlock.find('.constName').attr('value'));
         }
         else if(block instanceof ExprDefineFunc){
                 var prevName=block.contract.funcName;
@@ -1156,15 +1167,20 @@ function sync(objectID){
                         if(DOMBlock.find('.contractName').attr('value')===prevName){
                                 block.contract.funcName=decode(DOMBlock.find('.definitionName').attr('value'));
                                 DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
+                                //no idea why the fuck this works or is needed
+                                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.definitionName').attr('value'));
                         }
                         else if(DOMBlock.find('.definitionName').attr('value')===prevName){
                                 block.contract.funcName=decode(DOMBlock.find('.contractName').attr('value'));
                                 DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
+                                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.contractName').attr('value'));
                         }
                 }
                 var i=0;
                 DOMBlock.find('.argName').each(function(){
                           block.argumentNames[i]=$(this).attr('value');
+                          $(this).attr('value',$(this).attr('value'));
+                          makeArgumentDraggable($(this).closest(".argument"),$(this).attr('value'));
                           i++;
                 });
         }
@@ -1178,17 +1194,16 @@ createFunctionBlock takes as input a functionIndex and will output an HTML eleme
 that function with name, color, and spaces for input blocks
  createFunctionBlock: number -> string
  */
- function createFunctionBlock(functionIndex, codeObject){
-        var func = functions[functionIndex];
-        var block = "<table class=\"expr " + func.output  +"\"" + " id=\""+codeObject.id+"\" border>";
-        block += "<tr><th colspan=\"" + func.input.length  + "\">" + encode(func.name) + "</th></tr><tr>";
+ function createFunctionBlock(functionInfo, codeObject, constantEnvironment,functionEnvironment){
+        var block = "<table class=\"expr " + functionInfo.output  +"\"" + " id=\""+codeObject.id+"\" border>";
+        block += "<tr><th colspan=\"" + functionInfo.input.length  + "\">" + encode(functionInfo.name) + "</th></tr><tr>";
         var i;
-        for(i = 0; i < func.input.length; i++){
+        for(i = 0; i < functionInfo.input.length; i++){
                 if (codeObject.args[i] != undefined){
-                         block += "<th name=\""+func.input[i].name+"\" class=\"" + encode(func.input[i].type) +" noborder droppable\" id=\""+codeObject.funcIDList[i]+"\">" + createBlock(codeObject.args[i]);
+                         block += "<th name=\""+functionInfo.input[i].name+"\" class=\"" + encode(functionInfo.input[i].type) +" noborder droppable\" id=\""+codeObject.funcIDList[i]+"\">" + createBlock(codeObject.args[i],constantEnvironment,functionEnvironment);
                 }
                 else{
-                        block+= "<th name=\""+func.input[i].name+"\" class=\"" + encode(func.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">" + func.input[i].name;
+                        block+= "<th name=\""+functionInfo.input[i].name+"\" class=\"" + encode(functionInfo.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">" + functionInfo.input[i].name;
                 }
                 block+="</th>";
         }
@@ -1197,7 +1212,7 @@ that function with name, color, and spaces for input blocks
  }
 
 //createDefineBlock outputs the block corresponding to defining a function
-function createDefineBlock(codeObject){
+function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
         var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
         //contract
         block+="<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+")\" ";
@@ -1229,7 +1244,7 @@ function createDefineBlock(codeObject){
         //         block+="<th width=\"10px\" class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"argName\"/>";
         // }
         for(var i=0;i<codeObject.argumentNames.length;i++){
-                block+="<th width=\"10px\" class=\"expr\"";
+                block+="<th width=\"10px\" class=\"expr argument\"";
                 if(codeObject.contract.argumentTypes[i]!=undefined){
                         block+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
                 }
@@ -1246,18 +1261,18 @@ function createDefineBlock(codeObject){
                 block+=" style=\"background:"+colors[codeObject.contract.outputType]+"\" ";
         }
         if(codeObject.expr != undefined){
-                block+="class=\"noborder droppable expr\" id="+codeObject.funcIDList[0]+">";
-                block+=createBlock(codeObject.expr);
+                block+="class=\"functionExpr noborder droppable expr\" id="+codeObject.funcIDList[0]+">";
+                block+=createBlock(codeObject.expr,constantEnvironment,functionEnvironment);
                 block+="</th>";
         }
         else{
-                block+="class=\"droppable expr\" id="+codeObject.funcIDList[0]+">expr</th>";
+                block+="class=\"functionExpr droppable expr\" id="+codeObject.funcIDList[0]+">expr</th>";
         }
         return block + "</tr></table>";
 }
 
 //createDefineVarBlock outputs the block corresponding to creating a variable
-function createDefineVarBlock(codeObject){
+function createDefineVarBlock(codeObject,constantEnvironment,functionEnvironment){
         var block = "<table class=\"DefineVar Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
         block+="<th class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"constName\""
         if(codeObject.constName != undefined){
@@ -1267,7 +1282,7 @@ function createDefineVarBlock(codeObject){
         if (codeObject.expr == undefined){
                 block+= "\"> Exp";
         } else{
-                block += " noborder\">" + createBlock(codeObject.expr);
+                block += " noborder\">" + createBlock(codeObject.expr,constantEnvironment,functionEnvironment);
         }
         return block + "</th></tr></table>";
 }
@@ -1281,7 +1296,7 @@ function createDefineStructBlock(codeObject){
 
 //createCondBlock outputs the block corresponding to creating a conditional
 //add stuff to make empty work and have new rows append to ExprCond
-function createCondBlock(codeObject){
+function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
         var block =  "<table class=\"Cond expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th style=\"float:left\">cond</th></tr>";
         for(var i=0;i<codeObject.listOfBooleanAnswer.length;i++){
                 if(i===codeObject.listOfBooleanAnswer.length-1){
@@ -1292,7 +1307,7 @@ function createCondBlock(codeObject){
                 }       
                 if(codeObject.listOfBooleanAnswer[i].bool!=undefined){
                         block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"noborder droppable Booleans expr\">";
-                        block+=createBlock(codeObject.listOfBooleanAnswer[i].bool);
+                        block+=createBlock(codeObject.listOfBooleanAnswer[i].bool,constantEnvironment,functionEnvironment);
                         block+="</th>";
                 }
                 else{
@@ -1300,7 +1315,7 @@ function createCondBlock(codeObject){
                 }
                 if(codeObject.listOfBooleanAnswer[i].answer!=undefined){
                         block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"noborder droppable expr\">";
-                        block+=createBlock(codeObject.listOfBooleanAnswer[i].answer);
+                        block+=createBlock(codeObject.listOfBooleanAnswer[i].answer,constantEnvironment,functionEnvironment);
                 }
                 else{
                         block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"droppable expr\">expr";
@@ -1314,23 +1329,23 @@ function createCondBlock(codeObject){
         return block + "</table>";
 }
 
-function createConstantBlock(constantelement, codeObject){
-        var block =  "<table class=\"expr " + encode(constantelement.type)+"\" " + "id=\""+codeObject.id+"\"><tr><th>"+encode(constantelement.name)+"</tr>";
+function createConstantBlock(codeObject,constantEnvironment,functionEnvironment){
+        var block =  "<table class=\"expr " + encode(codeObject.outputType)+"\" " + "id=\""+codeObject.id+"\"><tr><th>"+encode(codeObject.constName)+"</tr>";
         return block + "</table>";
 }
 
-function createBooleanBlock(codeObject){
+function createBooleanBlock(codeObject,constantEnvironment,functionEnvironment){
         var block =  "<table class=\"Booleans expr\" " + "id=\""+codeObject.id+"\"><tr><th>"+codeObject.value+"</tr>";
         return block + "</table>";
 }
 
-function createNumBlock(codeObject){
+function createNumBlock(codeObject,constantEnvironment,functionEnvironment){
     var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\""
     block+=" value=\""+codeObject.value+"\">";
     return block + "</th></tr></table>";
 }
 
-function createStringBlock(codeObject){
+function createStringBlock(codeObject,constantEnvironment,functionEnvironment){
     var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"</th><th><input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" class=\"Strings\"";
     block += " value=\"" + encode(codeObject.value) + "\">";
     return block + "</th><th>\"</th></tr></table>";
@@ -1602,13 +1617,28 @@ var makeDrawersDraggable = function(){
                 },
                 helper: function(event, ui){
                         programCarrying = makeCodeFromOptions($(this).text());
-                        carrying = createBlock(programCarrying);
+                        carrying = createBlock(programCarrying,constants,functions);
                         return carrying;
                 },
                 connectToSortable: "#List"
         });
 }
 
+
+var makeArgumentDraggable=function(jQuerySelection,name){
+        jQuerySelection.draggable({
+                start: function(event, ui) {
+                        tempProgram = cloneProgram(program);
+                },
+                containment:".functionExpr",
+                scroll: false,
+                helper: function(event, ui){
+                        
+                        programCarrying= new ExprConst(name)
+                        return carrying
+                }
+        });
+ }
 
 /*
 Adds dragging feature to jQuerySelection. This is applied to blocks within blocks.
@@ -1659,7 +1689,7 @@ var addClickableLiteralBox = function(jQuerySelection, parent, child){
 var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent, child) {
     addToHistory(cloneProgram(program));
 	setChildInProgram(parent, child, codeObject);
-        var html = createBlock(codeObject);
+        var html = createBlock(codeObject,constants,functions);
         $(jQuerySelection).css('border','none');
 	jQuerySelection.html(html);
         addDroppableFeature(jQuerySelection);
