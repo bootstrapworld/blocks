@@ -6,22 +6,22 @@
 // If there is no window.console, we'll make one up.
 if (!window.console){
         $(document).ready(function() {
-                var consoleDiv = $("<div id='console'/>");
-                $(document.body).append(consoleDiv);
-                consoleDiv.css("position", "absolute");
-                consoleDiv.css("right", "10px");
-                consoleDiv.css("top", "10px");
-                consoleDiv.css("width", "300px");
-                consoleDiv.css("height", "500px");
-                consoleDiv.css("background-color", "white");
-                consoleDiv.css("border", "1px solid red");
-                consoleDiv.css("overflow", "scroll");
+                //var consoleDiv = $("<div id='console'/>");
+                //$(document.body).append(consoleDiv);
+                //consoleDiv.css("position", "absolute");
+                //consoleDiv.css("right", "10px");
+                //consoleDiv.css("top", "10px");
+                //consoleDiv.css("width", "300px");
+                //consoleDiv.css("height", "500px");
+                //consoleDiv.css("background-color", "white");
+                //consoleDiv.css("border", "1px solid red");
+                //consoleDiv.css("overflow", "scroll");
                 window.console = { log: function() {
-                                            var i;
-                                            for (i = 0; i < arguments.length; i++) {
-                                                consoleDiv.append($("<span/>").text(arguments[i]));
-                                                consoleDiv.append($("<br/>")); 
-                                             }
+                                            //var i;
+                                            //for (i = 0; i < arguments.length; i++) {
+                                              //  consoleDiv.append($("<span/>").text(arguments[i]));
+                                                //consoleDiv.append($("<br/>")); 
+                                             //}
                                         }
                                  };
                 
