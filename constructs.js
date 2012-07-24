@@ -1200,15 +1200,20 @@ function sync(objectID){
         var block=searchForIndex(objectID+"",program);
         var DOMBlock=$(document.getElementById(objectID));
         if(block instanceof ExprNumber || block instanceof ExprString){
+                if(block.value!=decode(DOMBlock.find(".input").attr('value'))){
                         block.value=decode(DOMBlock.find(".input").attr('value'));
                         DOMBlock.find(".input").attr('value',DOMBlock.find(".input").attr('value'));
+                }
         }
         else if(block instanceof ExprDefineConst){
+                if(block.constName != decode(DOMBlock.find('.constName').attr('value'))){
                         block.constName=decode(DOMBlock.find('.constName').attr('value'));
                         DOMBlock.find('.constName').attr('value',DOMBlock.find('.constName').attr('value'));
+                }
         }
         else if(block instanceof ExprDefineFunc){
                 var prevName=block.contract.funcName;
+                if(!(prevName===DOMBlock.find('.contractName').attr('value') && prevName===DOMBlock.find('.definitionName').attr('value'))){
                         if(DOMBlock.find('.contractName').attr('value')===prevName){
                                 block.contract.funcName=decode(DOMBlock.find('.definitionName').attr('value'));
                                 DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
@@ -1219,6 +1224,7 @@ function sync(objectID){
                                 DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
                                 DOMBlock.find('.contractName').attr('value',DOMBlock.find('.contractName').attr('value'));
                         }
+                }
                 var i=0;
                 DOMBlock.find('.argName').each(function(){
                           block.argumentNames[i]=$(this).attr('value');
@@ -1258,7 +1264,7 @@ that function with name, color, and spaces for input blocks
 function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
         var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
         //contract
-        block+="<tr><th><input class=\"contractName\" onchange=\"sync("+codeObject.id+")\" ";
+        block+="<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+")\" ";
         if(codeObject.contract.funcName!=undefined){
                 block+="value=\""+encode(codeObject.contract.funcName)+"\"";
         }
@@ -1277,7 +1283,7 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
         //define block
         block+="<tr><th>define</th>";
         
-        block+="<th class=\"expr\"> <input class=\"definitionName\" onchange=\"sync("+codeObject.id+")\" ";
+        block+="<th class=\"expr\"> <input class=\"definitionName\" onkeyup=\"sync("+codeObject.id+")\" ";
         if(codeObject.contract.funcName!=undefined){
                 block+="value=\""+encode(codeObject.contract.funcName)+"\"";
         }
@@ -1291,7 +1297,7 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
                 if(codeObject.contract.argumentTypes[i]!=undefined){
                         block+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
                 }
-                block+="><input id=\""+codeObject.funcIDList[i+1]+"\" onchange=\"sync("+codeObject.id+")\" class=\"argName\" ";
+                block+="><input id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+")\" class=\"argName\" ";
                 if(codeObject.argumentNames[i]!=undefined){
                         block+="value=\""+encode(codeObject.argumentNames[i])+"\"";
                 }
@@ -1317,7 +1323,7 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject,constantEnvironment,functionEnvironment){
         var block = "<table class=\"DefineVar Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
-        block+="<th class=\"expr\"><input onchange=\"sync("+codeObject.id+")\" class=\"constName\""
+        block+="<th class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"constName\""
         if(codeObject.constName != undefined){
                 block+=" value=\""+encode(codeObject.constName)+"\"";
         }
@@ -1383,13 +1389,13 @@ function createBooleanBlock(codeObject,constantEnvironment,functionEnvironment){
 }
 
 function createNumBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input\" onchange=\"sync("+codeObject.id+")\" style=\"width:50px;\""
+    var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\""
     block+=" value=\""+codeObject.value+"\">";
     return block + "</th></tr></table>";
 }
 
 function createStringBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"</th><th><input class=\"input\" onchange=\"sync("+codeObject.id+")\" class=\"Strings\"";
+    var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"</th><th><input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" class=\"Strings\"";
     block += " value=\"" + encode(codeObject.value) + "\">";
     return block + "</th><th>\"</th></tr></table>";
 }
