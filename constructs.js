@@ -1200,12 +1200,16 @@ function sync(objectID){
         var block=searchForIndex(objectID+"",program);
         var DOMBlock=$(document.getElementById(objectID));
         if(block instanceof ExprNumber || block instanceof ExprString){
-                block.value=decode(DOMBlock.find(".input").attr('value'));
-                DOMBlock.find(".input").attr('value',DOMBlock.find(".input").attr('value'));
+                if(block.value!=decode(DOMBlock.find(".input").attr('value'))){
+                        block.value=decode(DOMBlock.find(".input").attr('value'));
+                        DOMBlock.find(".input").attr('value',DOMBlock.find(".input").attr('value'));
+                }
         }
         else if(block instanceof ExprDefineConst){
-                block.constName=decode(DOMBlock.find('.constName').attr('value'));
-                DOMBlock.find('.constName').attr('value',DOMBlock.find('.constName').attr('value'));
+                if(block.constName != decode(DOMBlock.find('.constName').attr('value'))){
+                        block.constName=decode(DOMBlock.find('.constName').attr('value'));
+                        DOMBlock.find('.constName').attr('value',DOMBlock.find('.constName').attr('value'));
+                }
         }
         else if(block instanceof ExprDefineFunc){
                 var prevName=block.contract.funcName;
