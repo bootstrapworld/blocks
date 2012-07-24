@@ -1,13 +1,14 @@
+
 //(function(){
 
 "use strict";
   // this function is strict...
 
 // If there is no window.console, we'll make one up.
-/*
+
 if (!window.console){
         $(document).ready(function() {
-                var consoleDiv = $("<div id='console'/>");
+         /*       var consoleDiv = $("<div id='console'/>");
                 $(document.body).append(consoleDiv);
                 consoleDiv.css("position", "absolute");
                 consoleDiv.css("right", "10px");
@@ -16,20 +17,20 @@ if (!window.console){
                 consoleDiv.css("height", "500px");
                 consoleDiv.css("background-color", "white");
                 consoleDiv.css("border", "1px solid red");
-                consoleDiv.css("overflow", "scroll");
-                window.console = { log: function() {
+                consoleDiv.css("overflow", "scroll");*/
+                window.console = {/* log: function() {
                                             var i;
                                             for (i = 0; i < arguments.length; i++) {
                                                 consoleDiv.append($("<span/>").text(arguments[i]));
                                                 consoleDiv.append($("<br/>")); 
                                              }
-                                        }
+                                        }*/
                                  };
                 
                  
 
         });
-} */
+}
 
 
 
@@ -38,7 +39,7 @@ if (!window.console){
 /*====================================================================================
  ___       _          ___       __ _      _ _   _             
 |   \ __ _| |_ __ _  |   \ ___ / _(_)_ _ (_) |_(_)___ _ _  ___
-| |) / _` |  _/ _` | | |) / -_)  _| | ' \| |  _| / _ \ ' \(_-<
+| |) / _` |  _/ _` | | |) / -_)  _| | ' \| |  _| / _ \ ' \(_-
 |___/\__,_|\__\__,_| |___/\___|_| |_|_||_|_|\__|_\___/_||_/__/
                                                                
 =====================================================================================*/
@@ -1863,5 +1864,3 @@ var argsArray = [];
 
 function typeInfer(expr){
 }
-
-//}());
