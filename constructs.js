@@ -4,6 +4,7 @@
   // this function is strict...
 
 // If there is no window.console, we'll make one up.
+/*
 if (!window.console){
         $(document).ready(function() {
                 var consoleDiv = $("<div id='console'/>");
@@ -28,7 +29,7 @@ if (!window.console){
                  
 
         });
-} 
+} */
 
 
 
@@ -618,7 +619,7 @@ var program = [];
 var contentHeight;
 var contentWidth;
 // Which Drawer type is currently being displayed
-var activated;
+var activated = [];
 // which text block in the #code div is currently being focused
 var focused=null;
 var initvalue=null;
@@ -715,8 +716,9 @@ $(document).ready(function(){
                                         initvalue=null;
                                         tempProgram=null;
                                 }
+			    var scrollValue = $("#options").scrollTop();
                                 makeDrawers(functions,constants);
-                                drawerButton(activated);
+                                setActivatedVisible(scrollValue);
                                 focused.attr('value',inputtext);
                                 focused=null;
                         }
@@ -849,18 +851,51 @@ function drawerToggle() {
 
     $("#options .toggleHeader").click(function() {
 	var toToggle = $(this).attr("class").split(" ")[1];
-	console.log(toToggle);
-	$("#options #" + toToggle).slideToggle("slow");
-    });
+	var toggledDiv = $("#options #" + toToggle);
+	toggledDiv.slideToggle("slow", function() {
+	    if($(toggledDiv).is(":visible")){
+		addNonRepeatedEltToArray(activated, toToggle);
+	    } else{
+		removeEltFromArray(activated, toToggle);
+	    }
+	});
+    });    
 }
 
-//DrawerButton takes in an element and either activates (shows) or deactivates (hides) the current element to show the new one
-function drawerButton(elt){
-        $("#options #" + activated).css("visibility","hidden");
-        activated=elt
-        $("#options #" + activated).css("visibility","visible");
+/*
+addNonRepeatedEltToArray takes in an array of strings (arr) and a string (toAdd) and
+pushes toAdd to arr if it is not already within arr
+*/
 
-}
+var addNonRepeatedEltToArray = function(arr, toAdd) {
+    var i;
+    if (arr.length === 0){
+	arr.push(toAdd)
+    } else{
+	for (i = 0; i < arr.length; i++) {
+	    if (arr[i] === toAdd) break;
+	    if(i === arr.length - 1){
+		arr.push(toAdd);
+	    }
+	}
+    }
+};
+
+/*
+removeEltFromArray takes in an array of strings (arr) and a string(toDelete) and removes 
+toDelte from arr by splicing it out
+*/
+var removeEltFromArray = function(arr, toDelete) {
+    var i;
+    for (i = 0; i < arr.length; i++){
+	if (arr[i] === toDelete){
+	    arr.splice(i, 1);
+	}
+    }
+    if (i === arr.length){
+	throw new Error("removeEltFromArray: couldn't find toDelete");
+    }
+};
 
 //makeTypesArray will construct an object of kv pairs such that each type's value is an array of all indices to which that type is the output or the exclusive input
 function makeTypesArray(allFunctions,allConstants){
@@ -918,6 +953,17 @@ function unique(array_inputs){
         return true;
 }
 
+/*
+setActivatedVisible sets the activated drawers to visible
+*/
+
+var setActivatedVisible = function(scrollValue) {
+    for(var i = 0; i < activated.length; i++){
+	$("#options #" + activated[i]).css("display","block");
+    }
+    $("#options").scrollTop(scrollValue);
+};
+
 //makeDrawers takes in all of the functions and all of the constants and will change the HTML so that each of the types is an openable drawer and when that drawer is opened
 //all of the functions corresponding to that type are displayed
 // INJECTION ATTACK FIXME
@@ -973,10 +1019,9 @@ else if(Type==="Define"){
     $("#Drawer").html(Drawers);
     drawerToggle();
     makeDrawersDraggable();
-    if (activated == undefined){
+/*    if (activated == undefined){
 	activated = "Numbers";
-    }
-    drawerButton(activated);
+    }*/
 }
 
 
@@ -1574,21 +1619,23 @@ $(function() {
                 tolerance:'pointer',
                 greedy:true,
                 drop: function(event, ui){
-                        //droppedInDroppable = true;
-                        if(carrying!=null && programCarrying !=null){
-                                if (draggedClone != undefined){
-                                   eliminateBorder(draggedClone.closest($("th")));
-                                   draggedClone = undefined;
-                                }
-                                $(ui.draggable).remove();
-                                addToHistory(tempProgram);
-                                programCarrying=null;
-                                carrying=null;
-                                setLiWidth();
-                        }
-                        else{
-                                throw new Error("tried to trash null")
-                        }
+                    if(carrying!=null && programCarrying !=null){
+			if(!ui.draggable.is('span')){ //if ui.draggable is not from the drawer
+			    console.log(ui.draggable);
+                            if (draggedClone != undefined){
+				eliminateBorder(draggedClone.closest($("th")));
+				draggedClone = undefined;
+                            }
+                            $(ui.draggable).remove();
+                            addToHistory(tempProgram);
+                            programCarrying=null;
+                            carrying=null;
+                            setLiWidth();
+			}
+		    }
+                    else{
+                        throw new Error("tried to trash null")
+                    }
                 }
         });
 });
@@ -1605,7 +1652,8 @@ var makeDrawersDraggable = function(){
                         carrying = createBlock(programCarrying);
                         return carrying;
                 },
-                connectToSortable: "#List"
+            connectToSortable: "#List",
+	    zIndex:999
         });
 }
 
