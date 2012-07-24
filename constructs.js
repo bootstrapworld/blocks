@@ -660,31 +660,32 @@ $(document).ready(function(){
         /*
         sets focus equal to the input that is focused. 
         */
-        $("#List input").live('focus',function(){
-            focused=$(this)
+        $("#List input").live('focus',function(e){
+            var toContinue=formValidation(e);
+            focused=$(this);
             initvalue=focused.value;
             tempProgram=cloneProgram(program);
+            console.log(toContinue);
+            return toContinue;
         });
 
         var formValidation = function(e){
-                        //e.preventDefault();
-                        //if focused is not null and if you are clicking something else besides the focused object
-                    if(focused !==null && $(e.target).attr("id") !== focused.attr("id")){
+                var toContinue=true;
+                    if(focused !==null &&  ($(e.target) !== focused)){
                         var inputtext=focused.val();
                         var codeObject = searchForIndex(focused.closest($("table")).attr("id"),program);
                         //NUMBERS
                         if(focused.closest($("table")).hasClass("Numbers")){
                                 if(isNaN(Number(inputtext))){
-                                        focused.css("background-color", colors.Expressions);
-                                        e.stopPropagation();
-                                        alert("Please only enter a number into this text field");
-                                        focused.focus();
-                                        return;
-                                } 
-                                else{
-                                        focused.css("background-color", colors.Numbers);
-                                        changeValue(inputtext);
+                                       toContinue=false;
+                                       console.log("should be false ",toContinue); 
                                 }
+                                while(isNaN(Number(inputtext)) || inputtext==null){
+                                        inputtext=prompt("You have entered an invalid number into that number field.  Please type a valid replacement below");
+                                }
+                                        focused.css("background-color", colors.Numbers);
+                                        changeValue(inputtext)
+                                        codeObject.value=inputtext;
                         }
 
                         //STRINGS
@@ -732,8 +733,12 @@ $(document).ready(function(){
                                 focused=null;
                         }
                     }
+                    return toContinue;
                 };
-        $(document.body).live('click', formValidation);
+        $(document.body).live('mousedown', function(e){
+                return formValidation(e)
+        });
+
 
     //Sets undo and redo buttons to disabled on startup
     $("#undoButton").attr('disabled','disabled');
@@ -1727,7 +1732,6 @@ var addDraggingFeature = function(jQuerySelection) {
 addClickableLiteralBox creates a literal block when a blue or orange droppable is clicked
 */
 var addClickableLiteralBox = function(jQuerySelection, parent, child){
-    console.log("WHYYY");
     if (jQuerySelection.children().length === 0){
 	if(jQuerySelection.hasClass("Numbers")){
 	    addClickableLiteralBoxHelper(jQuerySelection, new ExprNumber(), parent, child);
