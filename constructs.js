@@ -626,6 +626,9 @@ var initvalue=null;
 // ID that matches together a code object and an HTML element
 var ID =0;
 
+var numberofvalidations=0
+var errorVal=false;
+
 
 //resizes code div when the window is resized
 function onResize(){
@@ -732,6 +735,19 @@ $(document).ready(function(){
                     }
                     return toContinue;
                 };
+
+                if(!errorVal){
+                        focused=$(this);
+                        initvalue=focused.value;
+                        tempProgram=cloneProgram(program);
+                }
+                else{
+                        e.stopPropagation();
+                        e.preventDefault();
+                        event.stopImmediatePropagation();
+                        return false;
+                }
+        });
        
         $(document.body).live('mousedown', function(e){
                 return formValidation(e)
@@ -778,7 +794,7 @@ $(document).ready(function(){
                 addToHistory(cloneProgram(program));
                 searchForIndex($(this).closest('table').attr('id'),program).listOfBooleanAnswer.push(new ExprBoolAnswer());
                 renderProgram(createProgramHTML())
-        })
+        });
 
         $(".removeCond").live('click',function(){
                 var listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),program).listOfBooleanAnswer
@@ -791,7 +807,7 @@ $(document).ready(function(){
                      }  
                      renderProgram(createProgramHTML());
                 }    
-        })
+        });
 
         $(".addArgument").live('click',function(){
                 addToHistory(cloneProgram(program));
@@ -800,10 +816,81 @@ $(document).ready(function(){
                 block.contract.funcIDList.push(makeID())
                 block.argumentNames.push("");
                 renderProgram(createProgramHTML());
-        })
+        });
 
 
-});
+
+
+function formValidation(e){
+                var toContinue=true;
+                numberofvalidations++;
+                errorVal=false;
+                console.log("there have been",numberofvalidations,"validations")
+                    if(focused !==null &&  ($(e.target) !== focused)){
+                        var inputtext=focused.val();
+                        var codeObject = searchForIndex(focused.closest($("table")).attr("id"),program);
+                        //NUMBERS
+                        if(focused.closest($("table")).hasClass("Numbers")){
+                                if(isNaN(Number(inputtext))){
+                                       toContinue=false;
+                                       errorVal=true
+                                       console.log("should be false ",toContinue); 
+                                }
+                                while(isNaN(Number(inputtext)) || inputtext==null){
+                                        inputtext=prompt("You have entered an invalid number into that number field.  Please type a valid replacement below");
+                                }
+                                        focused.css("background-color", colors.Numbers);
+                                        changeValue(inputtext)
+                                        codeObject.value=inputtext;
+                        }
+
+                        //STRINGS
+                        else if(focused.closest($("table")).hasClass("Strings")){
+                                changeValue(inputtext);
+                        }
+                        //DEFINING CONSTANTS
+                        else if(focused.closest($("table")).hasClass("DefineVar")){
+                                if((initvalue !=undefined && initvalue != "") && inputtext !== ""){
+                                        console.log("case prev is defined, input is defined");
+                                        console.log("prevName is",prevName)
+                                        var prevIndex=containsName(prevName,constants);
+                                        if(prevIndex != -1){
+                                                constants[prevIndex].name=inputtext;
+                                        }
+                                        addToHistory(tempProgram);
+                                        initvalue=null
+                                        tempProgram=null;
+                                }
+                                else if ((initvalue !=undefined && initvalue != "") && inputtext === ""){
+                                        console.log("case prev is defined, input is undefined");
+                                        constants.splice(containsName(prevName,1));
+                                        addToHistory(tempProgram);
+                                        initvalue=null;
+                                        tempProgram=null;
+                                }
+                                else if((initvalue ==undefined || prevName == "") && inputtext !== ""){
+                                        console.log("case prev is undefined, input is defined");
+                                        addToHistory(tempProgram);
+                                        initvalue=null;
+                                        tempProgram=null;
+                                }
+                            var scrollValue = $("#options").scrollTop();
+                                makeDrawers(functions,constants);
+                                setActivatedVisible(scrollValue);
+                                focused.attr('value',inputtext);
+                                focused=null;
+                        }
+                        else if(focused.closest($("table")).hasClass("DefineFun")){
+                                if( initvalue != inputtext){
+                                        addToHistory(tempProgram);
+                                        initvalue=null;
+                                        tempProgram=null;
+                                }
+                                focused=null;
+                        }
+                    }
+                    return toContinue;
+                };
 
 function changeValue(inputtext){
         if( initvalue != inputtext ){
@@ -1413,13 +1500,13 @@ function createBooleanBlock(codeObject,constantEnvironment,functionEnvironment){
 }
 
 function createNumBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\""
+    var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input Numbers\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\""
     block+=" value=\""+codeObject.value+"\">";
     return block + "</th></tr></table>";
 }
 
 function createStringBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"</th><th><input class=\"input\" onkeyup=\"sync("+codeObject.id+")\" class=\"Strings\"";
+    var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"</th><th><input class=\"input Strings\" onkeyup=\"sync("+codeObject.id+")\" class=\"Strings\"";
     block += " value=\"" + encode(codeObject.value) + "\">";
     return block + "</th><th>\"</th></tr></table>";
 }
@@ -1598,11 +1685,25 @@ $(function() {
                                 throw new Error("sortable start: ui.item is undefined");
                         } else {
                                 if (ui.item.is('li')){
-			            tempProgram = cloneProgram(program);
-                                    carrying = ui.item.html();
-                                    var index = ui.item.index();
-                                    programCarrying = program[index];
-                                    program.splice(index, 1);
+                                        if(!errorVal){
+                                                tempProgram = cloneProgram(program);
+                                                carrying = ui.item.html();
+                                                var index = ui.item.index();
+                                                programCarrying = program[index];
+                                                program.splice(index, 1);
+                                        }
+                                        else{
+                                                console.log("I am trying to stop the event");
+                                                event.stopPropagation();
+                                                event.stopImmediatePropagation();
+                                                event.preventDefault();
+                                                $("#List li").each(function(){
+                                                        console.log("stopping the event of", $(this))
+                                                        $(this).sortable('cancel');
+                                                        $(this).draggable('cancel');
+                                                });
+                                                return false;
+                                        }
                                 } 
                         }
                 },
@@ -1691,12 +1792,20 @@ var makeDrawersDraggable = function(){
         //Exprs things draggable from the drawer to the code
         $('.draggable').draggable({
                 start: function(event, ui) {
-                        tempProgram = cloneProgram(program);
+                        if(!errorVal){
+                                tempProgram = cloneProgram(program);
+                        }
+                        else{
+                                event.stopPropagation();
+                                event.preventDefault();
+                                event.stopImmediatePropagation();
+                                return false;
+                        }
                 },
                 helper: function(event, ui){
-                        programCarrying = makeCodeFromOptions($(this).text());
-                        carrying = createBlock(programCarrying,constants,functions);
-                        return carrying;
+                                programCarrying = makeCodeFromOptions($(this).text());
+                                carrying = createBlock(programCarrying,constants,functions);
+                                return carrying;
                 },
             connectToSortable: "#List",
 	    zIndex:999
@@ -1712,7 +1821,15 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
     if (jQuerySelection != null){
 	$(jQuerySelection).draggable({
             start: function(event, ui) {
-		tempProgram = cloneProgram(program);
+		      if(!errorVal){
+                         tempProgram = cloneProgram(program);
+                       }
+                        else{
+                                event.stopPropagation();
+                                event.preventDefault();
+                                event.stopImmediatePropagation();
+                                return false;
+                        }
             },
             helper: function(event, ui){
 		programCarrying= new ExprConst(name);
@@ -1739,19 +1856,25 @@ var addDraggingFeature = function(jQuerySelection) {
     if (jQuerySelection !== null){
         if(!jQuerySelection.hasClass('noDrag')){
             jQuerySelection.draggable({
-                connectToSortable: "#List, #options",
-		containment:$("#content"),
+                connectToSortable: "#List",
                 helper:'clone',
                 start:function(event, ui){
                     if ($(this) === undefined){
                         throw new Error ("addDraggingFeature start: $(this) is undefined");
                     } else {
-			console.log('1');
-                        tempProgram = cloneProgram(program);
-                        draggedClone = $(this);
-                        programCarrying = searchForIndex($(this).attr("id"), program);
-                        carrying = getHTML($(this));
-                        setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined);
+                        if(!errorVal){
+                            tempProgram = cloneProgram(program);
+                            draggedClone = $(this);
+                            programCarrying = searchForIndex($(this).attr("id"), program);
+                            carrying = getHTML($(this));
+                            setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined);
+                        }
+                        else{
+                            event.stopPropagation();
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                            return false;
+                        }
                     }
                 },
                 stop:function(event, ui){
@@ -1762,8 +1885,10 @@ var addDraggingFeature = function(jQuerySelection) {
                 }
 
             });
+
         }
     }
+	
 };
 /*
 addClickableLiteralBox creates a literal block when a blue or orange droppable is clicked
