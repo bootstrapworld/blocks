@@ -734,15 +734,13 @@ $(document).ready(function(){
                         }
                     }
                     return toContinue;
-                };
-<<<<<<< HEAD
-        $(document.body).live('mousedown', formValidation);
-=======
+                };<
+       
         $(document.body).live('mousedown', function(e){
                 return formValidation(e)
         });
 
->>>>>>> de5ac72ececb412134d73c0de1a4e65a6735b4ed
+
 
     //Sets undo and redo buttons to disabled on startup
     $("#undoButton").attr('disabled','disabled');
@@ -1249,10 +1247,6 @@ function createNewConstants(codeObject){
         }
         return newConstants;
 }
-
-<<<<<<< HEAD
-=======
-
 /*
 createProgramHTML takes the program array and translates it into HTML
 */
@@ -1351,7 +1345,7 @@ function sync(objectID){
         }
 }
 
->>>>>>> de5ac72ececb412134d73c0de1a4e65a6735b4ed
+
 /*
 createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to 
 that function with name, color, and spaces for input blocks
