@@ -48,7 +48,6 @@ GENERAL
     position:absolute;
     top:0px;
     left:200px;
-    background-color:yellow;
 }
 
 /*****************************
@@ -78,12 +77,10 @@ th table{
 }
 #List{
     list-style:none;
-    background-color:green;
 }
+
 #List li{
     cursor:mover;
-   // z-index:100;
-    background-color:red;
 }
 form{
     height: 10px;

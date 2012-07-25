@@ -733,7 +733,7 @@ $(document).ready(function(){
                         }
                     }
                 };
-        $(document.body).live('click', formValidation);
+        $(document.body).live('mousedown', formValidation);
 
     //Sets undo and redo buttons to disabled on startup
     $("#undoButton").attr('disabled','disabled');
@@ -1042,6 +1042,108 @@ Adds a block to the end of the list given the HTML of the block.
 //              document.getElementById("List").appendChild(block);
 // }
 
+
+/*
+createProgramHTML takes the program array and translates it into HTML
+*/
+var createProgramHTML = function(){
+        var pageHTML = "";
+        functions.splice(initFunctions,functions.length-initFunctions);
+        constants.splice(initConstants,constants.length-initConstants);
+        for (var i = 0; i < program.length; i++){
+            pageHTML += "<li>" + createBlock(program[i],constants,functions) + "</li>";
+                if(program[i] instanceof ExprDefineConst){
+                        //constants.push({name:program[i].name;type:program[i].outputType})
+                }
+                else if(program[i] instanceof ExprDefineFunc){
+                        //ADD
+                }
+        }
+        //makeDrawers();
+        //drawerButton(activated);
+        return pageHTML;
+};
+
+/*
+renderProgram takes in a string (programHTML) and changes the contents of #List to 
+programHTML
+*/
+var renderProgram = function(programHTML){
+        $("#List").html(programHTML);
+        addDroppableFeature($("#List .droppable"));
+        // $("#List table").children().each(function(){
+        //         addDraggingFeature($(this).find("table"));
+        // });
+        setLiWidth();
+};
+
+/*
+encode takes in a string and encodes it such that bugs resulting from &, ", #, etc are eliminated"
+decode does something similar for the same purpose
+*/
+function encode(string){
+            return String(string)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+}
+function decode(string){
+        return String(string)
+                .replace('&amp;', '&')
+            .replace('&quot;','\"')
+            .replace('&#39;','\'')
+            .replace('&lt;',"<")
+            .replace('&gt;',">");
+}
+
+
+function sync(objectID){
+    var block=searchForIndex(objectID+"",program);
+    var DOMBlock=$(document.getElementById(objectID));
+    if(block instanceof ExprNumber || block instanceof ExprString){
+        block.value=decode(DOMBlock.find(".input").attr('value'));
+        DOMBlock.find(".input").attr('value',DOMBlock.find(".input").attr('value'));
+    }
+    else if(block instanceof ExprDefineConst){
+        block.constName=decode(DOMBlock.find('.constName').attr('value'));
+        DOMBlock.find('.constName').attr('value',DOMBlock.find('.constName').attr('value'));
+    }
+    else if(block instanceof ExprDefineFunc){
+        var prevName=block.contract.funcName;
+        if(!(prevName===DOMBlock.find('.contractName').attr('value') && prevName===DOMBlock.find('.definitionName').attr('value'))){
+            if(DOMBlock.find('.contractName').attr('value')===prevName){
+                block.contract.funcName=decode(DOMBlock.find('.definitionName').attr('value'));
+                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
+                //no idea why the fuck this works or is needed
+                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.definitionName').attr('value'));
+            }
+            else if(DOMBlock.find('.definitionName').attr('value')===prevName){
+                block.contract.funcName=decode(DOMBlock.find('.contractName').attr('value'));
+                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
+                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.contractName').attr('value'));
+            }
+        }
+        var i=0;
+        DOMBlock.find('.argName').each(function(){
+            block.argumentNames[i]=$(this).attr('value');
+            $(this).attr('value',$(this).attr('value'));
+            if($(this).attr('value') !== ""){
+		addDraggableToArgument($(this).closest(".argument"),block,$(this).attr('value'));
+	    } else{
+		console.log('blah');
+		$(this).closest(".argument").removeClass('ui-draggable');
+	    }
+            i++;
+        });
+    }
+    else{
+        throw new Error("block type not found");
+    }
+}
+
+
 /*
 Gets the output type of a function
 */
@@ -1108,14 +1210,14 @@ function createBlock(codeObject,constantEnvironment,functionEnvironment){
         }*/ else if (codeObject instanceof ExprCond){
                 return createCondBlock(codeObject,constantEnvironment,functionEnvironment);
         } else if (codeObject instanceof ExprConst){
-                for(i = 0; i < constants.length; i++){
+                for(i = 0; i < constantEnvironment.length; i++){
                         if (encode(constantEnvironment[i].name) === encode(codeObject.constName)){
                                 return createConstantBlock(codeObject,constantEnvironment,functionEnvironment);
                         }
                 }
                 throw new Error("createBlock: internal error");
         } else if (codeObject instanceof ExprApp){
-                for(i = 0; i < functions.length; i++){
+                for(i = 0; i < functionEnvironment.length; i++){
                         if (encode(functionEnvironment[i].name) === encode(codeObject.funcName)){
                                 return createFunctionBlock(functionEnvironment[i], codeObject,constantEnvironment,functionEnvironment);
                         }
@@ -1137,102 +1239,6 @@ function createNewConstants(codeObject){
                 newConstants.push({name:codeObject.argumentNames[i],type:codeObject.contract.argumentTypes[i]})
         }
         return newConstants;
-}
-
-
-/*
-createProgramHTML takes the program array and translates it into HTML
-*/
-var createProgramHTML = function(){
-        var pageHTML = "";
-        functions.splice(initFunctions,functions.length-initFunctions);
-        constants.splice(initConstants,constants.length-initConstants);
-        for (var i = 0; i < program.length; i++){
-                pageHTML += "<li>" + createBlock(program[i],constants,functions) + "</li>";
-                if(program[i] instanceof ExprDefineConst){
-                        //constants.push({name:program[i].name;type:program[i].outputType})
-                }
-                else if(program[i] instanceof ExprDefineFunc){
-                        //ADD
-                }
-        }
-        //makeDrawers();
-        //drawerButton(activated);
-        return pageHTML;
-};
-
-/*
-renderProgram takes in a string (programHTML) and changes the contents of #List to 
-programHTML
-*/
-var renderProgram = function(programHTML){
-        $("#List").html(programHTML);
-        addDroppableFeature($("#List .droppable"));
-        // $("#List table").children().each(function(){
-        //         addDraggingFeature($(this).find("table"));
-        // });
-        setLiWidth();
-};
-
-/*
-encode takes in a string and encodes it such that bugs resulting from &, ", #, etc are eliminated"
-decode does something similar for the same purpose
-*/
-function encode(string){
-            return String(string)
-            .replace(/&/g, '&amp;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-}
-function decode(string){
-        return String(string)
-                .replace('&amp;', '&')
-            .replace('&quot;','\"')
-            .replace('&#39;','\'')
-            .replace('&lt;',"<")
-            .replace('&gt;',">");
-}
-
-
-function sync(objectID){
-        var block=searchForIndex(objectID+"",program);
-        var DOMBlock=$(document.getElementById(objectID));
-        if(block instanceof ExprNumber || block instanceof ExprString){
-                block.value=decode(DOMBlock.find(".input").attr('value'));
-                DOMBlock.find(".input").attr('value',DOMBlock.find(".input").attr('value'));
-        }
-        else if(block instanceof ExprDefineConst){
-                block.constName=decode(DOMBlock.find('.constName').attr('value'));
-                DOMBlock.find('.constName').attr('value',DOMBlock.find('.constName').attr('value'));
-        }
-        else if(block instanceof ExprDefineFunc){
-                var prevName=block.contract.funcName;
-                if(!(prevName===DOMBlock.find('.contractName').attr('value') && prevName===DOMBlock.find('.definitionName').attr('value'))){
-                        if(DOMBlock.find('.contractName').attr('value')===prevName){
-                                block.contract.funcName=decode(DOMBlock.find('.definitionName').attr('value'));
-                                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
-                                //no idea why the fuck this works or is needed
-                                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.definitionName').attr('value'));
-                        }
-                        else if(DOMBlock.find('.definitionName').attr('value')===prevName){
-                                block.contract.funcName=decode(DOMBlock.find('.contractName').attr('value'));
-                                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
-                                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.contractName').attr('value'));
-                        }
-                }
-                var i=0;
-                DOMBlock.find('.argName').each(function(){
-                          block.argumentNames[i]=$(this).attr('value');
-                          $(this).attr('value',$(this).attr('value'));
-                          makeArgumentDraggable($(this).closest(".argument"),$(this).attr('value'));
-                          i++;
-                });
-        }
-        else{
-                throw new Error("block type not found");
-        }
 }
 
 /*
@@ -1294,7 +1300,7 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
                 if(codeObject.contract.argumentTypes[i]!=undefined){
                         block+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
                 }
-                block+="><input id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+")\" class=\"argName\" ";
+                block+="><input style=\"width:70px;\" id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+")\" class=\"argName\" ";
                 if(codeObject.argumentNames[i]!=undefined){
                         block+="value=\""+encode(codeObject.argumentNames[i])+"\"";
                 }
@@ -1307,12 +1313,12 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
                 block+=" style=\"background:"+colors[codeObject.contract.outputType]+"\" ";
         }
         if(codeObject.expr != undefined){
-                block+="class=\"functionExpr noborder droppable expr\" id="+codeObject.funcIDList[0]+">";
+                block+="class=\"functionExpr noborder droppable expr\" name=\"Expr\" id="+codeObject.funcIDList[0]+">";
                 block+=createBlock(codeObject.expr,constantEnvironment,functionEnvironment);
                 block+="</th>";
         }
         else{
-                block+="class=\"functionExpr droppable expr\" id="+codeObject.funcIDList[0]+">expr</th>";
+                block+="name=\"Expr\" class=\"functionExpr droppable expr\" id="+codeObject.funcIDList[0]+">Expr</th>";
         }
         return block + "</tr></table>";
 }
@@ -1582,7 +1588,9 @@ $(function() {
                 },
                 stop: function(event, ui) {
                         if (carrying != undefined && programCarrying !=undefined){
+			    console.log("sortable stop");
                                 var replacement = $('<li>').append(carrying);
+			    console.log(replacement);
                                 addDroppableFeature(replacement.find(('.droppable')));
                                 ui.item.replaceWith(replacement);
                                 setLiWidth();
@@ -1674,20 +1682,24 @@ var makeDrawersDraggable = function(){
 }
 
 
-var makeArgumentDraggable=function(jQuerySelection,name){
-        jQuerySelection.draggable({
-                start: function(event, ui) {
-                        tempProgram = cloneProgram(program);
-                },
-                containment:".functionExpr",
-                scroll: false,
-                helper: function(event, ui){
-                        
-                        programCarrying= new ExprConst(name)
-                        return carrying
-                }
-        });
- }
+var addDraggableToArgument=function(jQuerySelection,codeObject, name){
+    if (jQuerySelection != null){
+	$(jQuerySelection).draggable({
+            start: function(event, ui) {
+		tempProgram = cloneProgram(program);
+            },
+            helper: function(event, ui){
+		programCarrying= new ExprConst(name);
+		programCarrying.outputType = "Numbers";
+		var carrying = createBlock(programCarrying, constants.concat(createNewConstants(codeObject)), functions);
+		return carrying;
+            },
+	    connectToSortable: "#List"
+	});
+    } else {
+	throw new Error("addDraggableToArgument: jQuerySelection is null");
+    }
+}
 
 /*
 Adds dragging feature to jQuerySelection. This is applied to blocks within blocks.
@@ -1765,6 +1777,7 @@ var addDroppableFeature = function(jQuerySelection) {
                                         throw new Error ("addDroppableFeature drop: $(this) is undefined");
                                 } 
                                 else if($(this).children().length === 0){
+				    console.log("dropped");
                                         $(this).html(carrying);
                                         setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying);
                                         addDroppableFeature($(this).find('.droppable'));
