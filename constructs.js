@@ -660,31 +660,32 @@ $(document).ready(function(){
         /*
         sets focus equal to the input that is focused. 
         */
-        $("#List input").live('focus',function(){
-            focused=$(this)
+        $("#List input").live('focus',function(e){
+            var toContinue=formValidation(e);
+            focused=$(this);
             initvalue=focused.value;
             tempProgram=cloneProgram(program);
+            console.log(toContinue);
+            return toContinue;
         });
 
         var formValidation = function(e){
-                        //e.preventDefault();
-                        //if focused is not null and if you are clicking something else besides the focused object
-                    if(focused !==null && $(e.target).attr("id") !== focused.attr("id")){
+                var toContinue=true;
+                    if(focused !==null &&  ($(e.target) !== focused)){
                         var inputtext=focused.val();
                         var codeObject = searchForIndex(focused.closest($("table")).attr("id"),program);
                         //NUMBERS
                         if(focused.closest($("table")).hasClass("Numbers")){
                                 if(isNaN(Number(inputtext))){
-                                        focused.css("background-color", colors.Expressions);
-                                        e.stopPropagation();
-                                        alert("Please only enter a number into this text field");
-                                        focused.focus();
-                                        return;
-                                } 
-                                else{
-                                        focused.css("background-color", colors.Numbers);
-                                        changeValue(inputtext);
+                                       toContinue=false;
+                                       console.log("should be false ",toContinue); 
                                 }
+                                while(isNaN(Number(inputtext)) || inputtext==null){
+                                        inputtext=prompt("You have entered an invalid number into that number field.  Please type a valid replacement below");
+                                }
+                                        focused.css("background-color", colors.Numbers);
+                                        changeValue(inputtext)
+                                        codeObject.value=inputtext;
                         }
 
                         //STRINGS
@@ -732,8 +733,16 @@ $(document).ready(function(){
                                 focused=null;
                         }
                     }
+                    return toContinue;
                 };
+<<<<<<< HEAD
         $(document.body).live('mousedown', formValidation);
+=======
+        $(document.body).live('mousedown', function(e){
+                return formValidation(e)
+        });
+
+>>>>>>> de5ac72ececb412134d73c0de1a4e65a6735b4ed
 
     //Sets undo and redo buttons to disabled on startup
     $("#undoButton").attr('disabled','disabled');
@@ -1241,6 +1250,108 @@ function createNewConstants(codeObject){
         return newConstants;
 }
 
+<<<<<<< HEAD
+=======
+
+/*
+createProgramHTML takes the program array and translates it into HTML
+*/
+var createProgramHTML = function(){
+        var pageHTML = "";
+        functions.splice(initFunctions,functions.length-initFunctions);
+        constants.splice(initConstants,constants.length-initConstants);
+        for (var i = 0; i < program.length; i++){
+                pageHTML += "<li>" + createBlock(program[i],constants,functions) + "</li>";
+                if(program[i] instanceof ExprDefineConst){
+                        //constants.push({name:program[i].name;type:program[i].outputType})
+                }
+                else if(program[i] instanceof ExprDefineFunc){
+                        //ADD
+                }
+        }
+        //makeDrawers();
+        //drawerButton(activated);
+        return pageHTML;
+};
+
+/*
+renderProgram takes in a string (programHTML) and changes the contents of #List to 
+programHTML
+*/
+var renderProgram = function(programHTML){
+        $("#List").html(programHTML);
+        addDroppableFeature($("#List .droppable"));
+        // $("#List table").children().each(function(){
+        //         addDraggingFeature($(this).find("table"));
+        // });
+        setLiWidth();
+};
+
+/*
+encode takes in a string and encodes it such that bugs resulting from &, ", #, etc are eliminated"
+decode does something similar for the same purpose
+*/
+function encode(string){
+            return String(string)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+}
+function decode(string){
+        return String(string)
+                .replace('&amp;', '&')
+            .replace('&quot;','\"')
+            .replace('&#39;','\'')
+            .replace('&lt;',"<")
+            .replace('&gt;',">");
+}
+
+
+function sync(objectID){
+        var block=searchForIndex(objectID+"",program);
+        var DOMBlock=$(document.getElementById(objectID));
+        if(block instanceof ExprNumber || block instanceof ExprString){
+                if(block.value!=decode(DOMBlock.find(".input").attr('value'))){
+                        block.value=decode(DOMBlock.find(".input").attr('value'));
+                        DOMBlock.find(".input").attr('value',DOMBlock.find(".input").attr('value'));
+                }
+        }
+        else if(block instanceof ExprDefineConst){
+                if(block.constName != decode(DOMBlock.find('.constName').attr('value'))){
+                        block.constName=decode(DOMBlock.find('.constName').attr('value'));
+                        DOMBlock.find('.constName').attr('value',DOMBlock.find('.constName').attr('value'));
+                }
+        }
+        else if(block instanceof ExprDefineFunc){
+                var prevName=block.contract.funcName;
+                if(!(prevName===DOMBlock.find('.contractName').attr('value') && prevName===DOMBlock.find('.definitionName').attr('value'))){
+                        if(DOMBlock.find('.contractName').attr('value')===prevName){
+                                block.contract.funcName=decode(DOMBlock.find('.definitionName').attr('value'));
+                                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
+                                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.definitionName').attr('value'));
+                        }
+                        else if(DOMBlock.find('.definitionName').attr('value')===prevName){
+                                block.contract.funcName=decode(DOMBlock.find('.contractName').attr('value'));
+                                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
+                                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.contractName').attr('value'));
+                        }
+                }
+                var i=0;
+                DOMBlock.find('.argName').each(function(){
+                          block.argumentNames[i]=$(this).attr('value');
+                          $(this).attr('value',$(this).attr('value'));
+                          makeArgumentDraggable($(this).closest(".argument"),$(this).attr('value'));
+                          i++;
+                });
+        }
+        else{
+                throw new Error("block type not found");
+        }
+}
+
+>>>>>>> de5ac72ececb412134d73c0de1a4e65a6735b4ed
 /*
 createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to 
 that function with name, color, and spaces for input blocks
@@ -1736,7 +1847,6 @@ var addDraggingFeature = function(jQuerySelection) {
 addClickableLiteralBox creates a literal block when a blue or orange droppable is clicked
 */
 var addClickableLiteralBox = function(jQuerySelection, parent, child){
-    console.log("WHYYY");
     if (jQuerySelection.children().length === 0){
 	if(jQuerySelection.hasClass("Numbers")){
 	    addClickableLiteralBoxHelper(jQuerySelection, new ExprNumber(), parent, child);
