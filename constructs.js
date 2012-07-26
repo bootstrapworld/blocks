@@ -787,7 +787,75 @@ $(document).ready(function(){
             }
         }
         $("#undoButton").removeAttr('disabled');
-    }); 
+    });
+
+    $("#saveButton").bind('click',function(){
+        if(typeof(Storage)!=="undefined"){
+                var valid=true;
+                var confirmed=true;
+                var saveName=prompt("Please enter a name to which to save your file.");
+                if(saveName==undefined){
+                        return;
+                }
+                if(saveName===""){
+                        valid=false;
+                }
+                else if(localStorage.getItem(saveName)!=undefined){
+                        confirmed=confirm("There already exists a file with this name.  Would you like to overwrite?");
+                }
+                while(!valid || !confirmed){
+                        if(!valid){
+                                saveName=prompt("You have failed to enter anything as your file name.  To cancel, please hit the cancel button.");
+                                valid=true;
+                                confirmed=true;
+                        }
+                        else if(!confirmed){
+                                saveName=prompt("Please enter a name to which to save your file.");
+                                valid=true;
+                                confirmed=true;
+                        }
+                        if(saveName===""){
+                                valid=false;
+                        }
+                        else if(saveName==undefined){
+                                return;
+                        }
+                        else if(localStorage.getItem(saveName)!=undefined){
+                                confirmed=confirm("There already exists a file with this name.  Would you like to overwrite?");
+                        }
+                }
+                //save id, program... maybe history, future, trash
+                localStorage[saveName]=parseProgram(cloneProgram(program));
+                console.log(parseProgram(cloneProgram(program)))
+        }
+        else{
+                alert("I am sorry but your browser does not support storage.");
+        }
+    }) ;
+
+        $("#loadButton").bind('click',function(){
+                var loadName=prompt("Please enter the name of the file you wish to load.  Your current program will be removed from screen.");
+                if(loadName==undefined){
+                        return;
+                }
+                else if(localStorage.getItem(loadName)==undefined){
+                        alert("There was no local file by that name.");
+                        return;
+                }
+                else{
+                        var programString=localStorage.getItem(loadName);
+                        console.log(programString);
+                        //do I change the history and trash? overwrite it?
+
+                        //renderProgram;
+                        //history=[];
+                        //future=[];
+                }
+        });
+
+        $("#exportButton").bind('click',function(){
+                alert("Here is the racket representation of the current program:\n\n"+parseProgram(program));
+        });
 
 
         $(".addCond").live('click',function(){
