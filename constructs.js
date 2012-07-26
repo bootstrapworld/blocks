@@ -207,6 +207,7 @@ funcIDList: first id refers to the expr block, all others refer to aruguments in
 */
 var ExprDefineFunc = function(){
         this.contract = new ExprContract();
+        this.selfType="ExprDefineFunc";
         this.argumentNames = [""];
         this.expr = undefined;
         this.id = makeID();
@@ -226,6 +227,7 @@ var ExprDefineFunc = function(){
 
 var ExprContract = function(){
         this.funcName = "";
+        this.selfType = "ExprContract"
         this.argumentTypes = [undefined];
         this.outputType = undefined;
         this.id = makeID();
@@ -253,6 +255,7 @@ ExprDefineConst("y", (ExprApp("+", [ExprNumber("2"), ExprConst("x")))
 */
 var ExprDefineConst = function(){
         this.constName = undefined;
+        this.selfType="ExprDefineConst";
         this.expr = undefined;
         this.outputType = undefined; //MAKE SURE THIS WILL BE DEFINED!!!!
         this.id = makeID();
@@ -297,6 +300,7 @@ args is a list of objects (one for each argument)
 */
 var ExprApp = function(funcName){
         this.funcName = funcName;
+        this.selfType="ExprApp";
         this.id = makeID();
         this.funcIDList = makeIDList(functions[containsName(functions, funcName)].input.length);
         this.args = [];
@@ -323,6 +327,7 @@ The value of the string is initialized as an empty string "". <<<<<<<<<<<<<<<<<<
 */
 var ExprString= function(){
     this.value="insert string here";
+    this.selfType="ExprString";
         this.outputType = "Strings";
         this.id = makeID();
         this.clone=function(){
@@ -339,6 +344,7 @@ Constructs a number given a number num.
 */
 var ExprNumber = function(){
     this.value = 20;
+    this.selfType="ExprNumber"
         this.outputType = "Numbers";
         this.id = makeID();
         this.clone=function(){
@@ -356,6 +362,7 @@ Constructs a variable object given a name of type string.
 */
 var ExprConst = function(constName){
         this.constName = constName;
+        this.selfType="ExprConst"
         this.outputType = undefined;
         this.id = makeID();
         this.clone=function(){
@@ -370,6 +377,7 @@ Constructs a boolean true or false (else == true)
 */
 var ExprBoolean = function(value){
         this.value=value;
+        this.selfType="ExprBoolean";
         this.outputType = "Booleans";
         this.id = makeID();
         this.clone=function(){
@@ -386,6 +394,7 @@ Constructs a tuple of boolean and answer to use in a cond expression
 var ExprBoolAnswer=function(){
         this.bool = undefined;
         this.answer = undefined;
+        this.selfType="ExprBoolAnswer";
         this.outputType = undefined;
         this.id = makeID();
         this.funcIDList = makeIDList(2);
@@ -418,6 +427,7 @@ list1 = [ExprBoolAnswer(ExprBoolean(true),ExprNumber(2)).ExprBoolAnswer(ExprBool
 */
 var ExprCond = function(){
         this.listOfBooleanAnswer=[new ExprBoolAnswer()];
+        this.selfType="ExprCond";
         this.outputType = undefined;
         this.id = makeID();
         this.clone=function(){
@@ -432,6 +442,72 @@ var ExprCond = function(){
 };
 
 
+function objectArrayToProgram(JSONArrayObject){
+        ID=0;
+        for(var i=0;i<JSONArrayObject.length;i++){
+                program.push(objectToCodeObject(JSONArrayObject[i]));
+        }
+}
+
+function objectToCodeObject(JSONObject){
+        var curType=JSONObject.selfType;
+        var tempObject;
+        if(curType==="ExprNumber"){
+                tempObject=new ExprNumber();
+                tempObject.value=JSONObject.value;
+        }
+        else if(curType==="ExprString"){
+                tempObject=new ExprString();
+                tempObject.value=JSONObject.value;
+        }
+        else if(curType==="ExprBoolean"){
+                tempObject=new ExprBoolean();
+                tempObject.value=JSONObject.value;
+        }
+        else if(curType==="ExprDefineFunc"){
+                tempObject=new ExprDefineFunc();
+                tempObject.argumentNames=JSONObject.argumentNames.slice(0);
+                tempObject.expr=objectToCodeObject(JSONObject.expr);
+                tempObject.contract=objectToCodeObject(JSONObject.contract);
+        }
+        else if(curType==="ExprContract"){
+                tempObject=new ExprContract();
+                tempObject.funcName=JSONObject.funcName;
+                tempObject.argumentTypes=JSONObject.argumentTypes.slice(0);
+                tempObject.outputType=JSONObject.outputType;
+
+        }
+        else if(curType==="ExprDefineConst"){
+                tempObject=new ExprDefineConst();
+                tempObject.constName=JSONObject.constName;
+                tempObject.expr=objectToCodeObject(JSONObject.expr);
+                tempObject.outputType=JSONObject.outputType;
+        }
+        else if(curType==="ExprApp"){
+                tempObject=new ExprApp(JSONObject.funcName);
+                for(var j=0;j<JSONObject.args.length;j++){
+                        tempObject.args[j]=objectToCodeObject(JSONObject.args[j]);
+                }
+        }
+        else if(curType==="ExprConst"){
+                tempObject=new ExprConst(JSONObject.constName);
+                tempObject.outputType=JSONObject.outputType
+        }
+        else if(curType==="ExprBoolAnswer"){
+                tempObject=new ExprBoolAnswer();
+                tempObject.bool=objectToCodeObject(JSONObject.bool);
+                tempObject.answer=objectToCodeObject(JSONObject.answer);
+                tempObject.outputType=JSONObject.outputType;
+        }
+        else if(curType==="ExprCond"){
+                tempObject=new ExprCond();
+                for(var j=0;j<JSONObject.listOfBooleanAnswer.length;j++){
+                        tempObject.listOfBooleanAnswer[j]=objectToCodeObject(JSONObject.listOfBooleanAnswer[j]);
+                }
+                tempObject.outputType=JSONObject.outputType;
+        }
+        return tempObject;
+};
 
 
 //Functions is an array of objects containing a name, tuples of type and name corresponding to their inputs and an output type
@@ -825,8 +901,8 @@ $(document).ready(function(){
                         }
                 }
                 //save id, program... maybe history, future, trash
-                localStorage[saveName]=parseProgram(cloneProgram(program));
-                console.log(parseProgram(cloneProgram(program)))
+                localStorage[saveName]=JSON.stringify(cloneProgram(program));
+                console.log(JSON.stringify(cloneProgram(program)))
         }
         else{
                 alert("I am sorry but your browser does not support storage.");
@@ -844,12 +920,15 @@ $(document).ready(function(){
                 }
                 else{
                         var programString=localStorage.getItem(loadName);
-                        console.log(programString);
+                        console.log(JSON.parse(programString))
+                        program=[];
+                        objectArrayToProgram(JSON.parse(programString));
                         //do I change the history and trash? overwrite it?
-
-                        //renderProgram;
-                        //history=[];
-                        //future=[];
+                        renderProgram(createProgramHTML(program));
+                        historyarr=[];
+                        future=[];
+                        $("#undoButton").attr('disabled','disabled');
+                        $("#redoButton").attr('disabled','disabled');
                 }
         });
 
