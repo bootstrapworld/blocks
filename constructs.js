@@ -79,10 +79,10 @@ var cloneProgram = function(arr){
 function flatten(obj){
         var toReturn = [];
         if(obj.bool !== undefined){
-                toReturn.push(obj.bool)
+                toReturn.push(obj.bool);
         }
         if(obj.answer !== undefined){
-                toReturn.push(obj.answer)
+                toReturn.push(obj.answer);
         }
         return toReturn;
 }
@@ -99,7 +99,7 @@ function searchForIndex(id, array){
                 if(array[i] === undefined){
                         //just skip
                 }else if(array[i].id===id){
-                        toReturn = array[i]
+                        toReturn = array[i];
                 }else if(isDefine(array[i])){
                         toReturn = searchForIndex(id, [array[i].expr]);
                 }else if(array[i] instanceof ExprApp){
@@ -152,7 +152,7 @@ function setChildInProgram(parentId, childId, obj){
                         }
                 }
         }else if(parent instanceof ExprCond){
-                console.log(parentId,childId)
+                console.log(parentId,childId);
                 throw new Error("setChildInProgram failure: parent was top level of cond, that doesn't work");
         }else{
                 throw new Error("setChildInProgram failure: parent looked like: " +interpreter(parent));
@@ -229,7 +229,7 @@ var ExprContract = function(){
         this.argumentTypes = [undefined];
         this.outputType = undefined;
         this.id = makeID();
-        this.funcIDList=makeIDList(2)
+        this.funcIDList=makeIDList(2);
         this.clone=function(){
                 var temp=new ExprContract();
                 temp.funcName=this.funcName;
@@ -557,7 +557,7 @@ var initFunctions=functions.length;
 //constants is an array of user defined variables containing their name and type
 var constants=[];
 
-var initConstants=constants.length
+var initConstants=constants.length;
 
 //restricted contains a list of key words in racket that we aren't allowing the user to redefine
 var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map","let","local"];
@@ -626,7 +626,7 @@ var initvalue=null;
 // ID that matches together a code object and an HTML element
 var ID =0;
 
-var numberofvalidations=0
+var numberofvalidations=0;
 var errorVal=false;
 
 
@@ -671,7 +671,7 @@ $(document).ready(function(){
 
         var formValidation = function(e){
                 var toContinue=true;
-                    if(focused !==null &&  ($(e.target) !== focused)){
+                    if(focused !== null &&  ($(e.target) !== focused)){
                         var inputtext=focused.val();
                         var codeObject = searchForIndex(focused.closest($("table")).attr("id"),program);
                         //NUMBERS
@@ -680,11 +680,11 @@ $(document).ready(function(){
                                        toContinue=false;
                                        console.log("should be false ",toContinue); 
                                 }
-                                while(isNaN(Number(inputtext)) || inputtext==null){
+                                while(isNaN(Number(inputtext)) || inputtext==undefined){
                                         inputtext=prompt("You have entered an invalid number into that number field.  Please type a valid replacement below");
                                 }
                                         focused.css("background-color", colors.Numbers);
-                                        changeValue(inputtext)
+                                        changeValue(inputtext);
                                         codeObject.value=inputtext;
                         }
 
@@ -694,15 +694,15 @@ $(document).ready(function(){
                         }
                         //DEFINING CONSTANTS
                         else if(focused.closest($("table")).hasClass("DefineVar")){
-                                if((initvalue !=undefined && initvalue != "") && inputtext !== ""){
+                                if((initvalue != undefined && initvalue !== "") && inputtext !== ""){
                                         console.log("case prev is defined, input is defined");
-                                        console.log("prevName is",prevName)
+                                        console.log("prevName is",prevName);
                                         var prevIndex=containsName(prevName,constants);
-                                        if(prevIndex != -1){
+                                        if(prevIndex !== -1){
                                                 constants[prevIndex].name=inputtext;
                                         }
                                         addToHistory(tempProgram);
-                                        initvalue=null
+                                        initvalue=null;
                                         tempProgram=null;
                                 }
                                 else if ((initvalue !=undefined && initvalue != "") && inputtext === ""){
@@ -718,14 +718,14 @@ $(document).ready(function(){
                                         initvalue=null;
                                         tempProgram=null;
                                 }
-			    var scrollValue = $("#options").scrollTop();
+                            var scrollValue = $("#options").scrollTop();
                                 makeDrawers(functions,constants);
                                 setActivatedVisible(scrollValue);
                                 focused.attr('value',inputtext);
                                 focused=null;
                         }
                         else if(focused.closest($("table")).hasClass("DefineFun")){
-                                if( initvalue != inputtext){
+                                if( initvalue !== inputtext){
                                         addToHistory(tempProgram);
                                         initvalue=null;
                                         tempProgram=null;
@@ -750,7 +750,7 @@ $(document).ready(function(){
         });
        
         $(document.body).live('mousedown', function(e){
-                return formValidation(e)
+                return formValidation(e);
         });
 
 
@@ -765,12 +765,12 @@ $(document).ready(function(){
     $("#undoButton").bind('click', function(){
         if (historyarr.length !== 0){
             future.unshift(cloneProgram(program));
-	    $("#redoButton").removeAttr('disabled');
+            $("#redoButton").removeAttr('disabled');
             program = historyarr.pop();
             renderProgram(createProgramHTML());
-	    if (historyarr.length === 0){
-		$(this).attr('disabled','disabled');
-	    }
+            if (historyarr.length === 0){
+                $(this).attr('disabled','disabled');
+            }
         }
     });  
 
@@ -782,27 +782,27 @@ $(document).ready(function(){
             historyarr.push(cloneProgram(program));
             program = future.shift();
             renderProgram(createProgramHTML());
-	    if (future.length === 0){
-		$("#redoButton").attr('disabled','disabled');
-	    }
+            if (future.length === 0){
+                $("#redoButton").attr('disabled','disabled');
+            }
         }
-	$("#undoButton").removeAttr('disabled');
+        $("#undoButton").removeAttr('disabled');
     }); 
 
 
         $(".addCond").live('click',function(){
                 addToHistory(cloneProgram(program));
                 searchForIndex($(this).closest('table').attr('id'),program).listOfBooleanAnswer.push(new ExprBoolAnswer());
-                renderProgram(createProgramHTML())
+                renderProgram(createProgramHTML());
         });
 
         $(".removeCond").live('click',function(){
-                var listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),program).listOfBooleanAnswer
-                if(listOfTuples.length!=1){
+                var listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),program).listOfBooleanAnswer;
+                if(listOfTuples.length!==1){
                      addToHistory(cloneProgram(program));
                      for(var i=0;i<listOfTuples.length;i++){
                         if(listOfTuples[i].id===$(this).closest('table').attr('id')){
-                                listOfTuples.splice(i,1)
+                                listOfTuples.splice(i,1);
                         }
                      }  
                      renderProgram(createProgramHTML());
@@ -811,9 +811,9 @@ $(document).ready(function(){
 
         $(".addArgument").live('click',function(){
                 addToHistory(cloneProgram(program));
-                var block=searchForIndex($(this).closest('table').attr('id'),program)
-                block.funcIDList.push(makeID())
-                block.contract.funcIDList.push(makeID())
+                var block=searchForIndex($(this).closest('table').attr('id'),program);
+                block.funcIDList.push(makeID());
+                block.contract.funcIDList.push(makeID());
                 block.argumentNames.push("");
                 renderProgram(createProgramHTML());
         });
@@ -825,7 +825,7 @@ function formValidation(e){
                 var toContinue=true;
                 numberofvalidations++;
                 errorVal=false;
-                console.log("there have been",numberofvalidations,"validations")
+                console.log("there have been",numberofvalidations,"validations");
                     if(focused !==null &&  ($(e.target) !== focused)){
                         var inputtext=focused.val();
                         var codeObject = searchForIndex(focused.closest($("table")).attr("id"),program);
@@ -833,14 +833,14 @@ function formValidation(e){
                         if(focused.closest($("table")).hasClass("Numbers")){
                                 if(isNaN(Number(inputtext))){
                                        toContinue=false;
-                                       errorVal=true
+                                       errorVal=true;
                                        console.log("should be false ",toContinue); 
                                 }
-                                while(isNaN(Number(inputtext)) || inputtext==null){
+                                while(isNaN(Number(inputtext)) || inputtext==undefined){
                                         inputtext=prompt("You have entered an invalid number into that number field.  Please type a valid replacement below");
                                 }
                                         focused.css("background-color", colors.Numbers);
-                                        changeValue(inputtext)
+                                        changeValue(inputtext);
                                         codeObject.value=inputtext;
                         }
 
@@ -850,15 +850,15 @@ function formValidation(e){
                         }
                         //DEFINING CONSTANTS
                         else if(focused.closest($("table")).hasClass("DefineVar")){
-                                if((initvalue !=undefined && initvalue != "") && inputtext !== ""){
+                                if((initvalue !=undefined && initvalue !== "") && inputtext !== ""){
                                         console.log("case prev is defined, input is defined");
-                                        console.log("prevName is",prevName)
+                                        console.log("prevName is",prevName);
                                         var prevIndex=containsName(prevName,constants);
-                                        if(prevIndex != -1){
+                                        if(prevIndex !== -1){
                                                 constants[prevIndex].name=inputtext;
                                         }
                                         addToHistory(tempProgram);
-                                        initvalue=null
+                                        initvalue=null;
                                         tempProgram=null;
                                 }
                                 else if ((initvalue !=undefined && initvalue != "") && inputtext === ""){
@@ -890,7 +890,7 @@ function formValidation(e){
                         }
                     }
                     return toContinue;
-                };
+                }
 
 function changeValue(inputtext){
         if( initvalue != inputtext ){
@@ -942,15 +942,15 @@ drawerToggle allows the drawer to slide toggle
 function drawerToggle() {
 
     $("#options .toggleHeader").click(function() {
-	var toToggle = $(this).attr("class").split(" ")[1];
-	var toggledDiv = $("#options #" + toToggle);
-	toggledDiv.slideToggle(400, function() {
-	    if($(toggledDiv).is(":visible")){
-		addNonRepeatedEltToArray(activated, toToggle);
-	    } else{
-		removeEltFromArray(activated, toToggle);
-	    }
-	});
+        var toToggle = $(this).attr("class").split(" ")[1];
+        var toggledDiv = $("#options #" + toToggle);
+        toggledDiv.slideToggle(400, function() {
+            if($(toggledDiv).is(":visible")){
+                addNonRepeatedEltToArray(activated, toToggle);
+            } else{
+                removeEltFromArray(activated, toToggle);
+            }
+        });
     });    
 }
 
@@ -962,14 +962,16 @@ pushes toAdd to arr if it is not already within arr
 var addNonRepeatedEltToArray = function(arr, toAdd) {
     var i;
     if (arr.length === 0){
-	arr.push(toAdd)
+        arr.push(toAdd);
     } else{
-	for (i = 0; i < arr.length; i++) {
-	    if (arr[i] === toAdd) break;
-	    if(i === arr.length - 1){
-		arr.push(toAdd);
-	    }
-	}
+        for (i = 0; i < arr.length; i++) {
+            if (arr[i] === toAdd){ 
+                break;
+        }
+            if(i === arr.length - 1){
+                arr.push(toAdd);
+            }
+        }
     }
 };
 
@@ -981,14 +983,14 @@ var removeEltFromArray = function(arr, toDelete) {
     var i;
     var initialArrLength =arr.length;
     for (i = 0; i < arr.length; i++){
-	if (arr[i] === toDelete){
-	    arr.splice(i, 1);
-	    break;
-	}
+        if (arr[i] === toDelete){
+            arr.splice(i, 1);
+            break;
+        }
     }
     if (i === initialArrLength){
-	console.log(toDelete, i, arr.length)
-	throw new Error("removeEltFromArray: couldn't find toDelete");
+        console.log(toDelete, i, arr.length);
+        throw new Error("removeEltFromArray: couldn't find toDelete");
     }
 };
 
@@ -1030,8 +1032,6 @@ function makeTypesArray(allFunctions,allConstants){
         types.Expressions=["cond"];
 
         return types;
-
-        $("")
 }
 
 //unique takes as input an array and outputs if there is only one type in the whole array
@@ -1054,7 +1054,7 @@ setActivatedVisible sets the activated drawers to visible
 
 var setActivatedVisible = function(scrollValue) {
     for(var i = 0; i < activated.length; i++){
-	$("#options #" + activated[i]).css("display","block");
+        $("#options #" + activated[i]).css("display","block");
     }
     $("#options").scrollTop(scrollValue);
 };
@@ -1069,46 +1069,46 @@ function makeDrawers(allFunctions,allConstants){
         for(var Type in typeDrawers){
                 if(typeDrawers.hasOwnProperty(Type)){
                     Drawers+="<h1 class=\"toggleHeader " + encode(Type) + "\">"+encode(Type)+"</h1>";
-		    Drawers += "<div id=\""+encode(Type)+"\">";
+                    Drawers += "<div id=\""+encode(Type)+"\">";
                     if(Type==="Constants"){
                         for(i=0;i<typeDrawers[Type].length;i++){
                             Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(allConstants[typeDrawers[Type][i]].name)+"</span>";
-			}
-		    }
-		    
+                        }
+                    }
+                    
 else if(Type==="Define"){
-			for(i=0;i<typeDrawers[Type].length;i++){
-			    Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span>";
-			}
-		    }
-		    else if(Type==="Expressions"){
-			for(i=0;i<typeDrawers[Type].length;i++){
-			    Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span>";
-			}
-		    }
-		    else{
-			for(i=0;i<typeDrawers[Type].length;i++){
-			    if(typeDrawers[Type][i]==="true"){
-				Drawers+=" <span class=\"Booleans draggable\">true</span>";
-			    }
-			    else if(typeDrawers[Type][i]==="false"){
-				Drawers+=" <span class=\"Booleans draggable\">false</span>";
-			    }
-			    else if(typeDrawers[Type][i]==="Text"){
-				Drawers+=" <span class=\"Strings draggable\">Text</span>";
-			    }
-			    else if(typeDrawers[Type][i]==="Number"){
-				Drawers+=" <span class=\"Numbers draggable\">Number</span>";
-			    }
-			    else{
-				Drawers+=" <span class=\"draggable "+encode(allFunctions[typeDrawers[Type][i]].output)+"\">"+encode(allFunctions[typeDrawers[Type][i]].name)+"</span>";
-			    }
-			}
-		    }
-		    
-		    Drawers+="</div>";
-		}
-	}
+                        for(i=0;i<typeDrawers[Type].length;i++){
+                            Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span>";
+                        }
+                    }
+                    else if(Type==="Expressions"){
+                        for(i=0;i<typeDrawers[Type].length;i++){
+                            Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span>";
+                        }
+                    }
+                    else{
+                        for(i=0;i<typeDrawers[Type].length;i++){
+                            if(typeDrawers[Type][i]==="true"){
+                                Drawers+=" <span class=\"Booleans draggable\">true</span>";
+                            }
+                            else if(typeDrawers[Type][i]==="false"){
+                                Drawers+=" <span class=\"Booleans draggable\">false</span>";
+                            }
+                            else if(typeDrawers[Type][i]==="Text"){
+                                Drawers+=" <span class=\"Strings draggable\">Text</span>";
+                            }
+                            else if(typeDrawers[Type][i]==="Number"){
+                                Drawers+=" <span class=\"Numbers draggable\">Number</span>";
+                            }
+                            else{
+                                Drawers+=" <span class=\"draggable "+encode(allFunctions[typeDrawers[Type][i]].output)+"\">"+encode(allFunctions[typeDrawers[Type][i]].name)+"</span>";
+                            }
+                        }
+                    }
+                    
+                    Drawers+="</div>";
+                }
+        }
 
     Drawers+="</div>";
 
@@ -1119,7 +1119,7 @@ else if(Type==="Define"){
     drawerToggle();
     makeDrawersDraggable();
 /*    if (activated == undefined){
-	activated = "Numbers";
+        activated = "Numbers";
     }*/
 }
 
@@ -1170,10 +1170,10 @@ var renderProgram = function(programHTML){
     $("#List").html(programHTML);
     addDroppableFeature($("#List .droppable"));
     $("#List li .DefineFun .argument").each(function(){
-	console.log($(this).find('input').attr('value'));
-	if ($(this).attr('value') !== ""){
-	    addDraggableToArgument($(this),searchForIndex($(this).closest(".DefineFun").attr('id'), program), $(this).find('input').attr('value'));
-	}
+        console.log($(this).find('input').attr('value'));
+        if ($(this).attr('value') !== ""){
+            addDraggableToArgument($(this),searchForIndex($(this).closest(".DefineFun").attr('id'), program), $(this).find('input').attr('value'));
+        }
     });
     // $("#List table").children().each(function(){
     //         addDraggingFeature($(this).find("table"));
@@ -1234,11 +1234,11 @@ function sync(objectID){
             block.argumentNames[i]=$(this).attr('value');
             $(this).attr('value',$(this).attr('value'));
             if($(this).attr('value') !== ""){
-		addDraggableToArgument($(this).closest(".argument"),block,$(this).attr('value'));
-	    } else{
-		console.log('blah');
-		$(this).closest(".argument").removeClass('ui-draggable');
-	    }
+                addDraggableToArgument($(this).closest(".argument"),block,$(this).attr('value'));
+            } else{
+                console.log('blah');
+                $(this).closest(".argument").removeClass('ui-draggable');
+            }
             i++;
         });
     }
@@ -1340,7 +1340,7 @@ function createBlock(codeObject,constantEnvironment,functionEnvironment){
 function createNewConstants(codeObject){
         var newConstants=[];
         for(var i=0;i<codeObject.argumentNames.length;i++){
-                newConstants.push({name:codeObject.argumentNames[i],type:codeObject.contract.argumentTypes[i]})
+                newConstants.push({name:codeObject.argumentNames[i],type:codeObject.contract.argumentTypes[i]});
         }
         return newConstants;
 }
@@ -1369,6 +1369,7 @@ that function with name, color, and spaces for input blocks
 
 //createDefineBlock outputs the block corresponding to defining a function
 function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
+        var i;
     var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
 
     //contract
@@ -1378,12 +1379,12 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
     if(codeObject.contract.funcName!=undefined){
         block+="value=\""+encode(codeObject.contract.funcName)+"\"";
     }
-    block+=" />"
+    block+=" />";
 
     block+="</th><th> : </th>";
 
     //CONTRACT ARGUMENTS
-    for(var i=0;i<codeObject.argumentNames.length;i++){
+    for(i=0;i<codeObject.argumentNames.length;i++){
         block+=" <th>"+generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject)+"</th>";
     }
 
@@ -1401,7 +1402,7 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
     block+=" /></th>";
 
     //DEFINE BLOCK ARGUMENTS
-    for(var i=0;i<codeObject.argumentNames.length;i++){
+    for(i=0;i<codeObject.argumentNames.length;i++){
         block+="<th width=\"10px\" class=\"expr argument\"";
         if(codeObject.contract.argumentTypes[i]!=undefined){
             block+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
@@ -1410,9 +1411,9 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
         if(codeObject.argumentNames[i]!=undefined){
             block+="value=\""+encode(codeObject.argumentNames[i])+"\"";
         }
-        block+=" />"
+        block+=" />";
     }
-    block+="<th></th><th></th>"
+    block+="<th></th><th></th>";
 
 
     //DEFINE EXPRESSIONS
@@ -1434,7 +1435,7 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject,constantEnvironment,functionEnvironment){
         var block = "<table class=\"DefineVar Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
-        block+="<th class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"constName\""
+        block+="<th class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"constName\"";
         if(codeObject.constName != undefined){
                 block+=" value=\""+encode(codeObject.constName)+"\"";
         }
@@ -1460,10 +1461,10 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
         var block =  "<table class=\"Cond expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th style=\"float:left\">cond</th></tr>";
         for(var i=0;i<codeObject.listOfBooleanAnswer.length;i++){
                 if(i===codeObject.listOfBooleanAnswer.length-1){
-                        block+="<tr class=\"BoolAnswer empty\"><th><table class=\"noDrag\" id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>"
+                        block+="<tr class=\"BoolAnswer empty\"><th><table class=\"noDrag\" id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";
                 }
                 else{
-                        block+="<tr><th><table id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>"
+                        block+="<tr><th><table id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";
                 }       
                 if(codeObject.listOfBooleanAnswer[i].bool!=undefined){
                         block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"noborder droppable Booleans expr\">";
@@ -1471,7 +1472,7 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
                         block+="</th>";
                 }
                 else{
-                        block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"droppable Booleans expr\">boolean</th>"
+                        block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"droppable Booleans expr\">boolean</th>";
                 }
                 if(codeObject.listOfBooleanAnswer[i].answer!=undefined){
                         block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"noborder droppable expr\">";
@@ -1483,9 +1484,9 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
                 if(codeObject.listOfBooleanAnswer.length!==1){
                         block+="<th><button class=\"removeCond\">x</button></th>";
                 }
-                block+="</table></th></tr>"
+                block+="</table></th></tr>";
         }
-        block +="<tr><th></th><th><button class=\"addCond\">+</button></th></tr>"
+        block +="<tr><th></th><th><button class=\"addCond\">+</button></th></tr>";
         return block + "</table>";
 }
 
@@ -1500,7 +1501,7 @@ function createBooleanBlock(codeObject,constantEnvironment,functionEnvironment){
 }
 
 function createNumBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input Numbers\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\""
+    var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input Numbers\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\"";
     block+=" value=\""+codeObject.value+"\">";
     return block + "</th></tr></table>";
 }
@@ -1539,7 +1540,7 @@ function generateTypeDrop(newID,codeObject){
         }
         HTML+="</select>";
         HTML+= (typeIndex!==-1 && codeObject.contract.funcIDList.length !== 2) ? "<button onclick=\"deleteArg("+newID+","+codeObject.id+")\">x</button>" : "";
-        return HTML
+        return HTML;
 }
 
 function changeType(curValue,selectID,codeObjectID){
@@ -1748,7 +1749,7 @@ $(function() {
                         if(ui.item === null){
                                 throw new Error ("sortable receive");
                         }else{
-			    console.log('sortable receive')
+                            console.log('sortable receive');
                                 if (!ui.item.is('span.draggable')){
                                         eliminateBorder(ui.sender.parent().parent());
                                 }
@@ -1774,30 +1775,30 @@ $(function() {
 
     //allows for deletion when item dragged into drawers
     $("#options").droppable({
-	accept:'table',
+        accept:'table',
         greedy:true,
         drop: function(event, ui){
-            if(carrying!=null && programCarrying !=null){
-		    if(!ui.draggable.is('span')){ //if ui.draggable is not from the drawer
+            if(carrying!=undefined && programCarrying !=undefined){
+                    if(!ui.draggable.is('span')){ //if ui.draggable is not from the drawer
                         if (draggedClone != undefined){
-			    eliminateBorder(draggedClone.closest($("th")));
-			    draggedClone = undefined;
+                            eliminateBorder(draggedClone.closest($("th")));
+                            draggedClone = undefined;
                         }
-			console.log("dropping");
-//			$(ui.draggable).detach();
+                        console.log("dropping");
+//                      $(ui.draggable).detach();
                         $(ui.draggable).remove();
                         addToHistory(tempProgram);
                         programCarrying=null;
                         carrying=null;
                         setLiWidth();
-		    }
-	    }
+                    }
+            }
             else{
-		console.log(ui.helper);
+                console.log(ui.helper);
                 throw new Error("tried to trash null");
             
-	    }
-	}
+            }
+        }
     });
 });
 
@@ -1823,7 +1824,7 @@ var makeDrawersDraggable = function(){
                                 return carrying;
                 },
             connectToSortable: "#List",
-	    zIndex:999
+            zIndex:999
         });
 };
 
@@ -1833,10 +1834,10 @@ functionCodeObject is the function from which the argument originates
 name is a string representing the name of the argument 
 */
 var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
-    if (jQuerySelection != null){
-	$(jQuerySelection).draggable({
+    if (jQuerySelection != undefined){
+        $(jQuerySelection).draggable({
             start: function(event, ui) {
-		      if(!errorVal){
+                      if(!errorVal){
                          tempProgram = cloneProgram(program);
                        }
                         else{
@@ -1847,20 +1848,20 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
                         }
             },
             helper: function(event, ui){
-		programCarrying= new ExprConst(name);
-		programCarrying.outputType = "Numbers";
-		//console.log(constants.concat(createNewConstants(functionCodeObject)));
-		carrying = createBlock(programCarrying, constants.concat(createNewConstants(functionCodeObject)), functions);
-		console.log(carrying);
-		return carrying;
-	    },
-	    stop:function(event, ui){
-		renderProgram(createProgramHTML());
-	    },
-	    connectToSortable:'#options'
-	});
+                programCarrying= new ExprConst(name);
+                programCarrying.outputType = "Numbers";
+                //console.log(constants.concat(createNewConstants(functionCodeObject)));
+                carrying = createBlock(programCarrying, constants.concat(createNewConstants(functionCodeObject)), functions);
+                console.log(carrying);
+                return carrying;
+            },
+            stop:function(event, ui){
+                renderProgram(createProgramHTML());
+            },
+            connectToSortable:'#options'
+        });
     } else {
-	throw new Error("addDraggableToArgument: jQuerySelection is null");
+        throw new Error("addDraggableToArgument: jQuerySelection is null");
     }
 };
 
@@ -1893,7 +1894,7 @@ var addDraggingFeature = function(jQuerySelection) {
                     }
                 },
                 stop:function(event, ui){
-                    if (programCarrying != null && carrying != null){
+                    if (programCarrying != undefined && carrying != undefined){
                         program = tempProgram;
                         renderProgram(createProgramHTML());
                     }
@@ -1903,28 +1904,28 @@ var addDraggingFeature = function(jQuerySelection) {
 
         }
     }
-	
+        
 };
 /*
 addClickableLiteralBox creates a literal block when a blue or orange droppable is clicked
 */
 var addClickableLiteralBox = function(jQuerySelection, parent, child){
     if (jQuerySelection.children().length === 0){
-	if(jQuerySelection.hasClass("Numbers")){
-	    addClickableLiteralBoxHelper(jQuerySelection, new ExprNumber(), parent, child);
-	}
-	else if (jQuerySelection.hasClass("Strings")){
-	    addClickableLiteralBoxHelper(jQuerySelection, new ExprString(), parent, child);
-	}
+        if(jQuerySelection.hasClass("Numbers")){
+            addClickableLiteralBoxHelper(jQuerySelection, new ExprNumber(), parent, child);
+        }
+        else if (jQuerySelection.hasClass("Strings")){
+            addClickableLiteralBoxHelper(jQuerySelection, new ExprString(), parent, child);
+        }
     }
 };
 
 var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent, child) {
     addToHistory(cloneProgram(program));
-	setChildInProgram(parent, child, codeObject);
+        setChildInProgram(parent, child, codeObject);
         var html = createBlock(codeObject,constants,functions);
         $(jQuerySelection).css('border','none');
-	jQuerySelection.html(html);
+        jQuerySelection.html(html);
         addDroppableFeature(jQuerySelection);
 };
 
@@ -1936,12 +1937,12 @@ var x;
 var addDroppableFeature = function(jQuerySelection) {
     if (jQuerySelection !== null){
         addDraggableToTable((jQuerySelection).find("table"));
-	//adds literal box upon click
-	jQuerySelection.mousedown(function(e) {
-	    if (e.which === 1){
-		addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"));
-	    }
-	});
+        //adds literal box upon click
+        jQuerySelection.mousedown(function(e) {
+            if (e.which === 1){
+                addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"));
+            }
+        });
         jQuerySelection.droppable({
            // hoverClass:"highlight",
             tolerance:"pointer",
@@ -1951,8 +1952,8 @@ var addDroppableFeature = function(jQuerySelection) {
                     throw new Error ("addDroppableFeature drop: $(this) is undefined");
                 } 
                 else if($(this).children().length === 0){
-		    console.log("dropped", carrying, $(this));
-		    x= $(this);
+                    console.log("dropped", carrying, $(this));
+                    x= $(this);
                     $(this).html(carrying);
                     setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying);
                     addDroppableFeature($(this).find('.droppable'));
@@ -2019,7 +2020,7 @@ var getHTML = function(jQuerySelection) {
 $("#storage").sortable({
     connectToSortable:"#List",
     stop:function(event, ui){
-	$("#storage").append($("span").append(carrying));
+        $("#storage").append($("span").append(carrying));
     }
 });
 
