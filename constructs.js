@@ -94,6 +94,7 @@ function flatten(obj){
   @return: The object with the corresponding id.
 */
 function searchForIndex(id, array){
+
     var toReturn = undefined;
     for(var i = 0; i< array.length; i++){
         if(array[i] === undefined){
@@ -111,7 +112,7 @@ function searchForIndex(id, array){
         }
         if(toReturn !== undefined){
             return toReturn;
-        }
+	}
     }
     return undefined;
 }
@@ -133,51 +134,59 @@ function setChildInProgram(parentId, childId, obj,prog){
         var index;
         if(obj !== undefined){
             index = getAddIndex(parent, childId);
-        }else{
+        }
+	else{
             index = getRemoveIndex(parent, childId);
         }
         if(index === -1){
             throw new Error("setChildInProgram failure: childId not found");
-        }else{
+        }
+	else{
             if(parent instanceof ExprApp){
                 parent.args[index] = obj;
-            }else if(isDefine(parent)){
+            }
+	    else if(isDefine(parent)){
                 parent.expr = obj;
-            }else if(parent instanceof ExprBoolAnswer){
+            }
+	    else if(parent instanceof ExprBoolAnswer){
                 if(index === 0){
                     parent.bool = obj;
-                }else{
+                }
+		else{
                     parent.answer = obj;
                 }
             }
-        }
-    }else if(parent instanceof ExprCond){
-        throw new Error("setChildInProgram failure: parent was top level of cond, that doesn't work");
-    }else{
-        throw new Error("setChildInProgram failure: parent looked like: " +interpreter(parent));
+	    else if(parent instanceof ExprCond){
+		throw new Error("setChildInProgram failure: parent was top level of cond, that doesn't work");
+	    }
+	    else{
+		throw new Error("setChildInProgram failure: parent looked like: " +interpreter(parent));
+	    }
+	}
     }
 }
+
 function getRemoveIndex(parent, childID){
     var i;
     var toReturn = -1;
     if(isDefine(parent)){
         if(parent.expr != undefined && parent.expr.id === childID){
-            toReturn = 0;
+	    toReturn = 0;
         }
     }else if(parent instanceof ExprApp){
         for(i=0; i<parent.args.length; i++){
-            if(parent.args[i] !== undefined){
+	    if(parent.args[i] !== undefined){
                 if(parent.args[i].id === childID){
-                    toReturn = i;
+		    toReturn = i;
                 }
-            }
+	    }
         }
     }else if(parent instanceof ExprBoolAnswer){
         if(parent.bool !== undefined && parent.bool.id === childID){
-            toReturn = 0;
+	    toReturn = 0;
         }
         if(parent.answer !== undefined && parent.answer.id === childID){
-            toReturn = 1;
+	    toReturn = 1;
         }
     }
     return toReturn;
@@ -185,7 +194,7 @@ function getRemoveIndex(parent, childID){
 function getAddIndex(parent, childID){
     for(var i =0; i<parent.funcIDList.length; i++){
         if(parent.funcIDList[i] === childID){
-            return i
+	    return i
         }
     }
     return -1;
@@ -205,7 +214,9 @@ function getAddIndex(parent, childID){
   funcIDList: first id refers to the expr block, all others refer to aruguments in order
 */
 var ExprDefineFunc = function(){
+
     this.contract = new ExprContract();
+    this.selfType="ExprDefineFunc";
     this.argumentNames = [""];
     this.expr = undefined;
     this.id = makeID();
@@ -225,10 +236,11 @@ var ExprDefineFunc = function(){
 
 var ExprContract = function(){
     this.funcName = "";
+    this.selfType = "ExprContract"
     this.argumentTypes = [undefined];
     this.outputType = undefined;
     this.id = makeID();
-    this.funcIDList=makeIDList(2)
+    this.funcIDList=makeIDList(2);
     this.clone=function(){
         var temp=new ExprContract();
         temp.funcName=this.funcName;
@@ -251,7 +263,9 @@ var ExprContract = function(){
   ExprDefineConst("y", (ExprApp("+", [ExprNumber("2"), ExprConst("x")))
 */
 var ExprDefineConst = function(){
+
     this.constName = undefined;
+    this.selfType="ExprDefineConst";
     this.expr = undefined;
     this.outputType = undefined; //MAKE SURE THIS WILL BE DEFINED!!!!
     this.id = makeID();
@@ -275,9 +289,9 @@ var ExprDefineConst = function(){
 function isLiteral (obj){
     return (
         obj instanceof ExprString ||
-            obj instanceof ExprNumber ||
-            obj instanceof ExprBoolean ||
-            obj instanceof ExprConst);
+	    obj instanceof ExprNumber ||
+	    obj instanceof ExprBoolean ||
+	    obj instanceof ExprConst);
 }
 
 /*
@@ -296,6 +310,7 @@ function isDefine (obj){
 */
 var ExprApp = function(funcName){
     this.funcName = funcName;
+    this.selfType="ExprApp";
     this.id = makeID();
     this.funcIDList = makeIDList(functions[containsName(functions, funcName)].input.length);
     this.args = [];
@@ -318,10 +333,11 @@ var ExprApp = function(funcName){
 
 /*
   Constructs a string given the contents of the string (str).
-  The value of the string is initialized as an empty string "". <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  The value of the string is initialized as an empty string "". 
 */
 var ExprString= function(){
     this.value="insert string here";
+    this.selfType="ExprString";
     this.outputType = "Strings";
     this.id = makeID();
     this.clone=function(){
@@ -338,6 +354,7 @@ var ExprString= function(){
 */
 var ExprNumber = function(){
     this.value = 20;
+    this.selfType="ExprNumber"
     this.outputType = "Numbers";
     this.id = makeID();
     this.clone=function(){
@@ -355,6 +372,7 @@ var ExprNumber = function(){
 */
 var ExprConst = function(constName){
     this.constName = constName;
+    this.selfType="ExprConst"
     this.outputType = undefined;
     this.id = makeID();
     this.clone=function(){
@@ -362,6 +380,7 @@ var ExprConst = function(constName){
         temp.id=this.id;
         return temp;
     };
+
 };
 
 /*
@@ -369,6 +388,7 @@ var ExprConst = function(constName){
 */
 var ExprBoolean = function(value){
     this.value=value;
+    this.selfType="ExprBoolean";
     this.outputType = "Booleans";
     this.id = makeID();
     this.clone=function(){
@@ -385,6 +405,7 @@ var ExprBoolean = function(value){
 var ExprBoolAnswer=function(){
     this.bool = undefined;
     this.answer = undefined;
+    this.selfType="ExprBoolAnswer";
     this.outputType = undefined;
     this.id = makeID();
     this.funcIDList = makeIDList(2);
@@ -417,6 +438,7 @@ var ExprBoolAnswer=function(){
 */
 var ExprCond = function(){
     this.listOfBooleanAnswer=[new ExprBoolAnswer()];
+    this.selfType="ExprCond";
     this.outputType = undefined;
     this.id = makeID();
     this.clone=function(){
@@ -431,6 +453,77 @@ var ExprCond = function(){
 };
 
 
+function objectArrayToProgram(JSONArrayObject){
+    ID=0;
+    for(var i=0;i<JSONArrayObject.length;i++){
+        program.push(objectToCodeObject(JSONArrayObject[i]));
+    }
+}
+
+function objectToCodeObject(JSONObject){
+    if(JSONObject==undefined){
+        return undefined;
+    }
+    var curType=JSONObject.selfType;
+    var tempObject;
+    if(curType==="ExprNumber"){
+        tempObject=new ExprNumber();
+        tempObject.value=JSONObject.value;
+    }
+    else if(curType==="ExprString"){
+        tempObject=new ExprString();
+        tempObject.value=JSONObject.value;
+    }
+    else if(curType==="ExprBoolean"){
+        tempObject=new ExprBoolean();
+        tempObject.value=JSONObject.value;
+    }
+    else if(curType==="ExprDefineFunc"){
+        tempObject=new ExprDefineFunc();
+        tempObject.argumentNames=JSONObject.argumentNames.slice(0);
+        tempObject.funcIDList=makeIDList(JSONObject.funcIDList.length)
+        tempObject.expr=objectToCodeObject(JSONObject.expr);
+        tempObject.contract=objectToCodeObject(JSONObject.contract);
+    }
+    else if(curType==="ExprContract"){
+        tempObject=new ExprContract();
+        tempObject.funcName=JSONObject.funcName;
+        tempObject.funcIDList=makeIDList(JSONObject.funcIDList.length)
+        tempObject.argumentTypes=JSONObject.argumentTypes.slice(0);
+        tempObject.outputType=JSONObject.outputType;
+
+    }
+    else if(curType==="ExprDefineConst"){
+        tempObject=new ExprDefineConst();
+        tempObject.constName=JSONObject.constName;
+        tempObject.expr=objectToCodeObject(JSONObject.expr);
+        tempObject.outputType=JSONObject.outputType;
+    }
+    else if(curType==="ExprApp"){
+        tempObject=new ExprApp(JSONObject.funcName);
+        for(var j=0;j<JSONObject.args.length;j++){
+            tempObject.args[j]=objectToCodeObject(JSONObject.args[j]);
+        }
+    }
+    else if(curType==="ExprConst"){
+        tempObject=new ExprConst(JSONObject.constName);
+        tempObject.outputType=JSONObject.outputType
+    }
+    else if(curType==="ExprBoolAnswer"){
+        tempObject=new ExprBoolAnswer();
+        tempObject.bool=objectToCodeObject(JSONObject.bool);
+        tempObject.answer=objectToCodeObject(JSONObject.answer);
+        tempObject.outputType=JSONObject.outputType;
+    }
+    else if(curType==="ExprCond"){
+        tempObject=new ExprCond();
+        for(var j=0;j<JSONObject.listOfBooleanAnswer.length;j++){
+            tempObject.listOfBooleanAnswer[j]=objectToCodeObject(JSONObject.listOfBooleanAnswer[j]);
+        }
+        tempObject.outputType=JSONObject.outputType;
+    }
+    return tempObject;
+};
 
 
 //Functions is an array of objects containing a name, tuples of type and name corresponding to their inputs and an output type
@@ -556,7 +649,7 @@ var initFunctions=functions.length;
 //constants is an array of user defined variables containing their name and type
 var constants=[];
 
-var initConstants=constants.length
+var initConstants=constants.length;
 
 //restricted contains a list of key words in racket that we aren't allowing the user to redefine
 var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map","let","local"];
@@ -608,7 +701,7 @@ var program = [];
 
 
 /*
-storageProgram stores the state of the stroage div
+  storageProgram stores the state of the stroage div
 */
 var storageProgram = [];
 
@@ -635,7 +728,7 @@ var initvalue=null;
 // ID that matches together a code object and an HTML element
 var ID =0;
 
-var numberofvalidations=0
+var numberofvalidations=0;
 var errorVal=false;
 
 
@@ -656,6 +749,7 @@ function onResize(){
 $(document).ready(function(){
     //When the window is resized, the height of the width of the code div changes
     $(window).resize(onResize);
+
 
     //draws drawers when the page is loaded
     makeDrawers(functions,constants);
@@ -683,8 +777,6 @@ $(document).ready(function(){
         return formValidation(e)
     });
 
-
-
     //Sets undo and redo buttons to disabled on startup
     $("#undoButton").attr('disabled','disabled');
     $("#redoButton").attr('disabled','disabled');
@@ -694,12 +786,12 @@ $(document).ready(function(){
     */
     $("#undoButton").bind('click', function(){
         if (historyarr.length !== 0){
-            future.unshift({program: cloneProgram(program), storage: cloneProgram(storageProgram)});
+	    future.unshift({program: cloneProgram(program), storage: cloneProgram(storageProgram)});
 	    $("#redoButton").removeAttr('disabled');
 	    var x = historyarr.pop();
-            program = x.program;
+	    program = x.program;
 	    storageProgram = x.storage;
-            renderProgram();
+	    renderProgram();
 	    if (historyarr.length === 0){
 		$(this).attr('disabled','disabled');
 	    }
@@ -711,17 +803,88 @@ $(document).ready(function(){
     */
     $("#redoButton").bind('click', function(){
         if (future.length !== 0){
-            historyarr.push({program: cloneProgram(program), storage: cloneProgram(storageProgram)});
+	    historyarr.push({program: cloneProgram(program), storage: cloneProgram(storageProgram)});
 	    var x = future.shift();
-            program = x.program;
+	    program = x.program;
 	    storageProgram = x.storage;
-            renderProgram();
+	    renderProgram();
 	    if (future.length === 0){
 		$("#redoButton").attr('disabled','disabled');
 	    }
         }
-	$("#undoButton").removeAttr('disabled');
-    }); 
+        $("#undoButton").removeAttr('disabled');
+    });
+
+    $("#saveButton").bind('click',function(){
+        if(typeof(Storage)!=="undefined"){
+            var valid=true;
+            var confirmed=true;
+            var saveName=prompt("Please enter a name to which to save your file.");
+            if(saveName==undefined){
+                return;
+            }
+            if(saveName===""){
+                valid=false;
+            }
+            else if(localStorage.getItem(saveName)!=undefined){
+                confirmed=confirm("There already exists a file with this name.  Would you like to overwrite?");
+            }
+            while(!valid || !confirmed){
+                if(!valid){
+                    saveName=prompt("You have failed to enter anything as your file name.  To cancel, please hit the cancel button.");
+                    valid=true;
+                    confirmed=true;
+                }
+                else if(!confirmed){
+                    saveName=prompt("Please enter a name to which to save your file.");
+                    valid=true;
+                    confirmed=true;
+                }
+                if(saveName===""){
+                    valid=false;
+                }
+                else if(saveName==undefined){
+                    return;
+                }
+                else if(localStorage.getItem(saveName)!=undefined){
+                    confirmed=confirm("There already exists a file with this name.  Would you like to overwrite?");
+                }
+            }
+            //save id, program... maybe history, future, trash
+            localStorage[saveName]=JSON.stringify(cloneProgram(program));
+            console.log(JSON.stringify(cloneProgram(program)))
+        }
+        else{
+            alert("I am sorry but your browser does not support storage.");
+        }
+    }) ;
+
+    $("#loadButton").bind('click',function(){
+        var loadName=prompt("Please enter the name of the file you wish to load.  Your current program will be removed from screen.");
+        if(loadName==undefined){
+            return;
+        }
+        else if(localStorage.getItem(loadName)==undefined){
+            alert("There was no local file by that name.");
+            return;
+        }
+        else{
+            var programString=localStorage.getItem(loadName);
+            console.log(JSON.parse(programString))
+            program=[];
+            objectArrayToProgram(JSON.parse(programString));
+            //do I change the history and trash? overwrite it?
+            renderProgram(createProgramHTML(program));
+            historyarr=[];
+            future=[];
+            $("#undoButton").attr('disabled','disabled');
+            $("#redoButton").attr('disabled','disabled');
+        }
+    });
+
+    $("#exportButton").bind('click',function(){
+        alert("Here is the racket representation of the current program:\n\n"+parseProgram(program));
+    });
 
 
     $(".addCond").live('click',function(){
@@ -733,13 +896,13 @@ $(document).ready(function(){
     $(".removeCond").live('click',function(){
         var listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),program).listOfBooleanAnswer
         if(listOfTuples.length!=1){
-            addToHistory(cloneProgram(program), cloneProgram(storageProgram));
-            for(var i=0;i<listOfTuples.length;i++){
+	    addToHistory(cloneProgram(program), cloneProgram(storageProgram));
+	    for(var i=0;i<listOfTuples.length;i++){
                 if(listOfTuples[i].id===$(this).closest('table').attr('id')){
-                    listOfTuples.splice(i,1)
+		    listOfTuples.splice(i,1)
                 }
-            }  
-            renderProgram(createProgramHTML());
+	    }  
+	    renderProgram(createProgramHTML());
         }    
     });
 });
@@ -752,6 +915,7 @@ $(".addArgument").live('click',function(){
     block.argumentNames.push("");
     renderProgram(createProgramHTML());
 });
+7
 
 
 
@@ -765,57 +929,56 @@ function formValidation(e){
         var codeObject = searchForIndex(focused.closest($("table")).attr("id"),program);
         //NUMBERS
         if(focused.closest($("table")).hasClass("Numbers")){
-            if(isNaN(Number(inputtext))){
+	    if(isNaN(Number(inputtext))){
                 toContinue=false;
                 errorVal=true
-            }
-            while(isNaN(Number(inputtext)) || inputtext==null){
+	    }
+	    while(isNaN(Number(inputtext)) || inputtext==null){
                 inputtext=prompt("You have entered an invalid number into that number field.  Please type a valid replacement below");
-            }
-            focused.css("background-color", colors.Numbers);
-            changeValue(inputtext)
-            codeObject.value=inputtext;
+	    }
+	    focused.css("background-color", colors.Numbers);
+	    changeValue(inputtext)
+	    codeObject.value=inputtext;
         }
-
         //STRINGS
         else if(focused.closest($("table")).hasClass("Strings")){
-            changeValue(inputtext);
+	    changeValue(inputtext);
         }
         //DEFINING CONSTANTS
         else if(focused.closest($("table")).hasClass("DefineVar")){
-            if((initvalue !=undefined && initvalue != "") && inputtext !== ""){
+	    if((initvalue !=undefined && initvalue != "") && inputtext !== ""){
                 var prevIndex=containsName(prevName,constants);
                 if(prevIndex != -1){
-                    constants[prevIndex].name=inputtext;
+		    constants[prevIndex].name=inputtext;
                 }
                 addToHistory(tempProgram, cloneProgram(storageProgram));
                 initvalue=null
                 tempProgram=null;
-            }
-            else if ((initvalue !=undefined && initvalue != "") && inputtext === ""){
+	    }
+	    else if ((initvalue !=undefined && initvalue != "") && inputtext === ""){
                 constants.splice(containsName(prevName,1));
                 addToHistory(tempProgram, cloneProgram(storageProgram));
                 initvalue=null;
                 tempProgram=null;
-            }
-            else if((initvalue ==undefined || prevName == "") && inputtext !== ""){
+	    }
+	    else if((initvalue ==undefined || prevName == "") && inputtext !== ""){
                 addToHistory(tempProgram, cloneProgram(storageProgram));
                 initvalue=null;
                 tempProgram=null;
-            }
-            var scrollValue = $("#options").scrollTop();
-            makeDrawers(functions,constants);
-            setActivatedVisible(scrollValue);
-            focused.attr('value',inputtext);
-            focused=null;
+	    }
+	    var scrollValue = $("#options").scrollTop();
+	    makeDrawers(functions,constants);
+	    setActivatedVisible(scrollValue);
+	    focused.attr('value',inputtext);
+	    focused=null;
         }
         else if(focused.closest($("table")).hasClass("DefineFun")){
-            if( initvalue != inputtext){
+	    if( initvalue != inputtext){
                 addToHistory(tempProgram, cloneProgram(storageProgram));
                 initvalue=null;
                 tempProgram=null;
-            }
-            focused=null;
+	    }
+	    focused=null;
         }
     }
     return toContinue;
@@ -838,7 +1001,7 @@ function renderTypeColors(){
     var styleCSS = "<style type='text/css'>";
     for (var type in colors){
         if (colors.hasOwnProperty(type)) {
-            styleCSS+="."+encode(type)+"{background-color:"+colors[type]+";}";
+	    styleCSS+="."+encode(type)+"{background-color:"+colors[type]+";}";
         }
     }
     styleCSS += "</style>";
@@ -850,8 +1013,8 @@ function containsName(array_of_obj,stringElement){
     var contain=-1;
     for (var i = 0; i < array_of_obj.length; i++) {
         if(array_of_obj[i].name===stringElement){
-            contain=i;
-            break;
+	    contain=i;
+	    break;
         }
     }
     return contain;
@@ -871,15 +1034,15 @@ function containsName(array_of_obj,stringElement){
 function drawerToggle() {
 
     $("#options .toggleHeader").click(function() {
-	var toToggle = $(this).attr("class").split(" ")[1];
-	var toggledDiv = $("#options #" + toToggle);
-	toggledDiv.slideToggle(400, function() {
+        var toToggle = $(this).attr("class").split(" ")[1];
+        var toggledDiv = $("#options #" + toToggle);
+        toggledDiv.slideToggle(400, function() {
 	    if($(toggledDiv).is(":visible")){
-		addNonRepeatedEltToArray(activated, toToggle);
+                addNonRepeatedEltToArray(activated, toToggle);
 	    } else{
-		removeEltFromArray(activated, toToggle);
+                removeEltFromArray(activated, toToggle);
 	    }
-	});
+        });
     });    
 }
 
@@ -891,14 +1054,16 @@ function drawerToggle() {
 var addNonRepeatedEltToArray = function(arr, toAdd) {
     var i;
     if (arr.length === 0){
-	arr.push(toAdd)
+        arr.push(toAdd);
     } else{
-	for (i = 0; i < arr.length; i++) {
-	    if (arr[i] === toAdd) break;
-	    if(i === arr.length - 1){
-		arr.push(toAdd);
+        for (i = 0; i < arr.length; i++) {
+	    if (arr[i] === toAdd){ 
+                break;
 	    }
-	}
+	    if(i === arr.length - 1){
+                arr.push(toAdd);
+	    }
+        }
     }
 };
 
@@ -910,13 +1075,14 @@ var removeEltFromArray = function(arr, toDelete) {
     var i;
     var initialArrLength =arr.length;
     for (i = 0; i < arr.length; i++){
-	if (arr[i] === toDelete){
+        if (arr[i] === toDelete){
 	    arr.splice(i, 1);
 	    break;
-	}
+        }
     }
     if (i === initialArrLength){
-	throw new Error("removeEltFromArray: couldn't find toDelete");
+        console.log(toDelete, i, arr.length);
+        throw new Error("removeEltFromArray: couldn't find toDelete");
     }
 };
 
@@ -929,24 +1095,24 @@ function makeTypesArray(allFunctions,allConstants){
     for(var i=0;i<allFunctions.length;i++){
         var curOutput=allFunctions[i].output;
         if(types[curOutput]!==undefined){
-            types[curOutput].push(i);
+	    types[curOutput].push(i);
         }
         else{
-            types[curOutput]=[i];
+	    types[curOutput]=[i];
         }
 
 
         var curInput=allFunctions[i].input;
         if(unique(curInput) && curInput.length>0){
-            var addition=curInput[0].type;
-            if( types[addition]!==undefined ){
+	    var addition=curInput[0].type;
+	    if( types[addition]!==undefined ){
                 if( types[addition][ types[addition].length-1 ]!==i ){
-                    types[addition].push(i);
+		    types[addition].push(i);
                 }
-            }
-            else{
+	    }
+	    else{
                 types[addition]=[i];
-            }
+	    }
         }
     }
     types.Constants=[];
@@ -966,9 +1132,9 @@ function unique(array_inputs){
     if(array_inputs.length>0){
         var first=array_inputs[0].type;
         for(var i=1;i<array_inputs.length;i++){
-            if(first!==array_inputs[i].type){
+	    if(first!==array_inputs[i].type){
                 return false;
-            }
+	    }
         }
     }
     return true;
@@ -980,7 +1146,7 @@ function unique(array_inputs){
 
 var setActivatedVisible = function(scrollValue) {
     for(var i = 0; i < activated.length; i++){
-	$("#options #" + activated[i]).css("display","block");
+        $("#options #" + activated[i]).css("display","block");
     }
     $("#options").scrollTop(scrollValue);
 };
@@ -994,11 +1160,11 @@ function makeDrawers(allFunctions,allConstants){
     var i;
     for(var Type in typeDrawers){
         if(typeDrawers.hasOwnProperty(Type)){
-            Drawers+="<h1 class=\"toggleHeader " + encode(Type) + "\">"+encode(Type)+"</h1>";
+	    Drawers+="<h1 class=\"toggleHeader " + encode(Type) + "\">"+encode(Type)+"</h1>";
 	    Drawers += "<div id=\""+encode(Type)+"\">";
-            if(Type==="Constants"){
+	    if(Type==="Constants"){
                 for(i=0;i<typeDrawers[Type].length;i++){
-                    Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(allConstants[typeDrawers[Type][i]].name)+"</span>";
+		    Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(allConstants[typeDrawers[Type][i]].name)+"</span>";
 		}
 	    }
 	    
@@ -1036,6 +1202,7 @@ function makeDrawers(allFunctions,allConstants){
 	}
     }
 
+
     Drawers+="</div>";
 
     //MAKE STORAGE
@@ -1044,9 +1211,6 @@ function makeDrawers(allFunctions,allConstants){
     $("#Drawer").html(Drawers);
     drawerToggle();
     makeDrawersDraggable();
-    /*    if (activated == undefined){
-	  activated = "Numbers";
-	  }*/
 }
 
 
@@ -1077,10 +1241,10 @@ var createProgramHTML = function(){
     for (var i = 0; i < program.length; i++){
         pageHTML += "<li>" + createBlock(program[i],constants,functions) + "</li>";
         if(program[i] instanceof ExprDefineConst){
-            //constants.push({name:program[i].name;type:program[i].outputType})
+	    //constants.push({name:program[i].name;type:program[i].outputType})
         }
         else if(program[i] instanceof ExprDefineFunc){
-            //ADD
+	    //ADD
         }
     }
     //makeDrawers();
@@ -1089,9 +1253,9 @@ var createProgramHTML = function(){
 };
 
 /*
-createStorageHTML takes the storageProgram array and converts the codeObjects into HTML.
-storageProgram is a global variable so it does not need to be passed in as a function.
-createBlock is used as a helper to generate HTML.
+  createStorageHTML takes the storageProgram array and converts the codeObjects into HTML.
+  storageProgram is a global variable so it does not need to be passed in as a function.
+  createBlock is used as a helper to generate HTML.
 */
 var createStorageHTML = function(){
     var storageHTML = "";
@@ -1102,17 +1266,19 @@ var createStorageHTML = function(){
 };
 
 /*
- renderProgram changes contents of #List to the current program and the contents of #storage
-to the current storageProgram
+  renderProgram changes contents of #List to the current program and the contents of #storage
+  to the current storageProgram
 */
 var renderProgram = function(){
     $("#storage").html(createStorageHTML());
     $("#List").html(createProgramHTML());
     addDroppableFeature($("#List .droppable"));
     $("#List li .DefineFun .argument").each(function(){
-	if ($(this).attr('value') !== ""){
+
+        console.log($(this).find('input').attr('value'));
+        if ($(this).attr('value') !== ""){
 	    addDraggableToArgument($(this),searchForIndex($(this).closest(".DefineFun").attr('id'), program), $(this).find('input').attr('value'));
-	}
+        }
     });
     // $("#List table").children().each(function(){
     //         addDraggingFeature($(this).find("table"));
@@ -1170,19 +1336,21 @@ function sync(objectID){
         }
         var i=0;
         DOMBlock.find('.argName').each(function(){
+
 	    block.argumentNames[i]=$(this).attr('value');
 	    $(this).attr('value',$(this).attr('value'));
 	    if($(this).attr('value') !== ""){
-		addDraggableToArgument($(this).closest(".argument"),block,$(this).attr('value'));
+                addDraggableToArgument($(this).closest(".argument"),block,$(this).attr('value'));
 	    } else{
-		$(this).closest(".argument").removeClass('ui-draggable');
+                console.log('blah');
+                $(this).closest(".argument").removeClass('ui-draggable');
 	    }
 	    i++;
         });
     }
-//    else{
-     //   throw new Error("sync: block type not found", block);
-  //  }
+    //    else{
+    //   throw new Error("sync: block type not found", block);
+    //  }
 }
 
 
@@ -1223,14 +1391,14 @@ function makeCodeFromOptions(optionsText){
     }
     else{
         for(i = 0; i < functions.length; i++){
-            if (functions[i].name === optionsText){
+	    if (functions[i].name === optionsText){
                 return new ExprApp(optionsText);
-            }
+	    }
         }
         for(i=0;i<constants.length;i++){
-            if (constants[i].name === optionsText){
+	    if (constants[i].name === optionsText){
                 return new ExprConst(optionsText);
-            }
+	    }
         }
         throw new Error("makeCodeFromOptions: internal error");
     }
@@ -1250,35 +1418,36 @@ function createBlock(codeObject,constantEnvironment,functionEnvironment){
     }/* else if (codeObject instanceof ExprDefineStruct){
         return stringToElement(createDefineStructBlock());
         }*/ else if (codeObject instanceof ExprCond){
-            return createCondBlock(codeObject,constantEnvironment,functionEnvironment);
+	    return createCondBlock(codeObject,constantEnvironment,functionEnvironment);
         } else if (codeObject instanceof ExprConst){
-            for(i = 0; i < constantEnvironment.length; i++){
+	    for(i = 0; i < constantEnvironment.length; i++){
                 if (encode(constantEnvironment[i].name) === encode(codeObject.constName)){
-                    return createConstantBlock(codeObject,constantEnvironment,functionEnvironment);
+		    return createConstantBlock(codeObject,constantEnvironment,functionEnvironment);
                 }
-            }
+	    }
 	    throw new Error("createBlock: internal error with constants", codeObject);
         } else if (codeObject instanceof ExprApp){
-            for(i = 0; i < functionEnvironment.length; i++){
+	    for(i = 0; i < functionEnvironment.length; i++){
                 if (encode(functionEnvironment[i].name) === encode(codeObject.funcName)){
-                    return createFunctionBlock(functionEnvironment[i], codeObject,constantEnvironment,functionEnvironment);
+		    return createFunctionBlock(functionEnvironment[i], codeObject,constantEnvironment,functionEnvironment);
                 }
-            }
+	    }
 	    throw new Error("createBlock: internal error with apps", codeObject);
         } else if (codeObject instanceof ExprNumber){
-            return createNumBlock(codeObject,constantEnvironment,functionEnvironment);
+	    return createNumBlock(codeObject,constantEnvironment,functionEnvironment);
         } else if (codeObject instanceof ExprString){
-            return createStringBlock(codeObject,constantEnvironment,functionEnvironment);
+	    return createStringBlock(codeObject,constantEnvironment,functionEnvironment);
         } else if (codeObject instanceof ExprBoolean){
-            return createBooleanBlock(codeObject,constantEnvironment,functionEnvironment);
+	    return createBooleanBlock(codeObject,constantEnvironment,functionEnvironment);
         }
     
 }
 
 function createNewConstants(codeObject){
+
     var newConstants=[];
     for(var i=0;i<codeObject.argumentNames.length;i++){
-        newConstants.push({name:codeObject.argumentNames[i],type:codeObject.contract.argumentTypes[i]})
+        newConstants.push({name:codeObject.argumentNames[i],type:codeObject.contract.argumentTypes[i]});
     }
     return newConstants;
 }
@@ -1294,10 +1463,10 @@ function createFunctionBlock(functionInfo, codeObject, constantEnvironment,funct
     var i;
     for(i = 0; i < functionInfo.input.length; i++){
         if (codeObject.args[i] != undefined){
-            block += "<th name=\""+functionInfo.input[i].name+"\" class=\"" + encode(functionInfo.input[i].type) +" noborder droppable\" id=\""+codeObject.funcIDList[i]+"\">" + createBlock(codeObject.args[i],constantEnvironment,functionEnvironment);
+	    block += "<th name=\""+functionInfo.input[i].name+"\" class=\"" + encode(functionInfo.input[i].type) +" noborder droppable\" id=\""+codeObject.funcIDList[i]+"\">" + createBlock(codeObject.args[i],constantEnvironment,functionEnvironment);
         }
         else{
-            block+= "<th name=\""+functionInfo.input[i].name+"\" class=\"" + encode(functionInfo.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">" + functionInfo.input[i].name;
+	    block+= "<th name=\""+functionInfo.input[i].name+"\" class=\"" + encode(functionInfo.input[i].type) +" droppable\" id=\""+codeObject.funcIDList[i]+"\">" + functionInfo.input[i].name;
         }
         block+="</th>";
     }
@@ -1307,6 +1476,7 @@ function createFunctionBlock(functionInfo, codeObject, constantEnvironment,funct
 
 //createDefineBlock outputs the block corresponding to defining a function
 function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
+    var i;
     var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
 
     //contract
@@ -1316,12 +1486,12 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
     if(codeObject.contract.funcName!=undefined){
         block+="value=\""+encode(codeObject.contract.funcName)+"\"";
     }
-    block+=" />"
+    block+=" />";
 
     block+="</th><th> : </th>";
 
     //CONTRACT ARGUMENTS
-    for(var i=0;i<codeObject.argumentNames.length;i++){
+    for(i=0;i<codeObject.argumentNames.length;i++){
         block+=" <th>"+generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject)+"</th>";
     }
 
@@ -1339,7 +1509,7 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
     block+=" /></th>";
 
     //DEFINE BLOCK ARGUMENTS
-    for(var i=0;i<codeObject.argumentNames.length;i++){
+    for(i=0;i<codeObject.argumentNames.length;i++){
         block+="<th width=\"10px\" class=\"expr argument\"";
         if(codeObject.contract.argumentTypes[i]!=undefined){
 	    block+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
@@ -1348,9 +1518,9 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
         if(codeObject.argumentNames[i]!=undefined){
 	    block+="value=\""+encode(codeObject.argumentNames[i])+"\"";
         }
-        block+=" />"
+        block+=" />";
     }
-    block+="<th></th><th></th>"
+    block+="<th></th><th></th>";
 
 
     //DEFINE EXPRESSIONS
@@ -1371,8 +1541,9 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
 
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject,constantEnvironment,functionEnvironment){
+
     var block = "<table class=\"DefineVar Define\" " + "id=\""+codeObject.id+"\"><tr><th>define</th>";
-    block+="<th class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"constName\""
+    block+="<th class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"constName\"";
     if(codeObject.constName != undefined){
         block+=" value=\""+encode(codeObject.constName)+"\"";
     }
@@ -1395,13 +1566,14 @@ function createDefineStructBlock(codeObject){
 //createCondBlock outputs the block corresponding to creating a conditional
 //add stuff to make empty work and have new rows append to ExprCond
 function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
+
     var block =  "<table class=\"Cond expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th style=\"float:left\">cond</th></tr>";
     for(var i=0;i<codeObject.listOfBooleanAnswer.length;i++){
         if(i===codeObject.listOfBooleanAnswer.length-1){
-            block+="<tr class=\"BoolAnswer empty\"><th><table class=\"noDrag\" id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>"
+            block+="<tr class=\"BoolAnswer empty\"><th><table class=\"noDrag\" id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";
         }
         else{
-            block+="<tr><th><table id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>"
+            block+="<tr><th><table id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";
         }       
         if(codeObject.listOfBooleanAnswer[i].bool!=undefined){
             block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"noborder droppable Booleans expr\">";
@@ -1409,7 +1581,7 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
             block+="</th>";
         }
         else{
-            block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"droppable Booleans expr\">boolean</th>"
+            block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"droppable Booleans expr\">boolean</th>";
         }
         if(codeObject.listOfBooleanAnswer[i].answer!=undefined){
             block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"noborder droppable expr\">";
@@ -1421,9 +1593,9 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
         if(codeObject.listOfBooleanAnswer.length!==1){
             block+="<th><button class=\"removeCond\">x</button></th>";
         }
-        block+="</table></th></tr>"
+        block+="</table></th></tr>";
     }
-    block +="<tr><th></th><th><button class=\"addCond\">+</button></th></tr>"
+    block +="<tr><th></th><th><button class=\"addCond\">+</button></th></tr>";
     return block + "</table>";
 }
 
@@ -1438,7 +1610,7 @@ function createBooleanBlock(codeObject,constantEnvironment,functionEnvironment){
 }
 
 function createNumBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input Numbers\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\""
+    var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input Numbers\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\"";
     block+=" value=\""+codeObject.value+"\">";
     return block + "</th></tr></table>";
 }
@@ -1459,17 +1631,18 @@ function stringToElement(string){
   Creates a drop down menu for use in the contract in order to select types.
 */
 function generateTypeDrop(newID,codeObject){
+
     var HTML = "<select id=\""+newID+"\" name=\"TypeDrop\" onchange=\"changeType(this.value,"+newID+","+codeObject.id+")\"><option value=\"Type\">Type</option>";
     var typeIndex=codeObject.contract.funcIDList.indexOf(newID)-1;
     for(var i=0;i<types.length;i++){
         HTML+="<option value=\""+ encode(types[i]) +"\" class=\""+ encode(types[i])+"\"";
         if(typeIndex===-1){
-            if(codeObject.contract.outputType===types[i]){
+            if(codeObject.contract.outputType==types[i]){
                 HTML+=" selected ";
             }
         }
         else{
-            if(codeObject.contract.argumentTypes[typeIndex]===types[i]){
+            if(codeObject.contract.argumentTypes[typeIndex]==types[i]){
                 HTML+=" selected ";
             }
         }
@@ -1477,7 +1650,7 @@ function generateTypeDrop(newID,codeObject){
     }
     HTML+="</select>";
     HTML+= (typeIndex!==-1 && codeObject.contract.funcIDList.length !== 2) ? "<button onclick=\"deleteArg("+newID+","+codeObject.id+")\">x</button>" : "";
-    return HTML
+    return HTML;
 }
 
 function changeType(curValue,selectID,codeObjectID){
@@ -1485,12 +1658,12 @@ function changeType(curValue,selectID,codeObjectID){
     var codeObject=searchForIndex(codeObjectID+"",program);
     for(var i=0;i<codeObject.contract.funcIDList.length;i++){
         if(selectID===codeObject.contract.funcIDList[i] && i!==0){
-            addToHistory(cloneProgram(program), cloneProgram(storageProgram));
-            codeObject.contract.argumentTypes[i-1]= (curValue==="Type") ? undefined : decode(curValue);
+	    addToHistory(cloneProgram(program), cloneProgram(storageProgram));
+	    codeObject.contract.argumentTypes[i-1]= (curValue==="Type") ? undefined : decode(curValue);
         }
         else if(selectID===codeObject.contract.funcIDList[i] && i===0){
-            addToHistory(cloneProgram(program), cloneProgram(storageProgram));
-            codeObject.contract.outputType= (curValue==="Type") ? undefined : decode(curValue);
+	    addToHistory(cloneProgram(program), cloneProgram(storageProgram));
+	    codeObject.contract.outputType= (curValue==="Type") ? undefined : decode(curValue);
         }
     }
     renderProgram(createProgramHTML(program));
@@ -1501,14 +1674,14 @@ function deleteArg(selectID,codeObjectID){
     var codeObject=searchForIndex(codeObjectID+"",program);
     if(codeObject.contract.funcIDList.length>2){
         for(var i=0;i<codeObject.contract.funcIDList.length;i++){
-            if(selectID===codeObject.contract.funcIDList[i] && i!==0){
+	    if(selectID===codeObject.contract.funcIDList[i] && i!==0){
                 addToHistory(cloneProgram(program), cloneProgram(storageProgram));
                 codeObject.argumentNames.splice(i-1,1);
                 codeObject.funcIDList.splice(i,1);
                 codeObject.contract.argumentTypes.splice(i-1,1);
                 codeObject.contract.funcIDList.splice(i,1);
                 renderProgram(createProgramHTML(program));
-            }
+	    }
         }      
     }
 }
@@ -1546,7 +1719,7 @@ function interpreter(obj){
     }else if(obj instanceof ExprDefineFunc){
         toReturn.push(";", obj.contract.funcName, ":");
         for(i = 0; i < obj.contract.argumentTypes.length; i++){
-            toReturn.push(" ", obj.contract.argumentTypes[i]);
+	    toReturn.push(" ", obj.contract.argumentTypes[i]);
         }
         toReturn.push(" -> ", obj.contract.outputType, "\n");
         toReturn.push("(define (", obj.contract.funcName);
@@ -1604,7 +1777,7 @@ var droppedInDroppable = false;
 var tempProgram = undefined;
 
 /*
-Stores the current state of the storage that will later be added to historyaarr
+  Stores the current state of the storage that will later be added to historyaarr
 */
 var tempStorageProgram = undefined;
 
@@ -1619,6 +1792,7 @@ var draggedClone = undefined;
 // .droppable is referring to things within the table that need to be filled and are yet to be actual expressions <e.g. (+ exp1 exp2)>
 
 $(function() {
+
 
     //implements sortability for the program block
     $("#List").sortable({
@@ -1651,7 +1825,7 @@ $(function() {
         },
         stop: function(event, ui) {
 	    if (carrying != undefined && programCarrying !=undefined){
-	
+		
                 var replacement = $('<li>').append(carrying);
                 addDroppableFeature(replacement.find(('.droppable')));
                 ui.item.replaceWith(replacement);
@@ -1706,21 +1880,21 @@ $(function() {
 
     //allows for deletion when item dragged into drawers
     $("#options").droppable({
-	accept:'table',
+        accept:'table',
         greedy:true,
         drop: function(event, ui){
 	    if(carrying!=null && programCarrying !=null){
 		if(!ui.draggable.is('span')){ //if ui.draggable is not from the drawer
-                    if (draggedClone != undefined){
+		    if (draggedClone != undefined){
 			eliminateBorder(draggedClone.closest($("th")));
 			draggedClone = undefined;
-                    }
+		    }
 		    //			$(ui.draggable).detach();
-                    $(ui.draggable).remove();
-                    addToHistory(tempProgram, cloneProgram(storageProgram))
-                    programCarrying=null;
-                    carrying=null;
-                    setLiWidth();
+		    $(ui.draggable).remove();
+		    addToHistory(tempProgram, cloneProgram(storageProgram))
+		    programCarrying=null;
+		    carrying=null;
+		    setLiWidth();
 		}
 	    }
 	    else{
@@ -1756,23 +1930,24 @@ $(function() {
 });
 
 var makeDrawersDraggable = function(){
+
     //Exprs things draggable from the drawer to the code
     $('.draggable').draggable({
         start: function(event, ui) {
-            if(!errorVal){
+	    if(!errorVal){
                 tempProgram = cloneProgram(program);
-            }
-            else{
+	    }
+	    else{
                 event.stopPropagation();
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 return false;
-            }
+	    }
         },
         helper: function(event, ui){
-            programCarrying = makeCodeFromOptions($(this).text());
-            carrying = createBlock(programCarrying,constants,functions);
-            return carrying;
+	    programCarrying = makeCodeFromOptions($(this).text());
+	    carrying = createBlock(programCarrying,constants,functions);
+	    return carrying;
         },
         connectToSortable: "#List",
 	zIndex:999
@@ -1785,17 +1960,18 @@ var makeDrawersDraggable = function(){
   name is a string representing the name of the argument 
 */
 var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
+
     if (jQuerySelection != null){
 	$(jQuerySelection).draggable({
 	    start: function(event, ui) {
 		if(!errorVal){
-                    tempProgram = cloneProgram(program);
+		    tempProgram = cloneProgram(program);
                 }
                 else{
-                    event.stopPropagation();
-                    event.preventDefault();
-                    event.stopImmediatePropagation();
-                    return false;
+		    event.stopPropagation();
+		    event.preventDefault();
+		    event.stopImmediatePropagation();
+		    return false;
                 }
 	    },
 	    helper: function(event, ui){
@@ -1810,7 +1986,7 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
 	    connectToSortable:'#options'
 	});
     } else {
-	throw new Error("addDraggableToArgument: jQuerySelection is null");
+        throw new Error("addDraggableToArgument: jQuerySelection is null");
     }
 };
 
@@ -1843,7 +2019,8 @@ var addDraggingFeature = function(jQuerySelection) {
 		    }
                 },
                 stop:function(event, ui){
-		    if (programCarrying != null && carrying != null){
+
+		    if (programCarrying != undefined && carrying != undefined){
                         program = tempProgram;
                         renderProgram(createProgramHTML());
 		    }
@@ -1853,12 +2030,13 @@ var addDraggingFeature = function(jQuerySelection) {
 
         }
     }
-    
+
 };
 /*
   addClickableLiteralBox creates a literal block when a blue or orange droppable is clicked
 */
 var addClickableLiteralBox = function(jQuerySelection, parent, child){
+
     if (jQuerySelection.children().length === 0 && jQuerySelection.closest('div').attr('id') !== 'storage'){
 	if(jQuerySelection.hasClass("Numbers")){
 	    addClickableLiteralBoxHelper(jQuerySelection, new ExprNumber(), parent, child);
@@ -1866,6 +2044,7 @@ var addClickableLiteralBox = function(jQuerySelection, parent, child){
 	else if (jQuerySelection.hasClass("Strings")){
 	    addClickableLiteralBoxHelper(jQuerySelection, new ExprString(), parent, child);
 	}
+
     }
 };
 
@@ -1958,7 +2137,7 @@ var getHTML = function(jQuerySelection) {
 };
 
 /*
-Disable drop/drag functions on blocks within block
+  Disable drop/drag functions on blocks within block
 */
 var disableDragDrop = function(jQuerySelection) {
     if (jQuerySelection != null){
@@ -1969,16 +2148,6 @@ var disableDragDrop = function(jQuerySelection) {
 	throw new Error('disableDragDrop: jqueryselection is null');
     }
 };
-
-
-/*====================================================================================
-  __      __       _   _                      
-  \ \    / /__ _ _| |_(_)_ _  __ _   ___ _ _  
-  \ \/\/ / _ \ '_| / / | ' \/ _` | / _ \ ' \ 
-  \_/\_/\___/_| |_\_\_|_||_\__, | \___/_||_| trash (done)
-  |___/                       
-  =====================================================================================*/
-
 
 
 
@@ -2043,30 +2212,30 @@ var disableDragDrop = function(jQuerySelection) {
 */
 
 var constraint = function(lhs, rhs, source){
-	this.lhs = lhs;
-	this.rhs = rhs;
-	this.source = source;
+    this.lhs = lhs;
+    this.rhs = rhs;
+    this.source = source;
 };
 /*
-*lhs/rhs can be elems or constructed
-*elem is an ID or a type or a makeVariable
-*Constructed(constructor, List(elem))
-*/
+ *lhs/rhs can be elems or constructed
+ *elem is an ID or a type or a makeVariable
+ *Constructed(constructor, List(elem))
+ */
 
 // new variable: string -> elem
 var variable = function(name){
-	this.name = name;
+    this.name = name;
 };
 
 
 /* Represents structured types in the type inference engine.
-* new construct: string (listof elem) -> elem
-*constructors:
-*             "func" -> function
-*/
+ * new construct: string (listof elem) -> elem
+ *constructors:
+ *             "func" -> function
+ */
 var construct = function(constructor, elemList){
-	this.constructor = constructor;
-	this.elemList = elemList;
+    this.constructor = constructor;
+    this.elemList = elemList;
 };
 var elemId = function(id){
     this.id = id
@@ -2075,19 +2244,19 @@ var elemType = function(type){
     this.type = type;
 }
 var genType = function(){
-	this.type = newGenType();
+    this.type = newGenType();
 }
 var currType = 0;
 function newGenType(){
-	return currType++;
+    return currType++;
 }
 
 
 
 //to create errors with a handy dandy message
 var error = function(id, message){
-	this.id = id;
-	this.message = message;
+    this.id = id;
+    this.message = message;
 };
 
 
@@ -2101,7 +2270,7 @@ function buildFuncConstructs(){
         elemList = [];
         elemList = elemList.concat([new elemType(functions[i].output)]);
         for(var k = 0; k<functions[i].input.length; k++){
-            elemList = elemList.concat([new elemType(functions[i].input[k].type)]);
+	    elemList = elemList.concat([new elemType(functions[i].input[k].type)]);
         }
         funcConstruct[functions[i].name] = new construct("func", elemList);
     }
@@ -2132,63 +2301,63 @@ function buildConstraints(obj, parentId){
     if(obj instanceof ExprDefineConst){
     	constraints = constraints.concat([new constraint(new elemId(obj.id), new elemId(obj.funcIDList[0]), obj.id)]);
         if(obj.expr === undefined){
-            errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
+	    errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
         }else{
-            next = buildConstraints(obj.expr, obj.funcIDList[0]);
-            errors = errors.concat(next.errors);
-            constraints = constraints.concat(next.constraints);
+	    next = buildConstraints(obj.expr, obj.funcIDList[0]);
+	    errors = errors.concat(next.errors);
+	    constraints = constraints.concat(next.constraints);
         }
     }else if(obj instanceof ExprContract){
     	elemList =[];
     	if(obj.outputType !== undefined){
-    		elemList = elemList.concat([new elemType(obj.outputType)]);
+    	    elemList = elemList.concat([new elemType(obj.outputType)]);
     	}else{
-    		errors = errors.concat([new error(obj.funcIDList[0], "Contract output type undefined")]);
-			elemList = elemList.concat([new elemId(obj.funcIDList[0])]);    		
+    	    errors = errors.concat([new error(obj.funcIDList[0], "Contract output type undefined")]);
+	    elemList = elemList.concat([new elemId(obj.funcIDList[0])]);    		
     	}
     	for(i=1; i<obj.funcIDList.length; i++){
-    		if(obj.argumentTypes[i-1] === undefined){
-    			errors = errors.concat([new error(obj.funcIDList[i], "Contract input type undefined")]);
-    			elemList = elemList.concat([new elemId(obj.funcIDList[i])]);  
-    		}else{
-    			elemList = elemList.concat([new elemType(obj.argumentTypes[i-1])]);
-    		}
+    	    if(obj.argumentTypes[i-1] === undefined){
+    		errors = errors.concat([new error(obj.funcIDList[i], "Contract input type undefined")]);
+    		elemList = elemList.concat([new elemId(obj.funcIDList[i])]);  
+    	    }else{
+    		elemList = elemList.concat([new elemType(obj.argumentTypes[i-1])]);
+    	    }
     	}
     	//may change func to contract
     	constraints = constraints.concat([new constraint(new elemId(parentId), new construct("func", elemList), obj.id)]);
     }else if(obj instanceof ExprDefineFunc){
     	//if(obj.argumentNames.length + 1 !== obj.funcIDList.length){
-    //		throw new Error("Each argument did not have an id or vice versa")
-    //	}
+	//		throw new Error("Each argument did not have an id or vice versa")
+	//	}
     	elemList = [];
     	//also check for invalid names
     	if(obj.contract.funcName === undefined || obj.contract.funcName === ""){
-    		errors = errors.concat([new error(obj.id, "No function name found")]);
+    	    errors = errors.concat([new error(obj.id, "No function name found")]);
     	}else{
-    		constraints = constraints.concat([new constraint(new variable(obj.contract.funcName), new elemId(obj.id), obj.id)]);
+    	    constraints = constraints.concat([new constraint(new variable(obj.contract.funcName), new elemId(obj.id), obj.id)]);
     	}
     	//argument names
     	elemList = elemList.concat([new elemId(obj.funcIDList[0])]);
     	for(i=1; i<obj.funcIDList.length; i++){
-    		elemList = elemList.concat([new elemId(obj.funcIDList[i])]);
-    		if(obj.argumentNames[i-1] === undefined || obj.argumentNames[i-1] === ""){
-    			errors = errors.concat([new error(obj.funcIDList[i], "Argument spot without a name")]);
-    		}else{
-    			constraints = constraints.concat([new constraint(new elemId(obj.funcIDList[i]), new variable(obj.argumentNames[i-1]), obj.funcIDList[i])]);
-    		}
+    	    elemList = elemList.concat([new elemId(obj.funcIDList[i])]);
+    	    if(obj.argumentNames[i-1] === undefined || obj.argumentNames[i-1] === ""){
+    		errors = errors.concat([new error(obj.funcIDList[i], "Argument spot without a name")]);
+    	    }else{
+    		constraints = constraints.concat([new constraint(new elemId(obj.funcIDList[i]), new variable(obj.argumentNames[i-1]), obj.funcIDList[i])]);
+    	    }
     	}
     	constraints = constraints.concat([new constraint(new elemId(obj.id), new construct("func", elemList), obj.id)]);
     	//expr
     	if(obj.expr !== undefined){
-            next = buildConstraints(obj.expr, obj.funcIDList[0]);
-            constraints = constraints.concat(next.constraints);
-            errors = errors.concat(next.errors);
+	    next = buildConstraints(obj.expr, obj.funcIDList[0]);
+	    constraints = constraints.concat(next.constraints);
+	    errors = errors.concat(next.errors);
     	}else{
-    		errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
+    	    errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
     	}
     	//contracts
     	if(obj.funcIDList.length !== obj.contract.funcIDList.length){
-    		throw new Error("This should never ever happen unless you break things. Meaning the contract's id list and the define's id list are of different length");
+    	    throw new Error("This should never ever happen unless you break things. Meaning the contract's id list and the define's id list are of different length");
     	}
     	next = buildConstraints(obj.contract, obj.id);
     	errors = errors.concat(next.errors);
@@ -2197,19 +2366,19 @@ function buildConstraints(obj, parentId){
         lhs = new elemId(obj.id);
         elemList = [];
         if(parentId === undefined){
-            elemList = elemList.concat([new elemType(obj.outputType)]);
+	    elemList = elemList.concat([new elemType(obj.outputType)]);
         }else{
-          elemList = elemList.concat([new elemId(parentId)]);
+	    elemList = elemList.concat([new elemId(parentId)]);
         }
         for(i=0; i<obj.funcIDList.length; i++){
-            elemList = elemList.concat([new elemId(obj.funcIDList[i])]);
-            if(obj.args[i] === undefined){
+	    elemList = elemList.concat([new elemId(obj.funcIDList[i])]);
+	    if(obj.args[i] === undefined){
                 errors = errors.concat([new error(obj.funcIDList[i], "Empty space")]);
-            }else{
+	    }else{
                 next = buildConstraints(obj.args[i], obj.funcIDList[i]);
                 errors = errors.concat(next.errors);
                 constraints = constraints.concat(next.constraints);
-            }
+	    }
         }
         rhs = new construct("func", elemList);
         constraints = constraints.concat([new constraint(lhs, rhs, obj.id), (new constraint(lhs, funcConstruct[obj.funcName], obj.id))]);
@@ -2217,140 +2386,140 @@ function buildConstraints(obj, parentId){
     	lhs = new elemId(obj.id);
         constraints = constraints.concat([new constraint(lhs, new variable(obj.constName), obj.id)]);
         if(parentId !== undefined){
-            constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
+	    constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
         }
         if(containsName(constants, obj.constName) === -1 && containsName(functions, obj.constName)===-1){
-            errors = errors.concat([new error(obj.id, "The variable or constant " + obj.constName + " does not exist.")]);
+	    errors = errors.concat([new error(obj.id, "The variable or constant " + obj.constName + " does not exist.")]);
         }
     }else if(isLiteral(obj)){
         lhs = new elemId(obj.id);
         if(parentId !== undefined){
-            constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
+	    constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
         }
         constraints = constraints.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
         if(obj.value === undefined){
-            errors = errors.concat([new error(obj.id, "Empty space")]);
+	    errors = errors.concat([new error(obj.id, "Empty space")]);
         }
     }else if(obj instanceof ExprCond){
         lhs = new elemId(obj.id);
         if(parentId !== undefined){
-            constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
+	    constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
         }
         for(i=0; i<obj.listOfBooleanAnswer.length; i++){
-        //deal with answers
-            if(obj.listOfBooleanAnswer[i].answer !== undefined){
+	    //deal with answers
+	    if(obj.listOfBooleanAnswer[i].answer !== undefined){
                 next = buildConstraints(obj.listOfBooleanAnswer[i].answer, obj.listOfBooleanAnswer[i].funcIDList[1]);
                 constraints = constraints.concat(next.constraints);
                 errors = errors.concat(next.errors);
-            }else{
+	    }else{
                 errors = errors.concat([new error(obj.listOfBooleanAnswer[i].funcIDList[1], "Empty space")]);
-            }
-            constraints = constraints.concat([new constraint(lhs, new elemId(obj.listOfBooleanAnswer[i].funcIDList[1]), obj.listOfBooleanAnswer[i].funcIDList[1])]);
-        //deal with question
-            if(obj.listOfBooleanAnswer[i].bool !== undefined){
+	    }
+	    constraints = constraints.concat([new constraint(lhs, new elemId(obj.listOfBooleanAnswer[i].funcIDList[1]), obj.listOfBooleanAnswer[i].funcIDList[1])]);
+	    //deal with question
+	    if(obj.listOfBooleanAnswer[i].bool !== undefined){
                 next = buildConstraints(obj.listOfBooleanAnswer[i].bool, obj.listOfBooleanAnswer[i].funcIDList[0]);
                 constraints = constraints.concat(next.constraints);
                 errors = errors.concat(next.errors);
-            }else{
+	    }else{
                 errors = errors.concat([new error(obj.listOfBooleanAnswer[i].funcIDList[0], "Empty space")]);
-            }
-            constraints = constraints.concat([new constraint(new elemId(obj.listOfBooleanAnswer[i].funcIDList[0]), new elemType("Booleans"), obj.listOfBooleanAnswer[i].funcIDList[0])]);            
+	    }
+	    constraints = constraints.concat([new constraint(new elemId(obj.listOfBooleanAnswer[i].funcIDList[0]), new elemType("Booleans"), obj.listOfBooleanAnswer[i].funcIDList[0])]);            
         }
     }
     return {errors: errors, 
-            constraints: constraints};
+	    constraints: constraints};
 }
 
 //unifies constraints
 function unify(constr){
-	var subst = [];
-	var next;
-	var errors = [];
-	while(constr.length > 0){
-		next = constr.pop();
-		if(objectEquality(next.lhs, next.rhs, ["source"])){
-			// do nothing, just to short circuit
-		}else if(next.lhs instanceof elemId || next.lhs instanceof variable){
-			substitute(next.rhs, next.lhs, constr);
-			substitute(next.rhs, next.lhs, subst);
-			subst.push(new constraint(next.lhs, next.rhs));
-		}else if(next.rhs instanceof elemId || next.rhs instanceof variable){
-			substitute(next.lhs, next.rhs, constr);
-			substitute(next.lhs, next.rhs, subst);
-			subst.push(new constraint(next.rhs, next.lhs));
-		}else if(next.rhs instanceof construct &&
-				 next.lhs instanceof construct &&
-				(next.rhs.constructor === next.lhs.constructor) &&
-				(next.rhs.elemList.length === next.lhs.elemList.length)){
-			for(var i = 0; i<next.rhs.elemList.length; i++){
-				constr.push(new constraint(next.rhs.elemList[i], next.lhs.elemList[i], next.source));
-			}
-		}else{
-			errors.push(new error(next.source, "Type mismatch"));
-		}
+    var subst = [];
+    var next;
+    var errors = [];
+    while(constr.length > 0){
+	next = constr.pop();
+	if(objectEquality(next.lhs, next.rhs, ["source"])){
+	    // do nothing, just to short circuit
+	}else if(next.lhs instanceof elemId || next.lhs instanceof variable){
+	    substitute(next.rhs, next.lhs, constr);
+	    substitute(next.rhs, next.lhs, subst);
+	    subst.push(new constraint(next.lhs, next.rhs));
+	}else if(next.rhs instanceof elemId || next.rhs instanceof variable){
+	    substitute(next.lhs, next.rhs, constr);
+	    substitute(next.lhs, next.rhs, subst);
+	    subst.push(new constraint(next.rhs, next.lhs));
+	}else if(next.rhs instanceof construct &&
+		 next.lhs instanceof construct &&
+		 (next.rhs.constructor === next.lhs.constructor) &&
+		 (next.rhs.elemList.length === next.lhs.elemList.length)){
+	    for(var i = 0; i<next.rhs.elemList.length; i++){
+		constr.push(new constraint(next.rhs.elemList[i], next.lhs.elemList[i], next.source));
+	    }
+	}else{
+	    errors.push(new error(next.source, "Type mismatch"));
 	}
-	//adding generic types
-	for(var i; i < subst.length; i++){
-		if(subst[i].lhs instanceof variable && !(subst[i].rhs instanceof elemType)){
-			substitute(new genType, subst[i].lhs, subst);
-		}else if(subst[i].rhs instanceof variable && !(subst[i].lhs instanceof elemType)){
-			substitute(new genType, subst[i].rhs, subst);
-		}
+    }
+    //adding generic types
+    for(var i; i < subst.length; i++){
+	if(subst[i].lhs instanceof variable && !(subst[i].rhs instanceof elemType)){
+	    substitute(new genType, subst[i].lhs, subst);
+	}else if(subst[i].rhs instanceof variable && !(subst[i].lhs instanceof elemType)){
+	    substitute(new genType, subst[i].rhs, subst);
 	}
-	return {subst:subst, errors: errors};
+    }
+    return {subst:subst, errors: errors};
 }
 //substitutes the new item for the old item in given constraint
 function substitute(newItem, oldItem, arr){
-	for(var i = 0; i< arr.length; i++){
-		if(!(arr[i] instanceof constraint)){
-			throw new Error("Found an item in arr that was not a constraint at index " + i);
-		}
-		arr[i].lhs = substituteHelp(newItem, oldItem, arr[i].lhs);
-		arr[i].rhs = substituteHelp(newItem, oldItem, arr[i].rhs);
+    for(var i = 0; i< arr.length; i++){
+	if(!(arr[i] instanceof constraint)){
+	    throw new Error("Found an item in arr that was not a constraint at index " + i);
 	}
+	arr[i].lhs = substituteHelp(newItem, oldItem, arr[i].lhs);
+	arr[i].rhs = substituteHelp(newItem, oldItem, arr[i].rhs);
+    }
 }
 function substituteHelp(newItem, oldItem, replaceIn){
-	if(!(newItem instanceof Object) || !(oldItem instanceof Object) || !(replaceIn instanceof Object)){
-		throw new Error("One of the inputs was not an object");
+    if(!(newItem instanceof Object) || !(oldItem instanceof Object) || !(replaceIn instanceof Object)){
+	throw new Error("One of the inputs was not an object");
+    }
+    if(objectEquality(oldItem, replaceIn, ["source"])){
+	return newItem;
+    }else if(replaceIn instanceof construct){
+	for(var i = 0; i<replaceIn.elemList.length; i++){
+	    if(objectEquality(oldItem, replaceIn.elemList[i], ["source"])){
+		replaceIn.elemList[i] = newItem;
+	    }
 	}
-	if(objectEquality(oldItem, replaceIn, ["source"])){
-		return newItem;
-	}else if(replaceIn instanceof construct){
-		for(var i = 0; i<replaceIn.elemList.length; i++){
-			if(objectEquality(oldItem, replaceIn.elemList[i], ["source"])){
-				replaceIn.elemList[i] = newItem;
-			}
-		}
-	}
-	return replaceIn;
+    }
+    return replaceIn;
 }
 //has own property deal?
 //obj1 and obj2 are objects to compare, ignoreArr is an array of values to ignore when comparing
 function objectEquality(obj1, obj2, ignoreArr){
-	var vals1 =[];
-	var item1;
-	var item2;
-	var found = false;
-	if(obj1 === obj2){
-		return true;
-	}
-	for(item1 in obj1){
-		found = false;
-		for(item2 in obj2){
-			if(ignoreArr.indexOf(item1) !== -1){
-				found = true;
-				break;
-			}
-			if(item1 === item2){
-				if((obj1[item1] === obj2[item2]) || (obj1[item1] instanceof Object && obj2[item2] instanceof Object && objectEquality(obj1[item1], obj2[item2]))){
-					found = true;
-					break;
-				}
-			}
-			if(!found){
-				return false;
-			}
-		}
-	}
+    var vals1 =[];
+    var item1;
+    var item2;
+    var found = false;
+    if(obj1 === obj2){
 	return true;
+    }
+    for(item1 in obj1){
+	found = false;
+	for(item2 in obj2){
+	    if(ignoreArr.indexOf(item1) !== -1){
+		found = true;
+		break;
+	    }
+	    if(item1 === item2){
+		if((obj1[item1] === obj2[item2]) || (obj1[item1] instanceof Object && obj2[item2] instanceof Object && objectEquality(obj1[item1], obj2[item2]))){
+		    found = true;
+		    break;
+		}
+	    }
+	    if(!found){
+		return false;
+	    }
+	}
+    }
+    return true;
 }
