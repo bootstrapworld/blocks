@@ -503,9 +503,10 @@ numTest++;
 
 
 
-var constraint = function(lhs, rhs){
+var constraint = function(lhs, rhs, source){
 	this.lhs = lhs;
 	this.rhs = rhs;
+	this.source = source;
 };
 /*
 *lhs/rhs can be elems or constructed
@@ -590,7 +591,7 @@ function buildConstraints(obj, parentId){
     var i;
     var elemList =[];
     if(obj instanceof ExprDefineConst){
-    	constraints = constraints.concat([new constraint(new elemId(obj.id), new elemId(obj.funcIDList[0]))]);
+    	constraints = constraints.concat([new constraint(new elemId(obj.id), new elemId(obj.funcIDList[0]), obj.id)]);
         if(obj.expr === undefined){
             errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
         }else{
@@ -615,7 +616,7 @@ function buildConstraints(obj, parentId){
     		}
     	}
     	//may change func to contract
-    	constraints = constraints.concat([new constraint(new elemId(parentId), new construct("func", elemList))]);
+    	constraints = constraints.concat([new constraint(new elemId(parentId), new construct("func", elemList), obj.id)]);
     }else if(obj instanceof ExprDefineFunc){
     	//if(obj.argumentNames.length + 1 !== obj.funcIDList.length){
     //		throw new Error("Each argument did not have an id or vice versa")
@@ -625,7 +626,7 @@ function buildConstraints(obj, parentId){
     	if(obj.contract.funcName === undefined || obj.contract.funcName === ""){
     		errors = errors.concat([new error(obj.id, "No function name found")]);
     	}else{
-    		constraints = constraints.concat([new constraint(new variable(obj.contract.funcName), new elemId(obj.id))]);
+    		constraints = constraints.concat([new constraint(new variable(obj.contract.funcName), new elemId(obj.id), obj.id)]);
     	}
     	//argument names
     	elemList = elemList.concat([new elemId(obj.funcIDList[0])]);
@@ -634,10 +635,10 @@ function buildConstraints(obj, parentId){
     		if(obj.argumentNames[i-1] === undefined || obj.argumentNames[i-1] === ""){
     			errors = errors.concat([new error(obj.funcIDList[i], "Argument spot without a name")]);
     		}else{
-    			constraints = constraints.concat([new constraint(new elemId(obj.funcIDList[i]), new variable(obj.argumentNames[i-1]))]);
+    			constraints = constraints.concat([new constraint(new elemId(obj.funcIDList[i]), new variable(obj.argumentNames[i-1]), obj.funcIDList[i])]);
     		}
     	}
-    	constraints = constraints.concat([new constraint(new elemId(obj.id), new construct("func", elemList))]);
+    	constraints = constraints.concat([new constraint(new elemId(obj.id), new construct("func", elemList), obj.id)]);
     	//expr
     	if(obj.expr !== undefined){
             next = buildConstraints(obj.expr, obj.funcIDList[0]);
@@ -672,12 +673,12 @@ function buildConstraints(obj, parentId){
             }
         }
         rhs = new construct("func", elemList);
-        constraints = constraints.concat([new constraint(lhs, rhs), (new constraint(lhs, funcConstruct[obj.funcName]))]);
+        constraints = constraints.concat([new constraint(lhs, rhs, obj.id), (new constraint(lhs, funcConstruct[obj.funcName], obj.id))]);
     }else if(obj instanceof ExprConst){
     	lhs = new elemId(obj.id);
-        constraints = constraints.concat([new constraint(lhs, new variable(obj.constName))]);
+        constraints = constraints.concat([new constraint(lhs, new variable(obj.constName), obj.id)]);
         if(parentId !== undefined){
-            constraints = constraints.concat([new constraint(lhs, new elemId(parentId))]);
+            constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
         }
         if(containsName(constants, obj.constName) === -1 && containsName(functions, obj.constName)===-1){
             errors = errors.concat([new error(obj.id, "The variable or constant " + obj.constName + " does not exist.")]);
@@ -685,16 +686,16 @@ function buildConstraints(obj, parentId){
     }else if(isLiteral(obj)){
         lhs = new elemId(obj.id);
         if(parentId !== undefined){
-            constraints = constraints.concat([new constraint(lhs, new elemId(parentId))]);
+            constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
         }
-        constraints = constraints.concat([new constraint(lhs, new elemType(obj.outputType))]);
+        constraints = constraints.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
         if(obj.value === undefined){
             errors = errors.concat([new error(obj.id, "Empty space")]);
         }
     }else if(obj instanceof ExprCond){
         lhs = new elemId(obj.id);
         if(parentId !== undefined){
-            constraints = constraints.concat([new constraint(lhs, new elemId(parentId))]);
+            constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
         }
         for(i=0; i<obj.listOfBooleanAnswer.length; i++){
         //deal with answers
@@ -705,7 +706,7 @@ function buildConstraints(obj, parentId){
             }else{
                 errors = errors.concat([new error(obj.listOfBooleanAnswer[i].funcIDList[1], "Empty space")]);
             }
-            constraints = constraints.concat([new constraint(lhs, new elemId(obj.listOfBooleanAnswer[i].funcIDList[1]))]);
+            constraints = constraints.concat([new constraint(lhs, new elemId(obj.listOfBooleanAnswer[i].funcIDList[1]), obj.listOfBooleanAnswer[i].funcIDList[1])]);
         //deal with question
             if(obj.listOfBooleanAnswer[i].bool !== undefined){
                 next = buildConstraints(obj.listOfBooleanAnswer[i].bool, obj.listOfBooleanAnswer[i].funcIDList[0]);
@@ -714,7 +715,7 @@ function buildConstraints(obj, parentId){
             }else{
                 errors = errors.concat([new error(obj.listOfBooleanAnswer[i].funcIDList[0], "Empty space")]);
             }
-            constraints = constraints.concat([new constraint(new elemId(obj.listOfBooleanAnswer[i].funcIDList[0]), new elemType("Booleans"))]);            
+            constraints = constraints.concat([new constraint(new elemId(obj.listOfBooleanAnswer[i].funcIDList[0]), new elemType("Booleans"), obj.listOfBooleanAnswer[i].funcIDList[0])]);            
         }
     }
     return {errors: errors, 
@@ -729,7 +730,7 @@ function unify(constr){
 	var k = 0;
 	while(constr.length > 0){
 		next = constr.pop();
-		if(objectEquality(next.lhs, next.rhs)){
+		if(objectEquality(next.lhs, next.rhs, ["source"])){
 			// do nothing, just to short circuit
 		}else if(next.lhs instanceof elemId || next.lhs instanceof variable){
 			substitute(next.rhs, next.lhs, constr);
@@ -744,10 +745,10 @@ function unify(constr){
 				(next.rhs.constructor === next.lhs.constructor) &&
 				(next.rhs.elemList.length === next.lhs.elemList.length)){
 			for(var i = 0; i<next.rhs.elemList.length; i++){
-				constr.push(new constraint(next.rhs.elemList[i], next.lhs.elemList[i]));
+				constr.push(new constraint(next.rhs.elemList[i], next.lhs.elemList[i], next.source));
 			}
 		}else{
-			errors.push(next);
+			errors.push(new error(next.source, "Type mismatch"));
 		}
 	}
 	//adding generic types
@@ -774,11 +775,11 @@ function substituteHelp(newItem, oldItem, replaceIn){
 	if(!(newItem instanceof Object) || !(oldItem instanceof Object) || !(replaceIn instanceof Object)){
 		throw new Error("One of the inputs was not an object");
 	}
-	if(objectEquality(oldItem, replaceIn)){
+	if(objectEquality(oldItem, replaceIn, ["source"])){
 		return newItem;
 	}else if(replaceIn instanceof construct){
 		for(var i = 0; i<replaceIn.elemList.length; i++){
-			if(objectEquality(oldItem, replaceIn.elemList[i])){
+			if(objectEquality(oldItem, replaceIn.elemList[i], ["source"])){
 				replaceIn.elemList[i] = newItem;
 			}
 		}
@@ -786,7 +787,8 @@ function substituteHelp(newItem, oldItem, replaceIn){
 	return replaceIn;
 }
 //has own property deal?
-function objectEquality(obj1, obj2){
+//obj1 and obj2 are objects to compare, ignoreArr is an array of values to ignore when comparing
+function objectEquality(obj1, obj2, ignoreArr){
 	var vals1 =[];
 	var item1;
 	var item2;
@@ -797,6 +799,10 @@ function objectEquality(obj1, obj2){
 	for(item1 in obj1){
 		found = false;
 		for(item2 in obj2){
+			if(ignoreArr.indexOf(item1) !== -1){
+				found = true;
+				break;
+			}
 			if(item1 === item2){
 				if((obj1[item1] === obj2[item2]) || (obj1[item1] instanceof Object && obj2[item2] instanceof Object && objectEquality(obj1[item1], obj2[item2]))){
 					found = true;
@@ -832,7 +838,7 @@ function objectEquality(obj1, obj2){
 //         name.indexOf(";") !== -1 ||
 //         name.indexOf("|") !== -1 ||
 //         name.indexOf("\\") !== -1 ||
-//         name.isNaN)
+//         !(name.isNaN))
 // }
 
 
@@ -845,60 +851,62 @@ var s1 = new ExprString();
 s1.value = "test";
 var f1 = new ExprApp("+");
 var n1 = new ExprNumber();
-errorCheck(buildConstraints(s1).constraints, [new constraint(new elemId(s1.id), new elemType("Strings"))]);
+n1.value = undefined;
+errorCheck(buildConstraints(s1).constraints, [new constraint(new elemId(s1.id), new elemType("Strings"), s1.id)]);
 errorCheck(buildConstraints(s1).errors, []);
-errorCheck(buildConstraints(n1).constraints, [new constraint(new elemId(n1.id), new elemType("Numbers"))]);
+errorCheck(buildConstraints(n1).constraints, [new constraint(new elemId(n1.id), new elemType("Numbers"), n1.id)]);
 errorCheck(buildConstraints(n1).errors, [new error(n1.id, "Empty space")]);
-errorCheck(buildConstraints(f1).constraints, [new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemId(f1.funcIDList[0]), new elemId(f1.funcIDList[1])])),
-                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemType("Numbers"), new elemType("Numbers")]))]);
+errorCheck(buildConstraints(f1).constraints,
+	[new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemId(f1.funcIDList[0]), new elemId(f1.funcIDList[1])]), f1.id),
+                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemType("Numbers"), new elemType("Numbers")]), f1.id)]);
 errorCheck(buildConstraints(f1).errors, [new error(f1.funcIDList[0], "Empty space"), new error(f1.funcIDList[1], "Empty space")]);
 f1.args[0] = s1;
 errorCheck(buildConstraints(f1).constraints, [
-								new constraint(new elemId(s1.id), new elemId(f1.funcIDList[0])),
-								new constraint(new elemId(s1.id), new elemType("Strings")),
-                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemId(f1.funcIDList[0]), new elemId(f1.funcIDList[1])])),
-                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemType("Numbers"), new elemType("Numbers")]))]);
+								new constraint(new elemId(s1.id), new elemId(f1.funcIDList[0]), s1.id),
+								new constraint(new elemId(s1.id), new elemType("Strings"), s1.id),
+                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemId(f1.funcIDList[0]), new elemId(f1.funcIDList[1])]), f1.id),
+                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemType("Numbers"), new elemType("Numbers")]), f1.id)]);
 errorCheck(buildConstraints(f1).errors, [new error(f1.funcIDList[1], "Empty space")]);
 f1.args[1] = n1;
 errorCheck(buildConstraints(f1).constraints, [
-								new constraint(new elemId(s1.id), new elemId(f1.funcIDList[0])),
-                                new constraint(new elemId(s1.id), new elemType("Strings")),
-                                new constraint(new elemId(n1.id), new elemId(f1.funcIDList[1])),
-                                new constraint(new elemId(n1.id), new elemType("Numbers")),
-                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemId(f1.funcIDList[0]), new elemId(f1.funcIDList[1])])),
-                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemType("Numbers"), new elemType("Numbers")]))]);
+								new constraint(new elemId(s1.id), new elemId(f1.funcIDList[0]), s1.id),
+                                new constraint(new elemId(s1.id), new elemType("Strings"), s1.id),
+                                new constraint(new elemId(n1.id), new elemId(f1.funcIDList[1]), n1.id),
+                                new constraint(new elemId(n1.id), new elemType("Numbers"), n1.id),
+                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemId(f1.funcIDList[0]), new elemId(f1.funcIDList[1])]), f1.id),
+                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemType("Numbers"), new elemType("Numbers")]), f1.id)]);
 errorCheck(buildConstraints(f1).errors, [new error(n1.id, "Empty space")]);
 n1.value = 19;
 errorCheck(buildConstraints(f1).constraints, [
-                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemId(f1.funcIDList[0]), new elemId(f1.funcIDList[1])])),
-                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemType("Numbers"), new elemType("Numbers")])),
-                                new constraint(new elemId(s1.id), new elemId(f1.funcIDList[0])),
-                                new constraint(new elemId(s1.id), new elemType("Strings")),
-                                new constraint(new elemId(n1.id), new elemId(f1.funcIDList[1])),
-                                new constraint(new elemId(n1.id), new elemType("Numbers"))]);
+                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemId(f1.funcIDList[0]), new elemId(f1.funcIDList[1])]), f1.id),
+                                new constraint(new elemId(f1.id), new construct("func", [new elemType("Numbers"), new elemType("Numbers"), new elemType("Numbers")]), f1.id),
+                                new constraint(new elemId(s1.id), new elemId(f1.funcIDList[0]), s1.id),
+                                new constraint(new elemId(s1.id), new elemType("Strings"), s1.id),
+                                new constraint(new elemId(n1.id), new elemId(f1.funcIDList[1]), n1.id),
+                                new constraint(new elemId(n1.id), new elemType("Numbers"), n1.id)]);
 errorCheck(buildConstraints(f1).errors, []);
 var d1 = new ExprDefineConst();
-errorCheck(buildConstraints(d1).constraints, [new constraint(new elemId(d1.id), new elemId(d1.funcIDList[0]))]);
+errorCheck(buildConstraints(d1).constraints, [new constraint(new elemId(d1.id), new elemId(d1.funcIDList[0]), d1.id)]);
 errorCheck(buildConstraints(d1).errors, [new error(d1.funcIDList[0], "Empty space")]);
 var f2 = new ExprApp("place-image");
 errorCheck(buildConstraints(f2).constraints, [
-                                new constraint(new elemId(f2.id), new construct("func", [new elemType("Images"), new elemId(f2.funcIDList[0]), new elemId(f2.funcIDList[1]), new elemId(f2.funcIDList[2]), new elemId(f2.funcIDList[3])])),
-                                new constraint(new elemId(f2.id), new construct("func", [new elemType("Images"), new elemType("Images"), new elemType("Numbers"), new elemType("Numbers"), new elemType("Images")]))]);
+                                new constraint(new elemId(f2.id), new construct("func", [new elemType("Images"), new elemId(f2.funcIDList[0]), new elemId(f2.funcIDList[1]), new elemId(f2.funcIDList[2]), new elemId(f2.funcIDList[3])]), f2.id),
+                                new constraint(new elemId(f2.id), new construct("func", [new elemType("Images"), new elemType("Images"), new elemType("Numbers"), new elemType("Numbers"), new elemType("Images")]), f2.id)]);
 errorCheck(buildConstraints(f2).errors, [
                                 new error(f2.funcIDList[0], "Empty space"),
                                 new error(f2.funcIDList[1], "Empty space"),
                                 new error(f2.funcIDList[2], "Empty space"),
                                 new error(f2.funcIDList[3], "Empty space")]);
 var d2 = new ExprDefineFunc();
-errorCheck(buildConstraints(d2).constraints, [new constraint(new elemId(d2.id), new construct("func", [new elemId(d2.funcIDList[0]), new elemId(d2.funcIDList[1])])),
-											  new constraint(new elemId(d2.id), new construct("func", [new elemId(d2.contract.funcIDList[0]), new elemId(d2.contract.funcIDList[1])]))]);
+errorCheck(buildConstraints(d2).constraints, [new constraint(new elemId(d2.id), new construct("func", [new elemId(d2.funcIDList[0]), new elemId(d2.funcIDList[1])]), d2.id),
+											  new constraint(new elemId(d2.id), new construct("func", [new elemId(d2.contract.funcIDList[0]), new elemId(d2.contract.funcIDList[1])]), d2.contract.id)]);
 errorCheck(buildConstraints(d2).errors, [new error(d2.funcIDList[0], "Empty space"), new error(d2.funcIDList[1], "Argument spot without a name"), new error(d2.id, "No function name found"),
 										new error(d2.contract.funcIDList[1], "Contract input type undefined"),
 										new error(d2.contract.funcIDList[0], "Contract output type undefined")]);
 d2.argumentNames[0] = "x";
-errorCheck(buildConstraints(d2).constraints, [new constraint(new elemId(d2.id), new construct("func",[new elemId(d2.funcIDList[0]), new elemId(d2.funcIDList[1])])),
-                                              new constraint(new elemId(d2.funcIDList[1]), new variable("x"))
-                                             , new constraint(new elemId(d2.id), new construct("func", [new elemId(d2.contract.funcIDList[0]), new elemId(d2.contract.funcIDList[1])]))]);
+errorCheck(buildConstraints(d2).constraints, [new constraint(new elemId(d2.id), new construct("func",[new elemId(d2.funcIDList[0]), new elemId(d2.funcIDList[1])]), d2.id),
+                                              new constraint(new elemId(d2.funcIDList[1]), new variable("x"), d2.funcIDList[1])
+                                             , new constraint(new elemId(d2.id), new construct("func", [new elemId(d2.contract.funcIDList[0]), new elemId(d2.contract.funcIDList[1])]), d2.contract.id)]);
 errorCheck(buildConstraints(d2).errors, [new error(d2.funcIDList[0], "Empty space"), new error(d2.id, "No function name found"),
 										new error(d2.contract.funcIDList[0], "Contract output type undefined"),
 										new error(d2.contract.funcIDList[1], "Contract input type undefined")]);
@@ -907,35 +915,35 @@ f3.args[0] = new ExprConst("x");
 f3.args[1] = new ExprNumber();
 f3.args[1].value = 3;
 d2.expr = f3;
-errorCheck(buildConstraints(d2).constraints, [new constraint(new elemId(d2.id), new construct("func", [new elemId(d2.funcIDList[0]), new elemId(d2.funcIDList[1])])),
-                                              new constraint(new elemId(d2.funcIDList[1]), new variable("x")),
+errorCheck(buildConstraints(d2).constraints, [new constraint(new elemId(d2.id), new construct("func", [new elemId(d2.funcIDList[0]), new elemId(d2.funcIDList[1])]), d2.id),
+                                              new constraint(new elemId(d2.funcIDList[1]), new variable("x"), d2.funcIDList[1]),
                                               new constraint(new elemId(f3.id), new construct("func", [new elemId(d2.funcIDList[0]),
-                                                                    new elemId(f3.funcIDList[0]), new elemId(f3.funcIDList[1])])),
+                                                                    new elemId(f3.funcIDList[0]), new elemId(f3.funcIDList[1])]), f3.id),
                                               new constraint(new elemId(f3.id), new construct("func", [new elemType("Numbers"),
-                                                                    new elemType("Numbers"), new elemType("Numbers")])),
-                                              new constraint(new elemId(f3.args[0].id), new elemId(f3.funcIDList[0])),
-                                              new constraint(new elemId(f3.args[0].id), new variable("x")),
-                                              new constraint(new elemId(f3.args[1].id), new elemId(f3.funcIDList[1])),
-                                              new constraint(new elemId(f3.args[1].id), new elemType("Numbers")),
-                                              new constraint(new elemId(d2.id), new construct("func", [new elemId(d2.contract.funcIDList[0]), new elemId(d2.contract.funcIDList[1])]))]);
+                                                                    new elemType("Numbers"), new elemType("Numbers")]), f3.id),
+                                              new constraint(new elemId(f3.args[0].id), new elemId(f3.funcIDList[0]), f3.args[0].id),
+                                              new constraint(new elemId(f3.args[0].id), new variable("x"), f3.args[0].id),
+                                              new constraint(new elemId(f3.args[1].id), new elemId(f3.funcIDList[1]), f3.args[1].id),
+                                              new constraint(new elemId(f3.args[1].id), new elemType("Numbers"), f3.args[1].id),
+                                              new constraint(new elemId(d2.id), new construct("func", [new elemId(d2.contract.funcIDList[0]), new elemId(d2.contract.funcIDList[1])]), d2.contract.id)]);
 errorCheck(buildConstraints(d2).errors, [new error(d2.id, "No function name found"),
 										new error(d2.contract.funcIDList[0], "Contract output type undefined"),
 										new error(d2.contract.funcIDList[1], "Contract input type undefined")]);
 d2.contract.funcName = "fun";
 d2.contract.argumentTypes[0] = "Strings";
 d2.contract.outputType = "Numbers";
-errorCheck(buildConstraints(d2).constraints, [new constraint(new variable("fun"), new elemId(d2.id)),
-											  new constraint(new elemId(d2.id), new construct("func", [new elemId(d2.funcIDList[0]), new elemId(d2.funcIDList[1])])),
-                                              new constraint(new elemId(d2.funcIDList[1]), new variable("x")),
+errorCheck(buildConstraints(d2).constraints, [new constraint(new variable("fun"), new elemId(d2.id), d2.id),
+											  new constraint(new elemId(d2.id), new construct("func", [new elemId(d2.funcIDList[0]), new elemId(d2.funcIDList[1])]), d2.id),
+                                              new constraint(new elemId(d2.funcIDList[1]), new variable("x"), d2.funcIDList[1]),
                                               new constraint(new elemId(f3.id), new construct("func", [new elemId(d2.funcIDList[0]),
-                                                                    new elemId(f3.funcIDList[0]), new elemId(f3.funcIDList[1])])),
+                                                                    new elemId(f3.funcIDList[0]), new elemId(f3.funcIDList[1])]), f3.id),
                                               new constraint(new elemId(f3.id), new construct("func", [new elemType("Numbers"),
-                                                                    new elemType("Numbers"), new elemType("Numbers")])),
-                                              new constraint(new elemId(f3.args[0].id), new elemId(f3.funcIDList[0])),
-                                              new constraint(new elemId(f3.args[0].id), new variable("x")),
-                                              new constraint(new elemId(f3.args[1].id), new elemId(f3.funcIDList[1])),
-                                              new constraint(new elemId(f3.args[1].id), new elemType("Numbers")),
-                                              new constraint(new elemId(d2.id), new construct("func", [new elemType("Numbers"), new elemType("Strings")]))]);
+                                                                    new elemType("Numbers"), new elemType("Numbers")]), f3.id),
+                                              new constraint(new elemId(f3.args[0].id), new elemId(f3.funcIDList[0]), f3.args[0].id),
+                                              new constraint(new elemId(f3.args[0].id), new variable("x"), f3.args[0].id),
+                                              new constraint(new elemId(f3.args[1].id), new elemId(f3.funcIDList[1]), f3.args[1].id),
+                                              new constraint(new elemId(f3.args[1].id), new elemType("Numbers"), f3.args[1].id),
+                                              new constraint(new elemId(d2.id), new construct("func", [new elemType("Numbers"), new elemType("Strings")]), d2.contract.id)]);
 errorCheck(buildConstraints(d2).errors, []);
 var c1 = new ExprCond();
 c1.listOfBooleanAnswer[1] = new ExprBoolAnswer();
@@ -944,23 +952,23 @@ c1.listOfBooleanAnswer[1].bool = new ExprBoolean(true);
 c1.listOfBooleanAnswer[0].answer = new ExprBoolean(false);
 c1.listOfBooleanAnswer[1].answer = new ExprNumber();
 c1.listOfBooleanAnswer[1].answer.value = 19;
-errorCheck(buildConstraints(c1).constraints, [new constraint(new elemId(c1.id), new elemId(c1.listOfBooleanAnswer[0].funcIDList[1])),
-                                              new constraint(new elemId(c1.id), new elemId(c1.listOfBooleanAnswer[1].funcIDList[1])),
-                                              new constraint(new elemId(c1.listOfBooleanAnswer[0].funcIDList[0]), new elemType("Booleans")),
-                                              new constraint(new elemId(c1.listOfBooleanAnswer[1].funcIDList[0]), new elemType("Booleans")),
-                                              new constraint(new elemId(c1.listOfBooleanAnswer[0].bool.id), new elemId(c1.listOfBooleanAnswer[0].funcIDList[0])),
-                                              new constraint(new elemId(c1.listOfBooleanAnswer[1].bool.id), new elemId(c1.listOfBooleanAnswer[1].funcIDList[0])),
-                                              new constraint(new elemId(c1.listOfBooleanAnswer[0].bool.id), new elemType("Booleans")),
-                                              new constraint(new elemId(c1.listOfBooleanAnswer[1].bool.id), new elemType("Booleans")),
-                                              new constraint(new elemId(c1.listOfBooleanAnswer[0].answer.id), new elemId(c1.listOfBooleanAnswer[0].funcIDList[1])),
-                                              new constraint(new elemId(c1.listOfBooleanAnswer[1].answer.id), new elemId(c1.listOfBooleanAnswer[1].funcIDList[1])),
-                                              new constraint(new elemId(c1.listOfBooleanAnswer[0].answer.id), new elemType("Booleans")),
-                                              new constraint(new elemId(c1.listOfBooleanAnswer[1].answer.id), new elemType("Numbers"))
+errorCheck(buildConstraints(c1).constraints, [new constraint(new elemId(c1.id), new elemId(c1.listOfBooleanAnswer[0].funcIDList[1]), c1.listOfBooleanAnswer[0].funcIDList[1]),
+                                              new constraint(new elemId(c1.id), new elemId(c1.listOfBooleanAnswer[1].funcIDList[1]), c1.listOfBooleanAnswer[1].funcIDList[1]),
+                                              new constraint(new elemId(c1.listOfBooleanAnswer[0].funcIDList[0]), new elemType("Booleans"), c1.listOfBooleanAnswer[0].funcIDList[0]),
+                                              new constraint(new elemId(c1.listOfBooleanAnswer[1].funcIDList[0]), new elemType("Booleans"), c1.listOfBooleanAnswer[1].funcIDList[0]),
+                                              new constraint(new elemId(c1.listOfBooleanAnswer[0].bool.id), new elemId(c1.listOfBooleanAnswer[0].funcIDList[0]), c1.listOfBooleanAnswer[0].bool.id),
+                                              new constraint(new elemId(c1.listOfBooleanAnswer[1].bool.id), new elemId(c1.listOfBooleanAnswer[1].funcIDList[0]), c1.listOfBooleanAnswer[1].bool.id),
+                                              new constraint(new elemId(c1.listOfBooleanAnswer[0].bool.id), new elemType("Booleans"), c1.listOfBooleanAnswer[0].bool.id),
+                                              new constraint(new elemId(c1.listOfBooleanAnswer[1].bool.id), new elemType("Booleans"), c1.listOfBooleanAnswer[1].bool.id),
+                                              new constraint(new elemId(c1.listOfBooleanAnswer[0].answer.id), new elemId(c1.listOfBooleanAnswer[0].funcIDList[1]), c1.listOfBooleanAnswer[0].answer.id),
+                                              new constraint(new elemId(c1.listOfBooleanAnswer[1].answer.id), new elemId(c1.listOfBooleanAnswer[1].funcIDList[1]), c1.listOfBooleanAnswer[1].answer.id),
+                                              new constraint(new elemId(c1.listOfBooleanAnswer[0].answer.id), new elemType("Booleans"), c1.listOfBooleanAnswer[0].answer.id),
+                                              new constraint(new elemId(c1.listOfBooleanAnswer[1].answer.id), new elemType("Numbers"), c1.listOfBooleanAnswer[1].answer.id)
                                               ]);
 errorCheck(buildConstraints(c1).errors, []);
 var c2 = new ExprCond();
-errorCheck(buildConstraints(c2).constraints, [new constraint(new elemId(c2.id), new elemId(c2.listOfBooleanAnswer[0].funcIDList[1])),
-											  new constraint(new elemId(c2.listOfBooleanAnswer[0].funcIDList[0]), new elemType("Booleans"))]);
+errorCheck(buildConstraints(c2).constraints, [new constraint(new elemId(c2.id), new elemId(c2.listOfBooleanAnswer[0].funcIDList[1]), c2.listOfBooleanAnswer[0].funcIDList[1]),
+											  new constraint(new elemId(c2.listOfBooleanAnswer[0].funcIDList[0]), new elemType("Booleans"), c2.listOfBooleanAnswer[0].funcIDList[0])]);
 errorCheck(buildConstraints(c2).errors, [new error(c2.listOfBooleanAnswer[0].funcIDList[0], "Empty space"),
 										 new error(c2.listOfBooleanAnswer[0].funcIDList[1], "Empty space")]);
 
@@ -970,19 +978,19 @@ c2.listOfBooleanAnswer[1].bool = new ExprConst("y");
 c2.listOfBooleanAnswer[0].answer = new ExprNumber();
 c2.listOfBooleanAnswer[0].answer.value = 7;
 c2.listOfBooleanAnswer[1].answer = new ExprConst("w");
-errorCheck(buildConstraints(c2).constraints, [new constraint(new elemId(c2.id), new elemId(c2.listOfBooleanAnswer[0].funcIDList[1])),
-											  new constraint(new elemId(c2.listOfBooleanAnswer[0].funcIDList[0]), new elemType("Booleans")),
-											  new constraint(new elemId(c2.id), new elemId(c2.listOfBooleanAnswer[1].funcIDList[1])),
-											  new constraint(new elemId(c2.listOfBooleanAnswer[1].funcIDList[0]), new elemType("Booleans")),
-											  new constraint(new elemId(c2.listOfBooleanAnswer[0].bool.id), new elemType("Booleans")),
-                                              new constraint(new elemId(c2.listOfBooleanAnswer[0].bool.id), new elemId(c2.listOfBooleanAnswer[0].funcIDList[0])),
-                                              new constraint(new elemId(c2.listOfBooleanAnswer[1].bool.id), new elemId(c2.listOfBooleanAnswer[1].funcIDList[0])),
-                                              new constraint(new elemId(c2.listOfBooleanAnswer[0].answer.id), new elemId(c2.listOfBooleanAnswer[0].funcIDList[1])),
-                                              new constraint(new elemId(c2.listOfBooleanAnswer[1].answer.id), new elemId(c2.listOfBooleanAnswer[1].funcIDList[1])),
-                                              new constraint(new elemId(c2.listOfBooleanAnswer[0].answer.id), new elemType("Numbers")),
-                                              new constraint(new elemId(c2.listOfBooleanAnswer[1].bool.id), new variable("y")),
-                                              new constraint(new elemId(c2.listOfBooleanAnswer[1].answer.id), new variable("w"))]);
-console.log("Testing unify");
+errorCheck(buildConstraints(c2).constraints, [new constraint(new elemId(c2.id), new elemId(c2.listOfBooleanAnswer[0].funcIDList[1]), c2.listOfBooleanAnswer[0].funcIDList[1]),
+											  new constraint(new elemId(c2.listOfBooleanAnswer[0].funcIDList[0]), new elemType("Booleans"), c2.listOfBooleanAnswer[0].funcIDList[0]),
+											  new constraint(new elemId(c2.id), new elemId(c2.listOfBooleanAnswer[1].funcIDList[1]), c2.listOfBooleanAnswer[1].funcIDList[1]),
+											  new constraint(new elemId(c2.listOfBooleanAnswer[1].funcIDList[0]), new elemType("Booleans"), c2.listOfBooleanAnswer[1].funcIDList[0]),
+											  new constraint(new elemId(c2.listOfBooleanAnswer[0].bool.id), new elemType("Booleans"), c2.listOfBooleanAnswer[0].bool.id),
+                                              new constraint(new elemId(c2.listOfBooleanAnswer[0].bool.id), new elemId(c2.listOfBooleanAnswer[0].funcIDList[0]), c2.listOfBooleanAnswer[0].bool.id),
+                                              new constraint(new elemId(c2.listOfBooleanAnswer[1].bool.id), new elemId(c2.listOfBooleanAnswer[1].funcIDList[0]), c2.listOfBooleanAnswer[1].bool.id),
+                                              new constraint(new elemId(c2.listOfBooleanAnswer[0].answer.id), new elemId(c2.listOfBooleanAnswer[0].funcIDList[1]), c2.listOfBooleanAnswer[0].answer.id),
+                                              new constraint(new elemId(c2.listOfBooleanAnswer[1].answer.id), new elemId(c2.listOfBooleanAnswer[1].funcIDList[1]), c2.listOfBooleanAnswer[1].answer.id),
+                                              new constraint(new elemId(c2.listOfBooleanAnswer[0].answer.id), new elemType("Numbers"), c2.listOfBooleanAnswer[0].answer.id),
+                                              new constraint(new elemId(c2.listOfBooleanAnswer[1].bool.id), new variable("y"), c2.listOfBooleanAnswer[1].bool.id),
+                                              new constraint(new elemId(c2.listOfBooleanAnswer[1].answer.id), new variable("w"), c2.listOfBooleanAnswer[1].answer.id)]);
+console.log("Testing unify (Again, ignore order of arrays)");
 console.log(f1);
 console.log(unify(buildConstraints(f1).constraints));
 console.log(d2);
