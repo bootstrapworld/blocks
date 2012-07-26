@@ -1,4 +1,3 @@
-
 //(function(){
 
 "use strict";
@@ -339,7 +338,7 @@ var ExprString= function(){
 Constructs a number given a number num.
 */
 var ExprNumber = function(){
-    this.value = 0;
+    this.value = 20;
         this.outputType = "Numbers";
         this.id = makeID();
         this.clone=function(){
@@ -641,21 +640,20 @@ function onResize(){
     $("#code").width(contentWidth-$("#Drawers").width());
     $("#List").height(contentHeight);
     $("#List").width($("#code").width()-150);
+    $("#options").height(contentHeight - $("#storage").height());
 }
 
 
 $(document).ready(function(){
         //When the window is resized, the height of the width of the code div changes
-        $(window).resize(onResize);
-        onResize();
+    $(window).resize(onResize);
 
         //draws drawers when the page is loaded
         makeDrawers(functions,constants);
-
+  onResize();
         // activated is initially set to "Numbers"
         // activated = $("#options #Numbers");
         // activated.css("visibility", "visible");
-
         /*
         adds a stylesheet to <head> such that blocks can be colored according to their type
         */
@@ -664,6 +662,80 @@ $(document).ready(function(){
         sets focus equal to the input that is focused. 
         */
         $("#List input").live('focus',function(e){
+            var toContinue=formValidation(e);
+            focused=$(this);
+            initvalue=focused.value;
+            tempProgram=cloneProgram(program);
+            return toContinue;
+        });
+
+        var formValidation = function(e){
+                var toContinue=true;
+                    if(focused !==null &&  ($(e.target) !== focused)){
+                        var inputtext=focused.val();
+                        var codeObject = searchForIndex(focused.closest($("table")).attr("id"),program);
+                        //NUMBERS
+                        if(focused.closest($("table")).hasClass("Numbers")){
+                                if(isNaN(Number(inputtext))){
+                                       toContinue=false;
+                                       console.log("should be false ",toContinue); 
+                                }
+                                while(isNaN(Number(inputtext)) || inputtext==null){
+                                        inputtext=prompt("You have entered an invalid number into that number field.  Please type a valid replacement below");
+                                }
+                                        focused.css("background-color", colors.Numbers);
+                                        changeValue(inputtext)
+                                        codeObject.value=inputtext;
+                        }
+
+                        //STRINGS
+                        else if(focused.closest($("table")).hasClass("Strings")){
+                                changeValue(inputtext);
+                        }
+                        //DEFINING CONSTANTS
+                        else if(focused.closest($("table")).hasClass("DefineVar")){
+                                if((initvalue !=undefined && initvalue != "") && inputtext !== ""){
+                                        console.log("case prev is defined, input is defined");
+                                        console.log("prevName is",prevName)
+                                        var prevIndex=containsName(prevName,constants);
+                                        if(prevIndex != -1){
+                                                constants[prevIndex].name=inputtext;
+                                        }
+                                        addToHistory(tempProgram);
+                                        initvalue=null
+                                        tempProgram=null;
+                                }
+                                else if ((initvalue !=undefined && initvalue != "") && inputtext === ""){
+                                        console.log("case prev is defined, input is undefined");
+                                        constants.splice(containsName(prevName,1));
+                                        addToHistory(tempProgram);
+                                        initvalue=null;
+                                        tempProgram=null;
+                                }
+                                else if((initvalue ==undefined || prevName == "") && inputtext !== ""){
+                                        console.log("case prev is undefined, input is defined");
+                                        addToHistory(tempProgram);
+                                        initvalue=null;
+                                        tempProgram=null;
+                                }
+			    var scrollValue = $("#options").scrollTop();
+                                makeDrawers(functions,constants);
+                                setActivatedVisible(scrollValue);
+                                focused.attr('value',inputtext);
+                                focused=null;
+                        }
+                        else if(focused.closest($("table")).hasClass("DefineFun")){
+                                if( initvalue != inputtext){
+                                        addToHistory(tempProgram);
+                                        initvalue=null;
+                                        tempProgram=null;
+                                }
+                                focused=null;
+                        }
+                    }
+                    return toContinue;
+                };
+
                 if(!errorVal){
                         focused=$(this);
                         initvalue=focused.value;
@@ -722,7 +794,7 @@ $(document).ready(function(){
                 addToHistory(cloneProgram(program));
                 searchForIndex($(this).closest('table').attr('id'),program).listOfBooleanAnswer.push(new ExprBoolAnswer());
                 renderProgram(createProgramHTML())
-        })
+        });
 
         $(".removeCond").live('click',function(){
                 var listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),program).listOfBooleanAnswer
@@ -735,7 +807,7 @@ $(document).ready(function(){
                      }  
                      renderProgram(createProgramHTML());
                 }    
-        })
+        });
 
         $(".addArgument").live('click',function(){
                 addToHistory(cloneProgram(program));
@@ -744,10 +816,9 @@ $(document).ready(function(){
                 block.contract.funcIDList.push(makeID())
                 block.argumentNames.push("");
                 renderProgram(createProgramHTML());
-        })
+        });
 
 
-});
 
 
 function formValidation(e){
@@ -873,7 +944,7 @@ function drawerToggle() {
     $("#options .toggleHeader").click(function() {
 	var toToggle = $(this).attr("class").split(" ")[1];
 	var toggledDiv = $("#options #" + toToggle);
-	toggledDiv.slideToggle("slow", function() {
+	toggledDiv.slideToggle(400, function() {
 	    if($(toggledDiv).is(":visible")){
 		addNonRepeatedEltToArray(activated, toToggle);
 	    } else{
@@ -908,12 +979,15 @@ toDelte from arr by splicing it out
 */
 var removeEltFromArray = function(arr, toDelete) {
     var i;
+    var initialArrLength =arr.length;
     for (i = 0; i < arr.length; i++){
 	if (arr[i] === toDelete){
 	    arr.splice(i, 1);
+	    break;
 	}
     }
-    if (i === arr.length){
+    if (i === initialArrLength){
+	console.log(toDelete, i, arr.length)
 	throw new Error("removeEltFromArray: couldn't find toDelete");
     }
 };
@@ -998,36 +1072,36 @@ function makeDrawers(allFunctions,allConstants){
 		    Drawers += "<div id=\""+encode(Type)+"\">";
                     if(Type==="Constants"){
                         for(i=0;i<typeDrawers[Type].length;i++){
-                            Drawers+="<span class=\"draggable "+encode(Type)+"\">"+encode(allConstants[typeDrawers[Type][i]].name)+"</span><br>";
+                            Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(allConstants[typeDrawers[Type][i]].name)+"</span>";
 			}
 		    }
 		    
 else if(Type==="Define"){
 			for(i=0;i<typeDrawers[Type].length;i++){
-			    Drawers+="<span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span><br>";
+			    Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span>";
 			}
 		    }
 		    else if(Type==="Expressions"){
 			for(i=0;i<typeDrawers[Type].length;i++){
-			    Drawers+="<span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span><br>";
+			    Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span>";
 			}
 		    }
 		    else{
 			for(i=0;i<typeDrawers[Type].length;i++){
 			    if(typeDrawers[Type][i]==="true"){
-				Drawers+="<span class=\"Booleans draggable\">true</span><br>";
+				Drawers+=" <span class=\"Booleans draggable\">true</span>";
 			    }
 			    else if(typeDrawers[Type][i]==="false"){
-				Drawers+="<span class=\"Booleans draggable\">false</span><br>";
+				Drawers+=" <span class=\"Booleans draggable\">false</span>";
 			    }
 			    else if(typeDrawers[Type][i]==="Text"){
-				Drawers+="<span class=\"Strings draggable\">Text</span><br>";
+				Drawers+=" <span class=\"Strings draggable\">Text</span>";
 			    }
 			    else if(typeDrawers[Type][i]==="Number"){
-				Drawers+="<span class=\"Numbers draggable\">Number</span><br>";
+				Drawers+=" <span class=\"Numbers draggable\">Number</span>";
 			    }
 			    else{
-				Drawers+="<span class=\"draggable "+encode(allFunctions[typeDrawers[Type][i]].output)+"\">"+encode(allFunctions[typeDrawers[Type][i]].name)+"</span><br>";
+				Drawers+=" <span class=\"draggable "+encode(allFunctions[typeDrawers[Type][i]].output)+"\">"+encode(allFunctions[typeDrawers[Type][i]].name)+"</span>";
 			    }
 			}
 		    }
@@ -1037,6 +1111,10 @@ else if(Type==="Define"){
 	}
 
     Drawers+="</div>";
+
+    //MAKE STORAGE
+    Drawers+="<div id=\"storage\"></div>";
+
     $("#Drawer").html(Drawers);
     drawerToggle();
     makeDrawersDraggable();
@@ -1089,12 +1167,18 @@ renderProgram takes in a string (programHTML) and changes the contents of #List 
 programHTML
 */
 var renderProgram = function(programHTML){
-        $("#List").html(programHTML);
-        addDroppableFeature($("#List .droppable"));
-        // $("#List table").children().each(function(){
-        //         addDraggingFeature($(this).find("table"));
-        // });
-        setLiWidth();
+    $("#List").html(programHTML);
+    addDroppableFeature($("#List .droppable"));
+    $("#List li .DefineFun .argument").each(function(){
+	console.log($(this).find('input').attr('value'));
+	if ($(this).attr('value') !== ""){
+	    addDraggableToArgument($(this),searchForIndex($(this).closest(".DefineFun").attr('id'), program), $(this).find('input').attr('value'));
+	}
+    });
+    // $("#List table").children().each(function(){
+    //         addDraggingFeature($(this).find("table"));
+    // });
+    setLiWidth();
 };
 
 /*
@@ -1159,7 +1243,7 @@ function sync(objectID){
         });
     }
     else{
-        throw new Error("block type not found");
+        throw new Error("sync: block type not found", block);
     }
 }
 
@@ -1235,14 +1319,14 @@ function createBlock(codeObject,constantEnvironment,functionEnvironment){
                                 return createConstantBlock(codeObject,constantEnvironment,functionEnvironment);
                         }
                 }
-                throw new Error("createBlock: internal error");
+            throw new Error("createBlock: internal error with constants", codeObject);
         } else if (codeObject instanceof ExprApp){
                 for(i = 0; i < functionEnvironment.length; i++){
                         if (encode(functionEnvironment[i].name) === encode(codeObject.funcName)){
                                 return createFunctionBlock(functionEnvironment[i], codeObject,constantEnvironment,functionEnvironment);
                         }
                 }
-                throw new Error("createBlock: internal error");
+            throw new Error("createBlock: internal error with apps", codeObject);
         } else if (codeObject instanceof ExprNumber){
                 return createNumBlock(codeObject,constantEnvironment,functionEnvironment);
         } else if (codeObject instanceof ExprString){
@@ -1260,104 +1344,6 @@ function createNewConstants(codeObject){
         }
         return newConstants;
 }
-/*
-createProgramHTML takes the program array and translates it into HTML
-*/
-var createProgramHTML = function(){
-        var pageHTML = "";
-        functions.splice(initFunctions,functions.length-initFunctions);
-        constants.splice(initConstants,constants.length-initConstants);
-        for (var i = 0; i < program.length; i++){
-                pageHTML += "<li>" + createBlock(program[i],constants,functions) + "</li>";
-                if(program[i] instanceof ExprDefineConst){
-                        //constants.push({name:program[i].name;type:program[i].outputType})
-                }
-                else if(program[i] instanceof ExprDefineFunc){
-                        //ADD
-                }
-        }
-        //makeDrawers();
-        //drawerButton(activated);
-        return pageHTML;
-};
-
-/*
-renderProgram takes in a string (programHTML) and changes the contents of #List to 
-programHTML
-*/
-var renderProgram = function(programHTML){
-        $("#List").html(programHTML);
-        addDroppableFeature($("#List .droppable"));
-        // $("#List table").children().each(function(){
-        //         addDraggingFeature($(this).find("table"));
-        // });
-        setLiWidth();
-};
-
-/*
-encode takes in a string and encodes it such that bugs resulting from &, ", #, etc are eliminated"
-decode does something similar for the same purpose
-*/
-function encode(string){
-            return String(string)
-            .replace(/&/g, '&amp;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-}
-function decode(string){
-        return String(string)
-                .replace('&amp;', '&')
-            .replace('&quot;','\"')
-            .replace('&#39;','\'')
-            .replace('&lt;',"<")
-            .replace('&gt;',">");
-}
-
-
-function sync(objectID){
-        var block=searchForIndex(objectID+"",program);
-        var DOMBlock=$(document.getElementById(objectID));
-        if(block instanceof ExprNumber || block instanceof ExprString){
-                if(block.value!=decode(DOMBlock.find(".input").attr('value'))){
-                        block.value=decode(DOMBlock.find(".input").attr('value'));
-                        DOMBlock.find(".input").attr('value',DOMBlock.find(".input").attr('value'));
-                }
-        }
-        else if(block instanceof ExprDefineConst){
-                if(block.constName != decode(DOMBlock.find('.constName').attr('value'))){
-                        block.constName=decode(DOMBlock.find('.constName').attr('value'));
-                        DOMBlock.find('.constName').attr('value',DOMBlock.find('.constName').attr('value'));
-                }
-        }
-        else if(block instanceof ExprDefineFunc){
-                var prevName=block.contract.funcName;
-                if(!(prevName===DOMBlock.find('.contractName').attr('value') && prevName===DOMBlock.find('.definitionName').attr('value'))){
-                        if(DOMBlock.find('.contractName').attr('value')===prevName){
-                                block.contract.funcName=decode(DOMBlock.find('.definitionName').attr('value'));
-                                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
-                                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.definitionName').attr('value'));
-                        }
-                        else if(DOMBlock.find('.definitionName').attr('value')===prevName){
-                                block.contract.funcName=decode(DOMBlock.find('.contractName').attr('value'));
-                                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
-                                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.contractName').attr('value'));
-                        }
-                }
-                var i=0;
-                DOMBlock.find('.argName').each(function(){
-                          block.argumentNames[i]=$(this).attr('value');
-                          $(this).attr('value',$(this).attr('value'));
-                          makeArgumentDraggable($(this).closest(".argument"),$(this).attr('value'));
-                          i++;
-                });
-        }
-        else{
-                throw new Error("block type not found");
-        }
-}
-
 
 /*
 createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to 
@@ -1383,62 +1369,66 @@ that function with name, color, and spaces for input blocks
 
 //createDefineBlock outputs the block corresponding to defining a function
 function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
-        var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
-        //contract
-        block+="<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+")\" ";
-        if(codeObject.contract.funcName!=undefined){
-                block+="value=\""+encode(codeObject.contract.funcName)+"\"";
+    var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
+
+    //contract
+    block+="<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+")\" ";
+
+    //CONTRACT NAME
+    if(codeObject.contract.funcName!=undefined){
+        block+="value=\""+encode(codeObject.contract.funcName)+"\"";
+    }
+    block+=" />"
+
+    block+="</th><th> : </th>";
+
+    //CONTRACT ARGUMENTS
+    for(var i=0;i<codeObject.argumentNames.length;i++){
+        block+=" <th>"+generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject)+"</th>";
+    }
+
+    //CONTRACT OUTPUT
+    block+="<th> <button class=\"addArgument\">+</button> </th><th> -> </th><th>"+generateTypeDrop(codeObject.contract.funcIDList[0],codeObject)+"</th></tr>";
+    
+   
+    block+="<tr><th>define</th>";
+   
+    //DEFINE BLOCK NAME
+    block+="<th class=\"expr\"> <input class=\"definitionName\" onkeyup=\"sync("+codeObject.id+")\" ";
+    if(codeObject.contract.funcName!=undefined){
+        block+="value=\""+encode(codeObject.contract.funcName)+"\"";
+    }
+    block+=" /></th>";
+
+    //DEFINE BLOCK ARGUMENTS
+    for(var i=0;i<codeObject.argumentNames.length;i++){
+        block+="<th width=\"10px\" class=\"expr argument\"";
+        if(codeObject.contract.argumentTypes[i]!=undefined){
+            block+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
+        }
+        block+="><input style=\"width:70px;\" id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+")\" class=\"argName\" ";
+        if(codeObject.argumentNames[i]!=undefined){
+            block+="value=\""+encode(codeObject.argumentNames[i])+"\"";
         }
         block+=" />"
+    }
+    block+="<th></th><th></th>"
 
-        block+="</th><th> : </th>";
 
-        // if(codeObject.argumentNames.length===0){
-        //         block+=" <th>"+generateTypeDrop()+"</th>";
-        // }
-        for(var i=0;i<codeObject.argumentNames.length;i++){
-                block+=" <th>"+generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject)+"</th>";
-        }
-        block+="<th> <button class=\"addArgument\">+</button> </th><th> -> </th><th>"+generateTypeDrop(codeObject.contract.funcIDList[0],codeObject)+"</th></tr>";
-        
-        //define block
-        block+="<tr><th>define</th>";
-        
-        block+="<th class=\"expr\"> <input class=\"definitionName\" onkeyup=\"sync("+codeObject.id+")\" ";
-        if(codeObject.contract.funcName!=undefined){
-                block+="value=\""+encode(codeObject.contract.funcName)+"\"";
-        }
-        block+=" /></th>";
-
-        // if(codeObject.argumentNames.length===0){
-        //         block+="<th width=\"10px\" class=\"expr\"><input onkeyup=\"sync("+codeObject.id+")\" class=\"argName\"/>";
-        // }
-        for(var i=0;i<codeObject.argumentNames.length;i++){
-                block+="<th width=\"10px\" class=\"expr argument\"";
-                if(codeObject.contract.argumentTypes[i]!=undefined){
-                        block+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
-                }
-                block+="><input style=\"width:70px;\" id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+")\" class=\"argName\" ";
-                if(codeObject.argumentNames[i]!=undefined){
-                        block+="value=\""+encode(codeObject.argumentNames[i])+"\"";
-                }
-                block+=" />"
-        }
-        block+="<th></th><th></th>"
-
-        block+="<th ";
-        if(codeObject.contract.outputType!=undefined){
-                block+=" style=\"background:"+colors[codeObject.contract.outputType]+"\" ";
-        }
-        if(codeObject.expr != undefined){
-                block+="class=\"functionExpr noborder droppable expr\" name=\"Expr\" id="+codeObject.funcIDList[0]+">";
-                block+=createBlock(codeObject.expr,constantEnvironment,functionEnvironment);
-                block+="</th>";
-        }
-        else{
-                block+="name=\"Expr\" class=\"functionExpr droppable expr\" id="+codeObject.funcIDList[0]+">Expr</th>";
-        }
-        return block + "</tr></table>";
+    //DEFINE EXPRESSIONS
+    block+="<th ";
+    if(codeObject.contract.outputType!=undefined){
+        block+=" style=\"background:"+colors[codeObject.contract.outputType]+"\" ";
+    }
+    if(codeObject.expr != undefined){
+        block+="class=\"functionExpr noborder droppable expr\" name=\"Expr\" id="+codeObject.funcIDList[0]+">";
+        block+=createBlock(codeObject.expr,constantEnvironment.concat(createNewConstants(codeObject)),functionEnvironment);
+        block+="</th>";
+    }
+    else{
+        block+="name=\"Expr\" class=\"functionExpr droppable expr\" id="+codeObject.funcIDList[0]+">Expr</th>";
+    }
+    return block + "</tr></table>";
 }
 
 //createDefineVarBlock outputs the block corresponding to creating a variable
@@ -1689,8 +1679,7 @@ $(function() {
 
         //implements sortability for the program block
         $("#List").sortable({
-                connectWith: "#options, .droppable",
-                placeholder:'placeholder',
+                connectWith: "#options, .droppable, #storage",
                 start: function(event, ui){
                         if (ui.item === null){
                                 throw new Error("sortable start: ui.item is undefined");
@@ -1735,9 +1724,7 @@ $(function() {
                 },
                 stop: function(event, ui) {
                         if (carrying != undefined && programCarrying !=undefined){
-			    console.log("sortable stop");
                                 var replacement = $('<li>').append(carrying);
-			    console.log(replacement);
                                 addDroppableFeature(replacement.find(('.droppable')));
                                 ui.item.replaceWith(replacement);
                                 setLiWidth();
@@ -1761,6 +1748,7 @@ $(function() {
                         if(ui.item === null){
                                 throw new Error ("sortable receive");
                         }else{
+			    console.log('sortable receive')
                                 if (!ui.item.is('span.draggable')){
                                         eliminateBorder(ui.sender.parent().parent());
                                 }
@@ -1779,37 +1767,40 @@ $(function() {
                         }
                 },
                 tolerance:'pointer',
-                cursor:'pointer',
                 scroll:false
         });
 
         
 
-        //allows for deletion
-        $("#options").droppable({
-                tolerance:'pointer',
-                greedy:true,
-                drop: function(event, ui){
-                    if(carrying!=null && programCarrying !=null){
-			if(!ui.draggable.is('span')){ //if ui.draggable is not from the drawer
-			    console.log(ui.draggable);
-                            if (draggedClone != undefined){
-				eliminateBorder(draggedClone.closest($("th")));
-				draggedClone = undefined;
-                            }
-                            $(ui.draggable).remove();
-                            addToHistory(tempProgram);
-                            programCarrying=null;
-                            carrying=null;
-                            setLiWidth();
-			}
+    //allows for deletion when item dragged into drawers
+    $("#options").droppable({
+	accept:'table',
+        greedy:true,
+        drop: function(event, ui){
+            if(carrying!=null && programCarrying !=null){
+		    if(!ui.draggable.is('span')){ //if ui.draggable is not from the drawer
+                        if (draggedClone != undefined){
+			    eliminateBorder(draggedClone.closest($("th")));
+			    draggedClone = undefined;
+                        }
+			console.log("dropping");
+//			$(ui.draggable).detach();
+                        $(ui.draggable).remove();
+                        addToHistory(tempProgram);
+                        programCarrying=null;
+                        carrying=null;
+                        setLiWidth();
 		    }
-                    else{
-                        throw new Error("tried to trash null")
-                    }
-                }
-        });
+	    }
+            else{
+		console.log(ui.helper);
+                throw new Error("tried to trash null");
+            
+	    }
+	}
+    });
 });
+
 
 
 var makeDrawersDraggable = function(){
@@ -1834,10 +1825,14 @@ var makeDrawersDraggable = function(){
             connectToSortable: "#List",
 	    zIndex:999
         });
-}
+};
 
-
-var addDraggableToArgument=function(jQuerySelection,codeObject, name){
+/*
+Adds draggable feature to a single argument (jQuerySelection) in defines blocks
+functionCodeObject is the function from which the argument originates
+name is a string representing the name of the argument 
+*/
+var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
     if (jQuerySelection != null){
 	$(jQuerySelection).draggable({
             start: function(event, ui) {
@@ -1854,54 +1849,61 @@ var addDraggableToArgument=function(jQuerySelection,codeObject, name){
             helper: function(event, ui){
 		programCarrying= new ExprConst(name);
 		programCarrying.outputType = "Numbers";
-		var carrying = createBlock(programCarrying, constants.concat(createNewConstants(codeObject)), functions);
+		//console.log(constants.concat(createNewConstants(functionCodeObject)));
+		carrying = createBlock(programCarrying, constants.concat(createNewConstants(functionCodeObject)), functions);
+		console.log(carrying);
 		return carrying;
-            },
-	    connectToSortable: "#List"
+	    },
+	    stop:function(event, ui){
+		renderProgram(createProgramHTML());
+	    },
+	    connectToSortable:'#options'
 	});
     } else {
 	throw new Error("addDraggableToArgument: jQuerySelection is null");
     }
-}
+};
 
 /*
-Adds dragging feature to jQuerySelection. This is applied to blocks within blocks.
+  Adds dragging feature to jQuerySelection. This is applied to blocks within blocks.
 */
 var addDraggingFeature = function(jQuerySelection) {
-        if (jQuerySelection !== null){
-                if(!jQuerySelection.hasClass('noDrag')){
-                        jQuerySelection.draggable({
-                                connectToSortable: "#List",
-                                helper:'clone',
-                                start:function(event, ui){
-                                        if ($(this) === undefined){
-                                                throw new Error ("addDraggingFeature start: $(this) is undefined");
-                                        } else {
-                                                if(!errorVal){
-                                                        tempProgram = cloneProgram(program);
-                                                        draggedClone = $(this);
-                                                        programCarrying = searchForIndex($(this).attr("id"), program);
-                                                        carrying = getHTML($(this));
-                                                        setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined);
-                                                }
-                                                else{
-                                                        event.stopPropagation();
-                                                        event.preventDefault();
-                                                        event.stopImmediatePropagation();
-                                                        return false;
-                                                }
-                                        }
-                                },
-                                stop:function(event, ui){
-                                        if (programCarrying != null && carrying != null){
-                                                program = tempProgram;
-                                                renderProgram(createProgramHTML());
-                                        }
-                                }
-
-                        });
+    if (jQuerySelection !== null){
+        if(!jQuerySelection.hasClass('noDrag')){
+            jQuerySelection.draggable({
+                connectToSortable: "#List",
+                helper:'clone',
+                start:function(event, ui){
+                    if ($(this) === undefined){
+                        throw new Error ("addDraggingFeature start: $(this) is undefined");
+                    } else {
+                        if(!errorVal){
+                            tempProgram = cloneProgram(program);
+                            draggedClone = $(this);
+                            programCarrying = searchForIndex($(this).attr("id"), program);
+                            carrying = getHTML($(this));
+                            setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined);
+                        }
+                        else{
+                            event.stopPropagation();
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                            return false;
+                        }
+                    }
+                },
+                stop:function(event, ui){
+                    if (programCarrying != null && carrying != null){
+                        program = tempProgram;
+                        renderProgram(createProgramHTML());
+                    }
                 }
+
+            });
+
         }
+    }
+	
 };
 /*
 addClickableLiteralBox creates a literal block when a blue or orange droppable is clicked
@@ -1915,7 +1917,7 @@ var addClickableLiteralBox = function(jQuerySelection, parent, child){
 	    addClickableLiteralBoxHelper(jQuerySelection, new ExprString(), parent, child);
 	}
     }
-}
+};
 
 var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent, child) {
     addToHistory(cloneProgram(program));
@@ -1930,44 +1932,47 @@ var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent,
 addDroppableFeature is a function that takes in a jQuery selector and applys droppable functionality
 to that selector. This is applied to empty blocks within blocks.
 */
+var x;
 var addDroppableFeature = function(jQuerySelection) {
-        if (jQuerySelection !== null){
-                addDraggableToTable((jQuerySelection).find("table"));
-	        jQuerySelection.mousedown(function(e) {
-		    if (e.which === 1){
-			addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"));
-		    }
-		});
-                jQuerySelection.droppable({
-                        hoverClass:"highlight",
-                        tolerance:"pointer",
-                        greedy:true,
-                        drop: function(event, ui){
-                                if ($(this) === undefined){
-                                        throw new Error ("addDroppableFeature drop: $(this) is undefined");
-                                } 
-                                else if($(this).children().length === 0){
-				    console.log("dropped");
-                                        $(this).html(carrying);
-                                        setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying);
-                                        addDroppableFeature($(this).find('.droppable'));
-                                        addDraggableToTable($(this).find("table"));
-                                        $(this).css("border", "none");
-                                        ui.draggable.detach();
-                                        droppedInDroppable = true;
-                                }
-                        }
-                });
-        }
+    if (jQuerySelection !== null){
+        addDraggableToTable((jQuerySelection).find("table"));
+	//adds literal box upon click
+	jQuerySelection.mousedown(function(e) {
+	    if (e.which === 1){
+		addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"));
+	    }
+	});
+        jQuerySelection.droppable({
+           // hoverClass:"highlight",
+            tolerance:"pointer",
+            greedy:true,
+            drop: function(event, ui){
+                if ($(this) === undefined){
+                    throw new Error ("addDroppableFeature drop: $(this) is undefined");
+                } 
+                else if($(this).children().length === 0){
+		    console.log("dropped", carrying, $(this));
+		    x= $(this);
+                    $(this).html(carrying);
+                    setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying);
+                    addDroppableFeature($(this).find('.droppable'));
+                    addDraggableToTable($(this).find("table"));
+                    $(this).css("border", "none");
+                    ui.draggable.detach();
+                    droppedInDroppable = true;
+                }
+            }
+        });
+    }
 };
 
 
 var addDraggableToTable = function (jQuerySelection){
-        if(jQuerySelection !=undefined){
-                jQuerySelection.each(function (){
-                        addDraggingFeature($(this));
-                });
-        }
+    if(jQuerySelection !=undefined){
+        jQuerySelection.each(function (){
+            addDraggingFeature($(this));
+        });
+    }
 };
 
 /*
@@ -1983,7 +1988,7 @@ var eliminateBorder = function(jQuerySelection){
                                         "border-color:grey");
         jQuerySelection.children().detach();
         jQuerySelection.append(jQuerySelection.attr('name'));
-}
+};
 
 /*
 Sets the width of list items such that they span only the width of its contents, rather 
@@ -2011,6 +2016,12 @@ var getHTML = function(jQuerySelection) {
                             |___/                       
 =====================================================================================*/
 
+$("#storage").sortable({
+    connectToSortable:"#List",
+    stop:function(event, ui){
+	$("#storage").append($("span").append(carrying));
+    }
+});
 
 
 /*====================================================================================

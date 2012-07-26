@@ -37,8 +37,9 @@ GENERAL
 }
 
 #Drawer{
-    position:aboslute;
+    position:fixed;
     left:0px;
+    background-color:darkslateblue;
     height: 100%;
     width: 200px;
 }
@@ -66,7 +67,10 @@ table{
     border-radius: 5px;
 }
 th table{
-    border: none;
+border:none;
+}
+th {
+    white-space:nowrap;
 }
 
 .expr{
@@ -81,6 +85,7 @@ th table{
 
 #List li{
     cursor:mover;
+    margin-bottom:5px;
 }
 form{
     height: 10px;
@@ -101,10 +106,11 @@ form{
 
 #options{
     width:200px;
-    height:100%;
+        float:top;
     background-color:darkslateblue;
     z-index:100;
-    overflow:auto;
+    overflow-x:hidden;
+    overflow-y:auto;
 }
 
 #options span {
@@ -112,6 +118,7 @@ form{
     border: 1px solid black;
     border-radius: 5px;
     line-height:30px;
+    white-space: nowrap;
 }
 
 #options .toggleHeader{
@@ -130,13 +137,13 @@ form{
     margin-top:0px;
     margin-bottom:0px;
 }
-
-#selectors{
-    position:fixed;
-    background-color:gray;
-    width:100%;
-    bottom:0px;
-    height:50px;
+ 
+#storage{
+position:fixed;
+bottom:0px;
+width:200px;
+height:200px;
+background-color:#fff;
 }
 
 .ui-draggable{
