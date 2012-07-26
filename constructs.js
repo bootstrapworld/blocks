@@ -450,6 +450,9 @@ function objectArrayToProgram(JSONArrayObject){
 }
 
 function objectToCodeObject(JSONObject){
+        if(JSONObject==undefined){
+                return undefined;
+        }
         var curType=JSONObject.selfType;
         var tempObject;
         if(curType==="ExprNumber"){
@@ -467,12 +470,14 @@ function objectToCodeObject(JSONObject){
         else if(curType==="ExprDefineFunc"){
                 tempObject=new ExprDefineFunc();
                 tempObject.argumentNames=JSONObject.argumentNames.slice(0);
+                tempObject.funcIDList=makeIDList(JSONObject.funcIDList.length)
                 tempObject.expr=objectToCodeObject(JSONObject.expr);
                 tempObject.contract=objectToCodeObject(JSONObject.contract);
         }
         else if(curType==="ExprContract"){
                 tempObject=new ExprContract();
                 tempObject.funcName=JSONObject.funcName;
+                tempObject.funcIDList=makeIDList(JSONObject.funcIDList.length)
                 tempObject.argumentTypes=JSONObject.argumentTypes.slice(0);
                 tempObject.outputType=JSONObject.outputType;
 
@@ -1674,12 +1679,12 @@ function generateTypeDrop(newID,codeObject){
         for(var i=0;i<types.length;i++){
                 HTML+="<option value=\""+ encode(types[i]) +"\" class=\""+ encode(types[i])+"\"";
                 if(typeIndex===-1){
-                        if(codeObject.contract.outputType===types[i]){
+                        if(codeObject.contract.outputType==types[i]){
                                 HTML+=" selected ";
                         }
                 }
                 else{
-                        if(codeObject.contract.argumentTypes[typeIndex]===types[i]){
+                        if(codeObject.contract.argumentTypes[typeIndex]==types[i]){
                                 HTML+=" selected ";
                         }
                 }
