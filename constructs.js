@@ -1696,27 +1696,42 @@ $(function() {
                                 throw new Error("sortable start: ui.item is undefined");
                         } else {
                                 if (ui.item.is('li')){
-                                        if(!errorVal){
+                                        // if(!errorVal){
                                                 tempProgram = cloneProgram(program);
                                                 carrying = ui.item.html();
                                                 var index = ui.item.index();
                                                 programCarrying = program[index];
                                                 program.splice(index, 1);
-                                        }
-                                        else{
-                                                console.log("I am trying to stop the event");
-                                                event.stopPropagation();
-                                                event.stopImmediatePropagation();
-                                                event.preventDefault();
-                                                $("#List li").each(function(){
-                                                        console.log("stopping the event of", $(this))
-                                                        $(this).sortable('cancel');
-                                                        $(this).draggable('cancel');
-                                                });
-                                                return false;
-                                        }
+                                        // }
+                                        // else{
+                                        //         console.log("I am trying to stop the event");
+                                        //         event.stopPropagation();
+                                        //         event.stopImmediatePropagation();
+                                        //         event.preventDefault();
+                                        //         $("#List li").each(function(){
+                                        //                 console.log("stopping the event of", $(this))
+                                        //                 $(this).sortable('cancel');
+                                        //                 $(this).draggable('cancel');
+                                        //         });
+                                        //         return false;
+                                        // }
                                 } 
                         }
+                },
+                helper: function(event,ui) {
+                        // if(errorVal){
+                        //         event.stopPropagation();
+                        //         event.stopImmediatePropagation();
+                        //         event.preventDefault();
+                        //         $("#List li").each(function(){
+                        //                 console.log("stopping the event of", $(this))
+                        //                 $(this).sortable('cancel');
+                        //                 $(this).draggable('cancel');
+                        //         });
+                        //         return ui;
+                        // }
+                        // console.log(ui)
+                        return ui;
                 },
                 stop: function(event, ui) {
                         if (carrying != undefined && programCarrying !=undefined){
