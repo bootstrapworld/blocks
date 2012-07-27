@@ -12,6 +12,7 @@ body{
     -khtml-user-select: none;
     user-select: none;
     overflow:hidden;
+    list-style:none;
 }
 
 
@@ -34,91 +35,95 @@ GENERAL
     top:50px;
     left:0px;
     padding:0px;
-}
+overflow:hidden;
+ }
 
-#Drawer{
-    position:fixed;
-    left:0px;
-    background-color:darkslateblue;
-    height: 100%;
-    width: 200px;
-}
-
-
-#code{
-    position:absolute;
-    top:0px;
-    left:200px;
-}
-
-/*****************************
- CODE / HEADER
- *****************************/
+ #Drawer{
+     position:fixed;
+     left:0px;
+     background-color:darkslateblue;
+     height: 100%;
+     width: 200px;
+ }
 
 
-.header {
-    float: right;
-    margin: 15px;
-}
+ #code{
+     position:absolute;
+     top:0px;
+     left:200px;
+     overflow:auto;
+ }
+
+ /*****************************
+  CODE / HEADER
+  *****************************/
 
 
-table{
-    border-style: solid; 
-    border-radius: 5px;
-}
-th table{
-border:none;
-}
-th {
-    white-space:nowrap;
-}
+ .header {
+     float: right;
+     margin: 15px;
+ }
 
-.expr{
-    border: gray; 
-    border-style: solid; 
-    border-radius: 10px;
-    padding: 2px;
-}
-#List{
-    list-style:none;
-}
 
-#List li{
-    cursor:mover;
-    margin-bottom:5px;
-}
-form{
-    height: 10px;
-}
-.droppable{
-    border: gray; 
-    border-style: solid; 
-    border-radius: 10px;
-    padding: 2px;
-}
-.placeholder{
-    width:100%;
-    height:15px;
-}
-/*****************************
- DRAWER
- *****************************/
+ table{
+     border-style: solid; 
+     border-radius: 5px;
+ }
+ th table{
+ border:none;
+ }
+ th {
+     white-space:nowrap;
+ }
 
-#options{
-    width:200px;
-    float:top;
-    background-color:darkslateblue;
-    z-index:100;
-    overflow-x:hidden;
-    overflow-y:auto;
-}
+ .expr{
+     border: gray; 
+     border-style: solid; 
+     border-radius: 10px;
+     padding: 2px;
+ }
+ #List{
+     list-style:none;
+ }
 
-#options span {
-    padding: 5px;
-    border: 1px solid black;
-    border-radius: 5px;
-    line-height:30px;
-    white-space: nowrap;
+ #List li{
+     cursor:mover;
+     margin-bottom:5px;
+ }
+
+ form{
+     height: 10px;
+ }
+
+ .droppable{
+     border: gray; 
+     border-style: solid; 
+     border-radius: 10px;
+     padding: 2px;
+ }
+ .placeholder{
+     width:100%;
+     height:15px;
+ }
+ /*****************************
+  DRAWER
+  *****************************/
+
+ #options{
+     width:200px;
+     float:top;
+     background-color:darkslateblue;
+     z-index:100;
+     overflow-x:hidden;
+     overflow-y:auto;
+ }
+
+ #options span {
+     padding: 5px;
+     border: 1px solid black;
+     border-radius: 5px;
+     line-height:30px;
+     white-space: nowrap;
 }
 
 #options .toggleHeader{
@@ -150,8 +155,22 @@ form{
 //    overflow:auto;
 }
 
+#storagePopup {
+    visibility:hidden;
+    z-index:2000;
+    position:absolute;
+    top:50px;
+    left:250px;
+    width:500px;
+    height:500px;
+    list-style:none;
+    background-color:gray;
+    padding:10px;
+    overflow:auto;
+}
+
 .ui-draggable{
-    z-index: 10;
+    z-index: 100000;
 }
 
 .noborder{
@@ -161,4 +180,13 @@ form{
 .placeholder{
     width:100%;
     height:15px;
+}
+
+#graybox{
+height:100%;
+width:100%;
+background-color:gray;
+opacity:.5;
+z-index:1999;
+visibility:hidden;
 }

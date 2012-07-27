@@ -737,14 +737,38 @@ function onResize(){
     contentHeight = $(window).height() - $("#header").height();
     contentWidth = $(window).width();
     $("#content").height(contentHeight);
+    $("#graybox").height($(window).height());
+    $("#graybox").width($(window).width());
     $("#content").width(contentWidth);
-    $("#code").height(contentHeight);
+    $("#code").height(contentHeight  - 5);
     $("#code").width(contentWidth-$("#Drawers").width());
-    $("#List").height(contentHeight);
-    $("#List").width($("#code").width()-150);
+    $("#List").height(contentHeight - 25);
+    $("#List").width($("#code").width()-$("#Drawers").width() - 150);
     $("#options").height(contentHeight - $("#storage").height());
+//    resizeStorage();
 }
 
+var resizeStorage = function() {
+    $("#storagePopup").width($("#code").width()-$("#Drawers").width() - 300);
+    $("#storagePopup").height($("#code").height() - 100);
+};
+
+/*
+removeFromStorageOnClick takes in a jquery selection (jQuerySelection) and adds a function to it
+such that when it's double clicked, it gets removed from storagePopup div and gets added
+to the end of the sortable #List
+*/
+var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
+    $(jQuerySelection).dblclick(function() {
+	var index = $("#storagePopup li").index(jQuerySelection);
+	$("#List").append("<li>" + html + "</li>");
+	program.push(codeObject);
+	addDroppableFeature($("#List li:last").find(('.droppable')));
+	console.log(index);
+	storageProgram.splice(index, 1);
+	$(jQuerySelection).remove();
+    });
+};
 
 $(document).ready(function(){
     //When the window is resized, the height of the width of the code div changes
@@ -761,6 +785,20 @@ $(document).ready(function(){
       adds a stylesheet to <head> such that blocks can be colored according to their type
     */
     renderTypeColors();
+    
+    /*
+      storage pops up when clicked
+    */
+    $("#storage").click(function() {
+	$("#storagePopup").css('visibility','visible');
+	$("#graybox").css('visibility','visible').fadeIn('slow');;
+    });
+
+    $("#closestorage").click(function() {
+	$("#storagePopup").css('visibility','hidden');
+	$("#graybox").css('visibility','hidden');
+    });
+
     /*
       sets focus equal to the input that is focused. 
     */
@@ -775,6 +813,10 @@ $(document).ready(function(){
     
     $(document.body).live('mousedown', function(e){
         return formValidation(e)
+    });
+
+    $("table").live('mouseover', function(){
+	$(this).attr("title", "Added correctly to item " + $(this).attr('id'));
     });
 
     //Sets undo and redo buttons to disabled on startup
@@ -1270,11 +1312,10 @@ var createStorageHTML = function(){
   to the current storageProgram
 */
 var renderProgram = function(){
-    $("#storage").html(createStorageHTML());
+    $("#storagePopup").html(createStorageHTML());
     $("#List").html(createProgramHTML());
     addDroppableFeature($("#List .droppable"));
     $("#List li .DefineFun .argument").each(function(){
-
         console.log($(this).find('input').attr('value'));
         if ($(this).attr('value') !== ""){
 	    addDraggableToArgument($(this),searchForIndex($(this).closest(".DefineFun").attr('id'), program), $(this).find('input').attr('value'));
@@ -1283,7 +1324,8 @@ var renderProgram = function(){
     // $("#List table").children().each(function(){
     //         addDraggingFeature($(this).find("table"));
     // });
-    setLiWidth();
+    setLiWidth($("#List li"));
+    setLiWidth($("#storagePopup li"));
 };
 
 /*
@@ -1547,9 +1589,9 @@ function createDefineVarBlock(codeObject,constantEnvironment,functionEnvironment
     if(codeObject.constName != undefined){
         block+=" value=\""+encode(codeObject.constName)+"\"";
     }
-    block+="><th  id=\"" + codeObject.funcIDList[0] + "\" class=\"expr droppable";
+    block+="><th  id=\"" + codeObject.funcIDList[0] + "\" name=\"Expression\" class=\"expr droppable";
     if (codeObject.expr == undefined){
-        block+= "\"> Exp";
+        block+= "\"> Expression";
     } else{
         block += " noborder\">" + createBlock(codeObject.expr,constantEnvironment,functionEnvironment);
     }
@@ -1576,19 +1618,19 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
             block+="<tr><th><table id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";
         }       
         if(codeObject.listOfBooleanAnswer[i].bool!=undefined){
-            block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"noborder droppable Booleans expr\">";
+            block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"noborder droppable Booleans expr\" name=\"Boolean\">";
             block+=createBlock(codeObject.listOfBooleanAnswer[i].bool,constantEnvironment,functionEnvironment);
             block+="</th>";
         }
         else{
-            block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"droppable Booleans expr\">boolean</th>";
+            block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"droppable Booleans expr\"  name=\"Boolean\">Boolean</th>";
         }
         if(codeObject.listOfBooleanAnswer[i].answer!=undefined){
-            block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"noborder droppable expr\">";
+            block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"noborder droppable expr\"  name=\"Expression\">";
             block+=createBlock(codeObject.listOfBooleanAnswer[i].answer,constantEnvironment,functionEnvironment);
         }
         else{
-            block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"droppable expr\">expr";
+            block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"droppable expr\"  name=\"Expression\">Expression";
         }
         if(codeObject.listOfBooleanAnswer.length!==1){
             block+="<th><button class=\"removeCond\">x</button></th>";
@@ -1796,8 +1838,11 @@ $(function() {
 
     //implements sortability for the program block
     $("#List").sortable({
-        connectWith: "#options, .droppable, #storage",
         placeholder:'placeholder',
+        tolerance:'pointer',
+        scroll:true,
+	appendTo:'body',
+	helper:'clone',
         start: function(event, ui){
 	    if (ui.item === null){
                 throw new Error("sortable start: ui.item is undefined");
@@ -1809,7 +1854,8 @@ $(function() {
                         var index = ui.item.index();
                         programCarrying = program[index];
                         program.splice(index, 1);
-		    }
+		//	ui.item.replaceWith(ui.item.child('table'));
+		}
 		    else{
                         event.stopPropagation();
                         event.stopImmediatePropagation();
@@ -1829,7 +1875,7 @@ $(function() {
                 var replacement = $('<li>').append(carrying);
                 addDroppableFeature(replacement.find(('.droppable')));
                 ui.item.replaceWith(replacement);
-                setLiWidth()
+                setLiWidth($("#List li"))
 		if (!droppedInDroppable){
 		    
 		    program.splice(replacement.index(), 0, programCarrying);
@@ -1849,7 +1895,7 @@ $(function() {
 		    addDroppableFeature(replacement.find(('.droppable')));
 		    ui.item.replaceWith(replacement);
 		    $(replacement).find('input').attr('readonly', false);
-		    setLiWidth();
+		    setLiWidth($("#List li"));
 		    program.splice(replacement.index(), 0, programCarrying);
 		    addToHistory(tempProgram, tempStorageProgram);
 		    programCarrying = null;
@@ -1871,9 +1917,7 @@ $(function() {
                 //         }
                 // }
 	    }
-        },
-        tolerance:'pointer',
-        scroll:false
+        }
     });
 
     
@@ -1894,7 +1938,7 @@ $(function() {
 		    addToHistory(tempProgram, cloneProgram(storageProgram))
 		    programCarrying=null;
 		    carrying=null;
-		    setLiWidth();
+		    setLiWidth($("#List li"));
 		}
 	    }
 	    else{
@@ -1904,30 +1948,70 @@ $(function() {
 	}
     });
 
-    $("#storage").sortable({
-	connectWith:"#List",
+    $("#storagePopup").sortable({
+	containment:'parent',
 	start:function(event, ui) {
 	    tempStorageProgram = cloneProgram(storageProgram);
 	    carrying = ui.item.html();
-	    programCarrying = storageProgram[$(carrying).index()];
-	    storageProgram.splice($(carrying).index(), 1);
+	    programCarrying = storageProgram[$("#storagePopup li").index(ui.item)];
+	    storageProgram.splice($("#storagePopup li").index(ui.item), 1);
+	    console.log(storageProgram);
 	    tempProgram = cloneProgram(program);
 	},
 	stop: function(event, ui){
-	    storageProgram.splice($(carrying).index(), 0);
+	    storageProgram.splice($("#storagePopup li").index(ui.item), 0, programCarrying);
 	    carrying = null;
 	    programCarrying = null;
 	},
 	receive:function(event, ui){
 	    addToHistory(tempProgram, cloneProgram(storageProgram));
 	    storageProgram.splice($(ui.item).index(), 0, programCarrying);
-	    disableDragDrop($(ui.item).find('table'));
-	    carrying = null;
+	   	    carrying = null;
 	    programCarrying = null;
-	},
-	zIndex:999
+	}
+    });
+
+    $("#storagePopup").draggable();
+
+    $("#storage").droppable({
+	tolerance:'pointer',
+	drop:function(event, ui) {
+	    if (!$(ui.draggable).is('.draggable')){
+		var replacement = "<li>" + carrying + "</li>";
+		$("#storagePopup").append(replacement);
+		removeFromStorageOnClick($("#storagePopup li:last"), carrying, programCarrying);
+		storageProgram.push(programCarrying);
+		$(ui.draggable).remove();
+		setLiWidth($("#storagePopup li"));
+		carrying = null;
+		programCarrying = null;
+	    }
+	}
     });
 });
+
+
+/*
+var shrink  = function(jQuerySelection) {
+    console.log($(jQuerySelection.width()));
+    if ($(jQuerySelection).width() > 190){
+	var percentage = 190/$(jQuerySelection).width();
+	$(jQuerySelection).find("*").each(function(){
+	    $(this).css("font-size", (parseInt($(this).css("font-size")) * percentage) + "px");
+	    $(this).width($(this).width() * percentage);
+	});
+	$(jQuerySelection).width(190);/*
+	$(jQuerySelection).find('table').each(function(){
+	    $(this).width($(this).width() * percentage);
+	    console.log($(this).width());
+	    $(this).find('input').each(function(){
+		$(this).width($(this).width() * percentage);
+	    });
+	});
+    }
+    console.log(jQuerySelection);
+    return jQuerySelection;
+};*/
 
 var makeDrawersDraggable = function(){
 
@@ -1998,6 +2082,7 @@ var addDraggingFeature = function(jQuerySelection) {
         if(!jQuerySelection.hasClass('noDrag')){
 	    jQuerySelection.draggable({
                 connectToSortable: "#List",
+		appendTo:'body',
                 helper:'clone',
                 start:function(event, ui){
 		    if ($(this) === undefined){
@@ -2123,8 +2208,8 @@ var eliminateBorder = function(jQuerySelection){
   Sets the width of list items such that they span only the width of its contents, rather 
   than the entire page
 */
-var setLiWidth = function() {
-    $("#List li").each(function() {
+var setLiWidth = function(divContainer){
+    $(divContainer).each(function() {
         $(this).width($(this).find("table").width() + 10);
     });
 };
