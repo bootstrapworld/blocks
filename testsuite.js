@@ -389,25 +389,25 @@ def3.contract.argumentTypes = ["Numbers"];
 var str7 = new ExprString();
 var func3 = new ExprApp("string-length");
 str7.value = "WOOOOOOO";
-setChildInProgram(def2.id, def2.funcIDList[0], func2);
+setChildInProgram(def2.id, def2.funcIDList[0], func2, program);
 def3.expr = func3;
 errorCheck(def2, def3, true);
-setChildInProgram(def2.expr.id, def2.expr.funcIDList[0], str6);
+setChildInProgram(def2.expr.id, def2.expr.funcIDList[0], str6, program);
 def3.expr.args[0] = str7;
 errorCheck(def2, def3, true);
 def3.expr.args[0] = undefined;
-setChildInProgram(def2.expr.id, str6.id);
+setChildInProgram(def2.expr.id, str6.id, undefined, program);
 errorCheck(def2, def3, true);
 var cond1 = new ExprCond;
 var bool2 = new ExprBoolean(false);
 var cond2 = new ExprCond;
 var bool3 = new ExprBoolean(false);
 program.push(cond1);
-setChildInProgram(cond1.listOfBooleanAnswer[0].id, cond1.listOfBooleanAnswer[0].funcIDList[0], bool2);
+setChildInProgram(cond1.listOfBooleanAnswer[0].id, cond1.listOfBooleanAnswer[0].funcIDList[0], bool2, program);
 cond2.listOfBooleanAnswer[0].bool = bool3;
 errorCheck(cond1, cond2, true);
 try{
-setChildInProgram("70", "2");
+setChildInProgram("70", "2", undefined, program);
 }catch(err){
 	if(err.message === "setChildInProgram failure: parentId not found"){
 		console.log("Test #" + numTest + ": passed, error correctly caught");
@@ -418,7 +418,7 @@ setChildInProgram("70", "2");
 }
 numTest++;
 try{
-setChildInProgram(cond1.listOfBooleanAnswer[0].bool.id, "2");
+setChildInProgram(cond1.listOfBooleanAnswer[0].bool.id, "2", undefined, program);
 }catch(err){
 	if(err.message === "setChildInProgram failure: parent was a literal, and cannot be added to"){
 		console.log("Test #" + numTest + ": passed, error correctly caught");
@@ -429,7 +429,7 @@ setChildInProgram(cond1.listOfBooleanAnswer[0].bool.id, "2");
 }
 numTest++;
 try{
-setChildInProgram(cond1.listOfBooleanAnswer[0].id, "42");
+setChildInProgram(cond1.listOfBooleanAnswer[0].id, "42", undefined, program);
 }catch(err){
 	if(err.message === "setChildInProgram failure: childId not found"){
 		console.log("Test #" + numTest + ": passed, error correctly caught");
@@ -440,7 +440,7 @@ setChildInProgram(cond1.listOfBooleanAnswer[0].id, "42");
 }
 numTest++;
 try{
-setChildInProgram(cond1.listOfBooleanAnswer[0].id, "42", new ExprString);
+setChildInProgram(cond1.listOfBooleanAnswer[0].id, "42", new ExprString, program);
 }catch(err){
 	if(err.message === "setChildInProgram failure: childId not found"){
 		console.log("Test #" + numTest + ": passed, error correctly caught");
@@ -451,7 +451,7 @@ setChildInProgram(cond1.listOfBooleanAnswer[0].id, "42", new ExprString);
 }
 numTest++;
 try{
-setChildInProgram(cond1.id, "12");
+setChildInProgram(cond1.id, "12", undefined, program);
 }catch(err){
 	if(err.message === "setChildInProgram failure: parent was top level of cond, that doesn't work"){
 		console.log("Test #" + numTest + ": passed, error correctly caught");
