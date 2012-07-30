@@ -125,7 +125,7 @@ function searchForIndex(id, array){
 function setChildInProgram(parentId, childId, obj,prog){
     var parent = searchForIndex(parentId, prog);
     if(parent === undefined){
-        throw new Error("setChildInProgram failure: parentId not found");
+        throw new Error("setChildInProgram failure: parentId not found.");
     }
     if(isLiteral(parent)){
         throw new Error("setChildInProgram failure: parent was a literal, and cannot be added to");
@@ -377,6 +377,7 @@ var ExprConst = function(constName){
     this.id = makeID();
     this.clone=function(){
         var temp=new ExprConst(this.constName);
+        temp.outputType=this.outputType;
         temp.id=this.id;
         return temp;
     };
@@ -1316,7 +1317,7 @@ var renderProgram = function(){
     $("#List").html(createProgramHTML());
     addDroppableFeature($("#List .droppable"));
     $("#List li .DefineFun .argument").each(function(){
-        console.log($(this).find('input').attr('value'));
+        //console.log($(this).find('input').attr('value'));
         if ($(this).attr('value') !== ""){
 	    addDraggableToArgument($(this),searchForIndex($(this).closest(".DefineFun").attr('id'), program), $(this).find('input').attr('value'));
         }
@@ -1384,7 +1385,7 @@ function sync(objectID){
 	    if($(this).attr('value') !== ""){
                 addDraggableToArgument($(this).closest(".argument"),block,$(this).attr('value'));
 	    } else{
-                console.log('blah');
+                //console.log('blah');
                 $(this).closest(".argument").removeClass('ui-draggable');
 	    }
 	    i++;
@@ -1871,15 +1872,13 @@ $(function() {
         },
         stop: function(event, ui) {
 	    if (carrying != undefined && programCarrying !=undefined){
-		
                 var replacement = $('<li>').append(carrying);
+		if (!droppedInDroppable){
+		    program.splice(replacement.index(), 0, programCarrying);
+                }
                 addDroppableFeature(replacement.find(('.droppable')));
                 ui.item.replaceWith(replacement);
                 setLiWidth($("#List li"))
-		if (!droppedInDroppable){
-		    
-		    program.splice(replacement.index(), 0, programCarrying);
-                }
 		addToHistory(tempProgram, cloneProgram(storageProgram));
                 droppedInDroppable = false;
                 programCarrying = null;
@@ -2048,8 +2047,13 @@ var makeDrawersDraggable = function(){
   name is a string representing the name of the argument 
 */
 var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
-
-    if (jQuerySelection != null){
+        var parentDefine=searchForIndex(jQuerySelection.closest(".DefineFun").attr("id"),program)
+        for(var i=0;i<parentDefine.argumentNames.length;i++){
+                if(parentDefine.argumentNames[i]==name){
+                       var newOutputType=parentDefine.contract.argumentTypes[i];
+                }
+        }
+    if (jQuerySelection != null && newOutputType!=undefined){
 	$(jQuerySelection).draggable({
 	    start: function(event, ui) {
 		if(!errorVal){
@@ -2062,9 +2066,12 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
 		    return false;
                 }
 	    },
+            containment:".DefineFun",
 	    helper: function(event, ui){
 		programCarrying= new ExprConst(name);
-		programCarrying.outputType = "Numbers";
+                programCarrying.outputType=newOutputType;
+                //console.log(newOutputType)
+                //console.log(programCarrying)
 		carrying = createBlock(programCarrying, constants.concat(createNewConstants(functionCodeObject)), functions);
 		return carrying;
 	    },
@@ -2074,7 +2081,7 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
 	    connectToSortable:'#options'
 	});
     } else {
-        throw new Error("addDraggableToArgument: jQuerySelection is null");
+        //throw new Error("addDraggableToArgument: jQuerySelection is null");
     }
 };
 
@@ -2096,6 +2103,7 @@ var addDraggingFeature = function(jQuerySelection) {
 			    tempProgram = cloneProgram(program);
 			    draggedClone = $(this);
 			    programCarrying = searchForIndex($(this).attr("id"), program);
+                            //console.log(programCarrying)
 			    carrying = getHTML($(this));
 			    setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined,program);
                         }
@@ -2116,7 +2124,11 @@ var addDraggingFeature = function(jQuerySelection) {
                 }
 
 	    });
-
+        }
+        var temp=searchForIndex(jQuerySelection.attr('id'),program)
+        if(constantIsArgument(jQuerySelection,temp)){
+                jQuerySelection.draggable( "option", "containment", ".DefineFun" );
+                jQuerySelection.draggable( "option", "connectToSortable", "" );
         }
     }
 
@@ -2150,7 +2162,6 @@ var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent,
   addDroppableFeature is a function that takes in a jQuery selector and applys droppable functionality
   to that selector. This is applied to empty blocks within blocks.
 */
-var x;
 var addDroppableFeature = function(jQuerySelection) {
     if (jQuerySelection !== null){
         addDraggableToTable((jQuerySelection).find("table"));
@@ -2170,20 +2181,43 @@ var addDroppableFeature = function(jQuerySelection) {
 		    throw new Error ("addDroppableFeature drop: $(this) is undefined");
                 } 
                 else if($(this).children().length === 0){
-		    x= $(this);
+		    console.log(carrying);
 		    $(this).html(carrying);
 		    setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying, program);
 		    addDroppableFeature($(this).find('.droppable'));
 		    addDraggableToTable($(this).find("table"));
+                    //console.log($(this).find("table"));
+                   // console.log(program);
 		    $(this).css("border", "none");
 		    ui.draggable.detach();
-		    droppedInDroppable = true;
+                    if(constantIsArgument(jQuerySelection,programCarrying)){
+                        droppedInDroppable=false;
+                        carrying = null;
+                        programCarrying = null;
+                    }
+                    else{
+		      droppedInDroppable = true;
+                }
                 }
 	    }
         });
     }
 };
 
+function constantIsArgument(jQuerySelection,programBlock){
+        if(programBlock instanceof ExprConst){
+                var closestDefine=jQuerySelection.closest(".DefineFun")
+                if(closestDefine != undefined){
+                        var closestDefineBlock=searchForIndex(closestDefine.attr("id"),program);
+                        for(var i=0;i<closestDefineBlock.argumentNames.length;i++){
+                                if(closestDefineBlock.argumentNames[i]===programBlock.constName){
+                                        return true;
+                                }
+                        }
+                }
+        }
+        return false;
+}
 
 var addDraggableToTable = function (jQuerySelection){
     if(jQuerySelection !=undefined){
