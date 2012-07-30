@@ -2076,9 +2076,12 @@ var addDraggingFeature = function(jQuerySelection) {
                         renderProgram(createProgramHTML());
 		    }
                 }
-
 	    });
         }
+	if (constantIsArgument(searchForIndex($(jQuerySelection).attr('id'),program)), $(jQuerySelection).closest('.DefineFun')){
+	    jQuerySelection.draggable('option','connectToSortable','');
+	    jQuerySelection.draggable('option','containment','.DefineFun');
+	}
     }
 
 };
@@ -2128,6 +2131,27 @@ var addDraggableToTable = function (jQuerySelection){
 	    addDraggingFeature($(this));
         });
     }
+};
+
+/*
+constantIsArgument returns whether or not constant is an argument of $parentDefine
+
+@param constant - ExprConst representing the constant 
+@param $parentDefine - jQuery selection reprsenting the closest parenting Define function relative
+to constant
+
+@return boolean.
+*/
+var constantIsArgument = function(constant, $parentDefine) {
+    if (constant instanceof ExprConst && parentDefine != undefined) {
+	var parentArgs = searchForIndex($parentDefine.attr('id'),$program).argumentNames;
+	for (var i = 0; i < $parentArgs.length; i++){
+	    if ($parentArgs[i] === constant.constName){
+		return true;
+	    }
+	}
+    }
+    return false;
 };
 
 /*
