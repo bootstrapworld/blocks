@@ -3,7 +3,7 @@ body{
     background-color:#000;
     font-family:Arial;
     font-size:11pt;
-    position:absolute;
+    position:fixed;
     left:0px;
     margin: 0px;
     -webkit-user-select: none;
@@ -11,7 +11,6 @@ body{
     -o-user-select: none;
     -khtml-user-select: none;
     user-select: none;
-    overflow:hidden;
     list-style:none;
 }
 
@@ -35,10 +34,9 @@ GENERAL
     top:50px;
     left:0px;
     padding:0px;
-overflow:hidden;
  }
 
- #Drawer{
+#Drawer{
      position:fixed;
      left:0px;
      background-color:darkslateblue;
@@ -46,8 +44,7 @@ overflow:hidden;
      width: 200px;
  }
 
-
- #code{
+#code{
      position:absolute;
      top:0px;
      left:200px;
@@ -58,67 +55,70 @@ overflow:hidden;
   CODE / HEADER
   *****************************/
 
-
- .header {
+.header {
      float: right;
      margin: 15px;
- }
+}
 
-
- table{
+table{
      border-style: solid; 
      border-radius: 5px;
- }
- th table{
- border:none;
- }
- th {
-     white-space:nowrap;
- }
+}
 
- .expr{
+th table{
+    border:none;
+}
+
+th {
+     white-space:nowrap;
+}
+
+.expr{
      border: gray; 
-     border-style: solid; 
+     border-style: solid;
      border-radius: 10px;
      padding: 2px;
- }
- #List{
-     list-style:none;
- }
+}
 
- #List li{
+#List{
+     list-style:none;
+}
+
+#List li{
      cursor:mover;
      margin-bottom:5px;
- }
+}
 
- form{
+form{
      height: 10px;
- }
+}
 
- .droppable{
-     border: gray; 
+.droppable{
+     border: gray;
      border-style: solid; 
      border-radius: 10px;
      padding: 2px;
- }
- .placeholder{
+}
+
+.placeholder{
      width:100%;
      height:15px;
- }
- /*****************************
-  DRAWER
-  *****************************/
+}
 
- #options{
+/*****************************
+ DRAWER
+ *****************************/
+
+#options{
      width:200px;
      float:top;
      background-color:darkslateblue;
      z-index:100;
      overflow-x:hidden;
      overflow-y:auto;
- }
+}
 
- #options span {
+#options span {
      padding: 5px;
      border: 1px solid black;
      border-radius: 5px;
@@ -141,6 +141,7 @@ overflow:hidden;
 #options h1{
     margin-top:0px;
     margin-bottom:0px;
+    font-size:20px;
 }
 
 #storage{
@@ -149,15 +150,13 @@ overflow:hidden;
     padding-top: 5px;
     padding-left:5px;
     width:195px;
-    height:195px;
+    height:100px;
     background-color:#fff;
     list-style:none;
-//    overflow:auto;
 }
 
 #storagePopup {
     visibility:hidden;
-    z-index:2000;
     position:absolute;
     top:50px;
     left:250px;
@@ -169,10 +168,6 @@ overflow:hidden;
     overflow:auto;
 }
 
-.ui-draggable{
-    z-index: 100000;
-}
-
 .noborder{
     border:none;
 }
@@ -180,13 +175,4 @@ overflow:hidden;
 .placeholder{
     width:100%;
     height:15px;
-}
-
-#graybox{
-height:100%;
-width:100%;
-background-color:gray;
-opacity:.5;
-z-index:1999;
-visibility:hidden;
 }

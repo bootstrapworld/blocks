@@ -740,10 +740,10 @@ function onResize(){
     $("#graybox").height($(window).height());
     $("#graybox").width($(window).width());
     $("#content").width(contentWidth);
-    $("#code").height(contentHeight  - 5);
-    $("#code").width(contentWidth-$("#Drawers").width());
-    $("#List").height(contentHeight - 25);
-    $("#List").width($("#code").width()-$("#Drawers").width() - 150);
+    $("#code").height(contentHeight);
+    $("#code").width(contentWidth - $("#Drawer").width());
+    $("#List").height(contentHeight - 30);
+    $("#List").width($("#code").width() - 55);
     $("#options").height(contentHeight - $("#storage").height());
 //    resizeStorage();
 }
@@ -764,7 +764,6 @@ var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
 	$("#List").append("<li>" + html + "</li>");
 	program.push(codeObject);
 	addDroppableFeature($("#List li:last").find(('.droppable')));
-	console.log(index);
 	storageProgram.splice(index, 1);
 	$(jQuerySelection).remove();
     });
@@ -791,12 +790,12 @@ $(document).ready(function(){
     */
     $("#storage").click(function() {
 	$("#storagePopup").css('visibility','visible');
-	$("#graybox").css('visibility','visible').fadeIn('slow');;
+//	$("#graybox").css('visibility','visible').fadeIn('slow');;
     });
 
     $("#closestorage").click(function() {
 	$("#storagePopup").css('visibility','hidden');
-	$("#graybox").css('visibility','hidden');
+//	$("#graybox").css('visibility','hidden');
     });
 
     /*
@@ -894,7 +893,6 @@ $(document).ready(function(){
             }
             //save id, program... maybe history, future, trash
             localStorage[saveName]=JSON.stringify(cloneProgram(program));
-            console.log(JSON.stringify(cloneProgram(program)))
         }
         else{
             alert("I am sorry but your browser does not support storage.");
@@ -912,7 +910,6 @@ $(document).ready(function(){
         }
         else{
             var programString=localStorage.getItem(loadName);
-            console.log(JSON.parse(programString))
             program=[];
             objectArrayToProgram(JSON.parse(programString));
             //do I change the history and trash? overwrite it?
@@ -1123,7 +1120,6 @@ var removeEltFromArray = function(arr, toDelete) {
         }
     }
     if (i === initialArrLength){
-        console.log(toDelete, i, arr.length);
         throw new Error("removeEltFromArray: couldn't find toDelete");
     }
 };
@@ -1248,7 +1244,7 @@ function makeDrawers(allFunctions,allConstants){
     Drawers+="</div>";
 
     //MAKE STORAGE
-    Drawers+="<div id=\"storage\"></div>";
+    Drawers+="<div id=\"storage\">Storage</div>";
 
     $("#Drawer").html(Drawers);
     drawerToggle();
@@ -1315,8 +1311,7 @@ var renderProgram = function(){
     $("#storagePopup").html(createStorageHTML());
     $("#List").html(createProgramHTML());
     addDroppableFeature($("#List .droppable"));
-    $("#List li .DefineFun .argument").each(function(){
-        console.log($(this).find('input').attr('value'));
+    $("#List li .DefineFun .argument").each(function(){      
         if ($(this).attr('value') !== ""){
 	    addDraggableToArgument($(this),searchForIndex($(this).closest(".DefineFun").attr('id'), program), $(this).find('input').attr('value'));
         }
@@ -1383,8 +1378,7 @@ function sync(objectID){
 	    $(this).attr('value',$(this).attr('value'));
 	    if($(this).attr('value') !== ""){
                 addDraggableToArgument($(this).closest(".argument"),block,$(this).attr('value'));
-	    } else{
-                console.log('blah');
+	    } else{               
                 $(this).closest(".argument").removeClass('ui-draggable');
 	    }
 	    i++;
@@ -1870,7 +1864,7 @@ $(function() {
 	    }
         },
         stop: function(event, ui) {
-	    if (carrying != undefined && programCarrying !=undefined){
+	        if (carrying != undefined && programCarrying !=undefined){
 		
                 var replacement = $('<li>').append(carrying);
                 addDroppableFeature(replacement.find(('.droppable')));
@@ -1890,13 +1884,13 @@ $(function() {
 	    if(ui.item === null){
                 throw new Error ("sortable receive");
 	    }else{
-		if ( ui.sender.attr('id') === "storage"){
+		if ( ui.sender.attr('id') === "storagePopup"){
 		    var replacement = $('<li>').append(carrying);
 		    addDroppableFeature(replacement.find(('.droppable')));
 		    ui.item.replaceWith(replacement);
 		    $(replacement).find('input').attr('readonly', false);
 		    setLiWidth($("#List li"));
-		    program.splice(replacement.index(), 0, programCarrying);
+		    program.splice($("#List li").index(replacement), 0, programCarrying);
 		    addToHistory(tempProgram, tempStorageProgram);
 		    programCarrying = null;
 		    carrying = null;
@@ -1920,7 +1914,7 @@ $(function() {
         }
     });
 
-    
+    /*
 
     //allows for deletion when item dragged into drawers
     $("#options").droppable({
@@ -1947,19 +1941,23 @@ $(function() {
 	    }
 	}
     });
-
+*/
     $("#storagePopup").sortable({
-	containment:'parent',
+	//containment:'parent',
+	connectWith: '#List',
+	appendTo:'body',
+	helper:'clone',
 	start:function(event, ui) {
 	    tempStorageProgram = cloneProgram(storageProgram);
 	    carrying = ui.item.html();
 	    programCarrying = storageProgram[$("#storagePopup li").index(ui.item)];
 	    storageProgram.splice($("#storagePopup li").index(ui.item), 1);
-	    console.log(storageProgram);
 	    tempProgram = cloneProgram(program);
 	},
 	stop: function(event, ui){
-	    storageProgram.splice($("#storagePopup li").index(ui.item), 0, programCarrying);
+	    if ($(ui.item).closest('div').attr('id') === 'storagePopup'){
+		storageProgram.splice($("#storagePopup li").index(ui.item), 0, programCarrying);
+	    }
 	    carrying = null;
 	    programCarrying = null;
 	},
@@ -1995,8 +1993,7 @@ $(function() {
 });
 
 
-/*
-var shrink  = function(jQuerySelection) {
+/*var shrink  = function(jQuerySelection) {
     console.log($(jQuerySelection.width()));
     if ($(jQuerySelection).width() > 190){
 	var percentage = 190/$(jQuerySelection).width();
@@ -2004,7 +2001,7 @@ var shrink  = function(jQuerySelection) {
 	    $(this).css("font-size", (parseInt($(this).css("font-size")) * percentage) + "px");
 	    $(this).width($(this).width() * percentage);
 	});
-	$(jQuerySelection).width(190);/*
+	$(jQuerySelection).width(190);
 	$(jQuerySelection).find('table').each(function(){
 	    $(this).width($(this).width() * percentage);
 	    console.log($(this).width());
