@@ -1966,7 +1966,7 @@ $(function() {
 	receive:function(event, ui){
 	    addToHistory(tempProgram, cloneProgram(storageProgram));
 	    storageProgram.splice($(ui.item).index(), 0, programCarrying);
-	   	    carrying = null;
+	    carrying = null;
 	    programCarrying = null;
 	}
     });
@@ -1981,6 +1981,10 @@ $(function() {
 		$("#storagePopup").append(replacement);
 		removeFromStorageOnClick($("#storagePopup li:last"), carrying, programCarrying);
 		storageProgram.push(programCarrying);
+		if (draggedClone != undefined){
+		    eliminateBorder(draggedClone.closest($("th")));
+		    draggedClone = undefined;
+		}
 		$(ui.draggable).remove();
 		setLiWidth($("#storagePopup li"));
 		carrying = null;
