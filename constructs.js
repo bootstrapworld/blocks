@@ -1155,7 +1155,7 @@ function makeTypesArray(allFunctions,allConstants){
         types.Constants.push(i);
     }
 
-    types.Define=["define-constant","define-function","define-struct"];
+    types.Define=["define-constant","define-function"];
     types.Expressions=["cond"];
 
     return types;
@@ -2788,12 +2788,16 @@ function getVariables(name, objArr){
                                 //do nothing
                         }else if(curr instanceof ExprConst && curr.constName === name){
                 idArr.push(curr.id);
-            }else if(isDefine(curr)){
+            }else if(curr instanceof ExprDefineFunc){
                 for(i=0; i<curr.argumentNames.length; i++){
                         if(curr.argumentNames[i] === name){
-                                idArr.push(curr.contract.funcIDList[i+1])
+                                idArr.push(curr.contract.funcIDList[i+1]);
+                                idArr.push(curr.funcIDList[i+1]);
                         }
                 }
+                objArr.push(curr.expr);
+            }
+            else if(curr instanceof ExprConst){
                 objArr.push(curr.expr);
             }else if(curr instanceof ExprApp){
                 for(i = 0; i< curr.args.length; i++){
