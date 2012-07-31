@@ -2078,7 +2078,7 @@ var addDraggingFeature = function(jQuerySelection) {
                 }
 	    });
         }
-	if (constantIsArgument(searchForIndex($(jQuerySelection).attr('id'),program)), $(jQuerySelection).closest('.DefineFun')){
+	if (constantIsArgument(searchForIndex($(jQuerySelection).attr('id'),program), $(jQuerySelection).closest('.DefineFun'))){
 	    jQuerySelection.draggable('option','connectToSortable','');
 	    jQuerySelection.draggable('option','containment','.DefineFun');
 	}
@@ -2109,6 +2109,7 @@ var addDroppableFeature = function(jQuerySelection) {
 		    throw new Error ("addDroppableFeature drop: $(this) is undefined");
                 } 
                 else if($(this).children().length === 0){
+		    console.log('dropping');
 		    if($(ui.draggable).closest('div').attr('id') === 'code'){
 			droppedInDroppableFromList = true;
 		    }
@@ -2143,10 +2144,10 @@ to constant
 @return boolean.
 */
 var constantIsArgument = function(constant, $parentDefine) {
-    if (constant instanceof ExprConst && parentDefine != undefined) {
-	var parentArgs = searchForIndex($parentDefine.attr('id'),$program).argumentNames;
-	for (var i = 0; i < $parentArgs.length; i++){
-	    if ($parentArgs[i] === constant.constName){
+    if (constant instanceof ExprConst && $parentDefine != undefined) {
+	var parentArgs = searchForIndex($parentDefine.attr('id'),program).argumentNames;
+	for (var i = 0; i < parentArgs.length; i++){
+	    if (parentArgs[i] === constant.constName){
 		return true;
 	    }
 	}
