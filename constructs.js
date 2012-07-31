@@ -1318,6 +1318,10 @@ var renderProgram = function(){
     // });
     setLiWidth($("#List li"));
     setLiWidth($("#storagePopup li"));
+                                        for(var i=0;i<program.length;i++){
+                        removeErrorMessages($(document.getElementById(program[i].id)));
+                        createErrorMessages(typeInfer(program[i]).typeErrors);
+                    }
 };
 
 /*
@@ -2125,7 +2129,6 @@ var addDroppableFeature = function(jQuerySelection) {
 		    $(this).css("border", "none");
 
 		    ui.draggable.detach();
-            console.log(program)
                     // for(var i=0;i<program.length;i++){
                     //     removeErrorMessages($(document.getElementById(program[i].id)));
                     //     createErrorMessages(typeInfer(program[i]).typeErrors);
@@ -2392,7 +2395,6 @@ function typeInfer(obj){
 /*removeErrorMessages will, starting at a parent selection, recursively remove all messages and highliting from itself and its children*/
 function removeErrorMessages(jQuerySelection){
     jQuerySelection.attr("title","");
-    console.log("removed title from",jQuerySelection)
     jQuerySelection.find("table").each(function(){removeErrorMessages($(this))});
 }
 
@@ -2777,7 +2779,7 @@ function getParent(id, array, parent){
 }
 //returns the ids of the given variable in the objects in the objArr
 function getVariables(name, objArr){
-                var idArr
+                var idArr=[]
                 var curr;
                 var i;
         while(objArr.length>0){
@@ -2797,7 +2799,7 @@ function getVariables(name, objArr){
                 for(i = 0; i< curr.args.length; i++){
                         objArr.push(curr.args[i]);
                 }
-            }else if(array[i] instanceof ExprCond){
+            }else if(objArr[i] instanceof ExprCond){
                 for(i=0; i<curr.listOfBooleanAnswer.length; i++){
                         objArr.push(curr.listOfBooleanAnswer[i].answer);
                         objArr.push(curr.listOfBooleanAnswer[i].bool);
