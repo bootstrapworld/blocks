@@ -2410,6 +2410,7 @@ function removeInferTypes(jQuerySelection){
         }
     }
     jQuerySelection.find("table").each(function(){removeInferTypes($(this))});
+    jQuerySelection.find("th").each(function(){removeInferTypes($(this))});
 
 }
 
