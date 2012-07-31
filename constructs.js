@@ -815,10 +815,6 @@ $(document).ready(function(){
         return formValidation(e)
     });
 
-    $("table").live('mouseover', function(){
-	$(this).attr("title", "Added correctly to item " + $(this).attr('id'));
-    });
-
     //Sets undo and redo buttons to disabled on startup
     $("#undoButton").attr('disabled','disabled');
     $("#redoButton").attr('disabled','disabled');
@@ -2118,6 +2114,10 @@ var addDroppableFeature = function(jQuerySelection) {
 		    addDraggableToTable($(this).find("table"));
 		    $(this).css("border", "none");
 		    ui.draggable.detach();
+                                var curParent=searchForIndex(jQuerySelection.closest("table").attr('id'),program);
+                    console.log(curParent);
+                    console.log(typeInfer(curParent));
+                    createErrorMessages(typeInfer(curParent).typeErrors);
 		    
                 }
 	    }
@@ -2271,7 +2271,6 @@ var disableDragDrop = function(jQuerySelection) {
   - Clean up appearance
 */
 
-
 /*====================================================================================
   _____                 ___       __                         
   |_   _|  _ _ __  ___  |_ _|_ _  / _|___ _ _ ___ _ _  __ ___ 
@@ -2285,32 +2284,31 @@ var disableDragDrop = function(jQuerySelection) {
   - if we run into an inconsistency, we mark the id associated with that inconsistency and highlight it
 
 */
-
 var constraint = function(lhs, rhs, source){
-    this.lhs = lhs;
-    this.rhs = rhs;
-    this.source = source;
+        this.lhs = lhs;
+        this.rhs = rhs;
+        this.source = source;
 };
 /*
- *lhs/rhs can be elems or constructed
- *elem is an ID or a type or a makeVariable
- *Constructed(constructor, List(elem))
- */
+*lhs/rhs can be elems or constructed
+*elem is an ID or a type or a makeVariable
+*Constructed(constructor, List(elem))
+*/
 
 // new variable: string -> elem
 var variable = function(name){
-    this.name = name;
+        this.name = name;
 };
 
 
 /* Represents structured types in the type inference engine.
- * new construct: string (listof elem) -> elem
- *constructors:
- *             "func" -> function
- */
+* new construct: string (listof elem) -> elem
+*constructors:
+*             "func" -> function
+*/
 var construct = function(constructor, elemList){
-    this.constructor = constructor;
-    this.elemList = elemList;
+        this.constructor = constructor;
+        this.elemList = elemList;
 };
 var elemId = function(id){
     this.id = id
@@ -2319,21 +2317,24 @@ var elemType = function(type){
     this.type = type;
 }
 var genType = function(){
-    this.type = newGenType();
+        this.type = newGenType();
 }
 var currType = 0;
 function newGenType(){
-    return currType++;
+        return currType++;
 }
 
 
 
 //to create errors with a handy dandy message
 var error = function(id, message){
-    this.id = id;
-    this.message = message;
+        this.id = id;
+        this.message = message;
 };
-
+var errorMatch = function(idArr, message){
+        this.idArr = idArr;
+        this.message = message;
+}
 
 
 //contains a mapping of function names to constraints
@@ -2345,7 +2346,7 @@ function buildFuncConstructs(){
         elemList = [];
         elemList = elemList.concat([new elemType(functions[i].output)]);
         for(var k = 0; k<functions[i].input.length; k++){
-	    elemList = elemList.concat([new elemType(functions[i].input[k].type)]);
+            elemList = elemList.concat([new elemType(functions[i].input[k].type)]);
         }
         funcConstruct[functions[i].name] = new construct("func", elemList);
     }
@@ -2363,7 +2364,43 @@ buildFuncConstructs();
 //if concat becomes too expensive, switch to push
 
 
+//types = constraint of id to type (ignore constraints involving constructs)
+//typeErrors = matchError(array of ids, error message)
+//blankErrors = error(id, message)
+function typeInfer(obj){
+        var step1 = buildConstraints(obj);
+        var step2 = unify(step1.constraints);
+        var step3 = buildTypeErrors(step2.errors, obj);
+        return {types: step2.subst,
+                typeErrors: step3,
+                blankErrors: step2.errors};
+}
 
+/*removeErrorMessages will, starting at a parent selection, recursively remove all messages and highliting from itself and its children*/
+function removeErrorMessages(jQuerySelection){
+
+}
+
+function createErrorMessages(typeErrors){
+        console.log(typeErrors);
+        for(var i=0;i<typeErrors.length;i++){
+                for(var j=0;j<typeErrors[i].idArr.length;j++){
+                        console.log(typeErrors[i].idArr[j]);//the id to which the message is added
+                        console.log(typeErrors[i].message);//the message that needs to be added
+                        console.log("The current message is",$(document.getElementById(typeErrors[i].idArr[j])).attr('title'))
+                        if($(document.getElementById(typeErrors[i].idArr[j])).attr('title')=="" || $(document.getElementById(typeErrors[i].idArr[j])).attr('title') == undefined){
+                                $(document.getElementById(typeErrors[i].idArr[j])).attr('title',typeErrors[i].message);
+                        }
+                        else{
+                                $(document.getElementById(typeErrors[i].idArr[j])).attr('title', $(document.getElementById(typeErrors[i].idArr[j])).attr('title')+"\n"+typeErrors[i].message);                                
+                        }
+                        $(document.getElementById(typeErrors[i].idArr[j])).css('background-color',"red");
+                        console.log("After changing the",$(document.getElementById(typeErrors[i].idArr[j])).attr('title'))
+                        console.log("Should have changed",typeErrors[i].idArr[j])
+
+                }
+        }
+}
 
 function buildConstraints(obj, parentId){
     var lhs;
@@ -2374,227 +2411,387 @@ function buildConstraints(obj, parentId){
     var i;
     var elemList =[];
     if(obj instanceof ExprDefineConst){
-    	constraints = constraints.concat([new constraint(new elemId(obj.id), new elemId(obj.funcIDList[0]), obj.id)]);
+        constraints = constraints.concat([new constraint(new elemId(obj.id), new elemId(obj.funcIDList[0]), obj.id)]);
         if(obj.expr === undefined){
-	    errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
+            errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
         }else{
-	    next = buildConstraints(obj.expr, obj.funcIDList[0]);
-	    errors = errors.concat(next.errors);
-	    constraints = constraints.concat(next.constraints);
+            next = buildConstraints(obj.expr, obj.funcIDList[0]);
+            errors = errors.concat(next.errors);
+            constraints = constraints.concat(next.constraints);
         }
     }else if(obj instanceof ExprContract){
-    	elemList =[];
-    	if(obj.outputType !== undefined){
-    	    elemList = elemList.concat([new elemType(obj.outputType)]);
-    	}else{
-    	    errors = errors.concat([new error(obj.funcIDList[0], "Contract output type undefined")]);
-	    elemList = elemList.concat([new elemId(obj.funcIDList[0])]);    		
-    	}
-    	for(i=1; i<obj.funcIDList.length; i++){
-    	    if(obj.argumentTypes[i-1] === undefined){
-    		errors = errors.concat([new error(obj.funcIDList[i], "Contract input type undefined")]);
-    		elemList = elemList.concat([new elemId(obj.funcIDList[i])]);  
-    	    }else{
-    		elemList = elemList.concat([new elemType(obj.argumentTypes[i-1])]);
-    	    }
-    	}
-    	//may change func to contract
-    	constraints = constraints.concat([new constraint(new elemId(parentId), new construct("func", elemList), obj.id)]);
+        elemList =[];
+        if(obj.outputType !== undefined){
+                elemList = elemList.concat([new elemType(obj.outputType)]);
+        }else{
+                errors = errors.concat([new error(obj.funcIDList[0], "Contract output type undefined")]);
+                        elemList = elemList.concat([new elemId(obj.funcIDList[0])]);                    
+        }
+        for(i=1; i<obj.funcIDList.length; i++){
+                if(obj.argumentTypes[i-1] === undefined){
+                        errors = errors.concat([new error(obj.funcIDList[i], "Contract input type undefined")]);
+                        elemList = elemList.concat([new elemId(obj.funcIDList[i])]);  
+                }else{
+                        elemList = elemList.concat([new elemType(obj.argumentTypes[i-1])]);
+                }
+        }
+        //may change func to contract
+        constraints = constraints.concat([new constraint(new elemId(parentId), new construct("func", elemList), obj.id)]);
     }else if(obj instanceof ExprDefineFunc){
-    	//if(obj.argumentNames.length + 1 !== obj.funcIDList.length){
-	//		throw new Error("Each argument did not have an id or vice versa")
-	//	}
-    	elemList = [];
-    	//also check for invalid names
-    	if(obj.contract.funcName === undefined || obj.contract.funcName === ""){
-    	    errors = errors.concat([new error(obj.id, "No function name found")]);
-    	}else{
-    	    constraints = constraints.concat([new constraint(new variable(obj.contract.funcName), new elemId(obj.id), obj.id)]);
-    	}
-    	//argument names
-    	elemList = elemList.concat([new elemId(obj.funcIDList[0])]);
-    	for(i=1; i<obj.funcIDList.length; i++){
-    	    elemList = elemList.concat([new elemId(obj.funcIDList[i])]);
-    	    if(obj.argumentNames[i-1] === undefined || obj.argumentNames[i-1] === ""){
-    		errors = errors.concat([new error(obj.funcIDList[i], "Argument spot without a name")]);
-    	    }else{
-    		constraints = constraints.concat([new constraint(new elemId(obj.funcIDList[i]), new variable(obj.argumentNames[i-1]), obj.funcIDList[i])]);
-    	    }
-    	}
-    	constraints = constraints.concat([new constraint(new elemId(obj.id), new construct("func", elemList), obj.id)]);
-    	//expr
-    	if(obj.expr !== undefined){
-	    next = buildConstraints(obj.expr, obj.funcIDList[0]);
-	    constraints = constraints.concat(next.constraints);
-	    errors = errors.concat(next.errors);
-    	}else{
-    	    errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
-    	}
-    	//contracts
-    	if(obj.funcIDList.length !== obj.contract.funcIDList.length){
-    	    throw new Error("This should never ever happen unless you break things. Meaning the contract's id list and the define's id list are of different length");
-    	}
-    	next = buildConstraints(obj.contract, obj.id);
-    	errors = errors.concat(next.errors);
-    	constraints = constraints.concat(next.constraints);
+        //if(obj.argumentNames.length + 1 !== obj.funcIDList.length){
+    //          throw new Error("Each argument did not have an id or vice versa")
+    //  }
+        elemList = [];
+        //also check for invalid names
+        if(obj.contract.funcName === undefined || obj.contract.funcName === ""){
+                errors = errors.concat([new error(obj.id, "No function name found")]);
+        }else{
+                constraints = constraints.concat([new constraint(new variable(obj.contract.funcName), new elemId(obj.id), obj.id)]);
+        }
+        //argument names
+        elemList = elemList.concat([new elemId(obj.funcIDList[0])]);
+        for(i=1; i<obj.funcIDList.length; i++){
+                elemList = elemList.concat([new elemId(obj.funcIDList[i])]);
+                if(obj.argumentNames[i-1] === undefined || obj.argumentNames[i-1] === ""){
+                        errors = errors.concat([new error(obj.funcIDList[i], "Argument spot without a name")]);
+                }else{
+                        constraints = constraints.concat([new constraint(new elemId(obj.funcIDList[i]), new variable(obj.argumentNames[i-1]), obj.funcIDList[i])]);
+                }
+        }
+        constraints = constraints.concat([new constraint(new elemId(obj.id), new construct("func", elemList), obj.id)]);
+        //expr
+        if(obj.expr !== undefined){
+            next = buildConstraints(obj.expr, obj.funcIDList[0]);
+            constraints = constraints.concat(next.constraints);
+            errors = errors.concat(next.errors);
+        }else{
+                errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
+        }
+        //contracts
+        if(obj.funcIDList.length !== obj.contract.funcIDList.length){
+                throw new Error("This should never ever happen unless you break things. Meaning the contract's id list and the define's id list are of different length");
+        }
+        next = buildConstraints(obj.contract, obj.id);
+        errors = errors.concat(next.errors);
+        constraints = constraints.concat(next.constraints);
     }else if(obj instanceof ExprApp){
         lhs = new elemId(obj.id);
         elemList = [];
         if(parentId === undefined){
-	    elemList = elemList.concat([new elemType(obj.outputType)]);
+            elemList = elemList.concat([new elemType(obj.outputType)]);
         }else{
-	    elemList = elemList.concat([new elemId(parentId)]);
+          elemList = elemList.concat([new elemId(parentId)]);
         }
         for(i=0; i<obj.funcIDList.length; i++){
-	    elemList = elemList.concat([new elemId(obj.funcIDList[i])]);
-	    if(obj.args[i] === undefined){
+            elemList = elemList.concat([new elemId(obj.funcIDList[i])]);
+            if(obj.args[i] === undefined){
                 errors = errors.concat([new error(obj.funcIDList[i], "Empty space")]);
-	    }else{
+            }else{
                 next = buildConstraints(obj.args[i], obj.funcIDList[i]);
                 errors = errors.concat(next.errors);
                 constraints = constraints.concat(next.constraints);
-	    }
+            }
         }
         rhs = new construct("func", elemList);
         constraints = constraints.concat([new constraint(lhs, rhs, obj.id), (new constraint(lhs, funcConstruct[obj.funcName], obj.id))]);
     }else if(obj instanceof ExprConst){
-    	lhs = new elemId(obj.id);
+        lhs = new elemId(obj.id);
         constraints = constraints.concat([new constraint(lhs, new variable(obj.constName), obj.id)]);
         if(parentId !== undefined){
-	    constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
+            constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
+        }
+        if(obj.outputType !== undefined){
+                constraints = constraints.concat([new constraint(lhs, new elemType(obj.outpuType), obj.id)]);
         }
         if(containsName(constants, obj.constName) === -1 && containsName(functions, obj.constName)===-1){
-	    errors = errors.concat([new error(obj.id, "The variable or constant " + obj.constName + " does not exist.")]);
+            errors = errors.concat([new error(obj.id, "The variable or constant " + obj.constName + " does not exist.")]);
         }
     }else if(isLiteral(obj)){
         lhs = new elemId(obj.id);
         if(parentId !== undefined){
-	    constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
+            constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
         }
         constraints = constraints.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
         if(obj.value === undefined){
-	    errors = errors.concat([new error(obj.id, "Empty space")]);
+            errors = errors.concat([new error(obj.id, "Empty space")]);
         }
     }else if(obj instanceof ExprCond){
         lhs = new elemId(obj.id);
         if(parentId !== undefined){
-	    constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
+            constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
         }
         for(i=0; i<obj.listOfBooleanAnswer.length; i++){
-	    //deal with answers
-	    if(obj.listOfBooleanAnswer[i].answer !== undefined){
+        //deal with answers
+            if(obj.listOfBooleanAnswer[i].answer !== undefined){
                 next = buildConstraints(obj.listOfBooleanAnswer[i].answer, obj.listOfBooleanAnswer[i].funcIDList[1]);
                 constraints = constraints.concat(next.constraints);
                 errors = errors.concat(next.errors);
-	    }else{
+            }else{
                 errors = errors.concat([new error(obj.listOfBooleanAnswer[i].funcIDList[1], "Empty space")]);
-	    }
-	    constraints = constraints.concat([new constraint(lhs, new elemId(obj.listOfBooleanAnswer[i].funcIDList[1]), obj.listOfBooleanAnswer[i].funcIDList[1])]);
-	    //deal with question
-	    if(obj.listOfBooleanAnswer[i].bool !== undefined){
+            }
+            constraints = constraints.concat([new constraint(lhs, new elemId(obj.listOfBooleanAnswer[i].funcIDList[1]), obj.listOfBooleanAnswer[i].funcIDList[1])]);
+        //deal with question
+            if(obj.listOfBooleanAnswer[i].bool !== undefined){
                 next = buildConstraints(obj.listOfBooleanAnswer[i].bool, obj.listOfBooleanAnswer[i].funcIDList[0]);
                 constraints = constraints.concat(next.constraints);
                 errors = errors.concat(next.errors);
-	    }else{
+            }else{
                 errors = errors.concat([new error(obj.listOfBooleanAnswer[i].funcIDList[0], "Empty space")]);
-	    }
-	    constraints = constraints.concat([new constraint(new elemId(obj.listOfBooleanAnswer[i].funcIDList[0]), new elemType("Booleans"), obj.listOfBooleanAnswer[i].funcIDList[0])]);            
+            }
+            constraints = constraints.concat([new constraint(new elemId(obj.listOfBooleanAnswer[i].funcIDList[0]), new elemType("Booleans"), obj.listOfBooleanAnswer[i].funcIDList[0])]);            
         }
     }
     return {errors: errors, 
-	    constraints: constraints};
+            constraints: constraints};
 }
-
 //unifies constraints
 function unify(constr){
-    var subst = [];
-    var next;
-    var errors = [];
-    while(constr.length > 0){
-	next = constr.pop();
-	if(objectEquality(next.lhs, next.rhs, ["source"])){
-	    // do nothing, just to short circuit
-	}else if(next.lhs instanceof elemId || next.lhs instanceof variable){
-	    substitute(next.rhs, next.lhs, constr);
-	    substitute(next.rhs, next.lhs, subst);
-	    subst.push(new constraint(next.lhs, next.rhs));
-	}else if(next.rhs instanceof elemId || next.rhs instanceof variable){
-	    substitute(next.lhs, next.rhs, constr);
-	    substitute(next.lhs, next.rhs, subst);
-	    subst.push(new constraint(next.rhs, next.lhs));
-	}else if(next.rhs instanceof construct &&
-		 next.lhs instanceof construct &&
-		 (next.rhs.constructor === next.lhs.constructor) &&
-		 (next.rhs.elemList.length === next.lhs.elemList.length)){
-	    for(var i = 0; i<next.rhs.elemList.length; i++){
-		constr.push(new constraint(next.rhs.elemList[i], next.lhs.elemList[i], next.source));
-	    }
-	}else{
-	    errors.push(new error(next.source, "Type mismatch"));
-	}
-    }
-    //adding generic types
-    for(var i; i < subst.length; i++){
-	if(subst[i].lhs instanceof variable && !(subst[i].rhs instanceof elemType)){
-	    substitute(new genType, subst[i].lhs, subst);
-	}else if(subst[i].rhs instanceof variable && !(subst[i].lhs instanceof elemType)){
-	    substitute(new genType, subst[i].rhs, subst);
-	}
-    }
-    return {subst:subst, errors: errors};
+        var subst = [];
+        var next;
+        var errors = [];
+        while(constr.length > 0){
+                next = constr.pop();
+                if(objectEquality(next.lhs, next.rhs, ["source"])){
+                        // do nothing, just to short circuit
+                }else if(next.lhs instanceof elemId || next.lhs instanceof variable){
+                        substitute(next.rhs, next.lhs, constr);
+                        substitute(next.rhs, next.lhs, subst);
+                        subst.push(new constraint(next.lhs, next.rhs, next.source));
+                }else if(next.rhs instanceof elemId || next.rhs instanceof variable){
+                        substitute(next.lhs, next.rhs, constr);
+                        substitute(next.lhs, next.rhs, subst);
+                        subst.push(new constraint(next.rhs, next.lhs, next.source));
+                }else if(next.rhs instanceof construct &&
+                                 next.lhs instanceof construct &&
+                                (next.rhs.constructor === next.lhs.constructor) &&
+                                (next.rhs.elemList.length === next.lhs.elemList.length)){
+                        for(var i = 0; i<next.rhs.elemList.length; i++){
+                                constr.push(new constraint(next.rhs.elemList[i], next.lhs.elemList[i], next.source));
+                        }
+                }else{
+                        errors.push(new error(next.source, "Type mismatch"));
+                }
+        }
+        //adding generic types
+        for(var i = 0; i < subst.length; i++){
+                if(subst[i].lhs instanceof variable && (subst[i].rhs instanceof elemId)){
+                        substitute(new genType, subst[i].lhs, subst);
+                }else if(subst[i].rhs instanceof variable && (subst[i].lhs instanceof elemId)){
+                        substitute(new genType, subst[i].rhs, subst);
+                }
+        }
+        return {subst:subst, errors: errors};
 }
 //substitutes the new item for the old item in given constraint
 function substitute(newItem, oldItem, arr){
-    for(var i = 0; i< arr.length; i++){
-	if(!(arr[i] instanceof constraint)){
-	    throw new Error("Found an item in arr that was not a constraint at index " + i);
-	}
-	arr[i].lhs = substituteHelp(newItem, oldItem, arr[i].lhs);
-	arr[i].rhs = substituteHelp(newItem, oldItem, arr[i].rhs);
-    }
+        for(var i = 0; i< arr.length; i++){
+                if(!(arr[i] instanceof constraint)){
+                        throw new Error("Found an item in arr that was not a constraint at index " + i);
+                }
+                arr[i].lhs = substituteHelp(newItem, oldItem, arr[i].lhs);
+                arr[i].rhs = substituteHelp(newItem, oldItem, arr[i].rhs);
+        }
 }
 function substituteHelp(newItem, oldItem, replaceIn){
-    if(!(newItem instanceof Object) || !(oldItem instanceof Object) || !(replaceIn instanceof Object)){
-	throw new Error("One of the inputs was not an object");
-    }
-    if(objectEquality(oldItem, replaceIn, ["source"])){
-	return newItem;
-    }else if(replaceIn instanceof construct){
-	for(var i = 0; i<replaceIn.elemList.length; i++){
-	    if(objectEquality(oldItem, replaceIn.elemList[i], ["source"])){
-		replaceIn.elemList[i] = newItem;
-	    }
-	}
-    }
-    return replaceIn;
+        if(!(newItem instanceof Object) || !(oldItem instanceof Object) || !(replaceIn instanceof Object)){
+                throw new Error("One of the inputs was not an object");
+        }
+        if(objectEquality(oldItem, replaceIn, ["source"])){
+                return newItem;
+        }else if(replaceIn instanceof construct){
+                for(var i = 0; i<replaceIn.elemList.length; i++){
+                        if(objectEquality(oldItem, replaceIn.elemList[i], ["source"])){
+                                replaceIn.elemList[i] = newItem;
+                        }
+                }
+        }
+        return replaceIn;
 }
 //has own property deal?
 //obj1 and obj2 are objects to compare, ignoreArr is an array of values to ignore when comparing
 function objectEquality(obj1, obj2, ignoreArr){
-    var vals1 =[];
-    var item1;
-    var item2;
-    var found = false;
-    if(obj1 === obj2){
-	return true;
-    }
-    for(item1 in obj1){
-	found = false;
-	for(item2 in obj2){
-	    if(ignoreArr.indexOf(item1) !== -1){
-		found = true;
-		break;
-	    }
-	    if(item1 === item2){
-		if((obj1[item1] === obj2[item2]) || (obj1[item1] instanceof Object && obj2[item2] instanceof Object && objectEquality(obj1[item1], obj2[item2]))){
-		    found = true;
-		    break;
-		}
-	    }
-	    if(!found){
-		return false;
-	    }
-	}
-    }
-    return true;
+        var item1;
+        var item2;
+        var found = false;
+        if(obj1 === obj2){
+                return true;
+        }
+        for(item1 in obj1){
+                found = false;
+                if(obj1.hasOwnProperty(item1)){
+                        for(item2 in obj2){
+                                if(obj2.hasOwnProperty(item2)){
+                                        if(ignoreArr !== undefined && ignoreArr.indexOf(item1) !== -1){
+                                                found = true;
+                                                break;
+                                        }
+                                        if(item1 === item2){
+                                                if((obj1[item1] === obj2[item2]) || (obj1[item1] instanceof Object && obj2[item2] instanceof Object && objectEquality(obj1[item1], obj2[item2], ignoreArr))){
+                                                        found = true;
+                                                        break;
+                                                }
+                                        }
+                                }
+                        }
+                        if(!found){
+                                return false;
+                        }
+                }
+        }
+        return true;
+}
+//helpful errors is an array of tuples of an array of ids connected by the same error and a nice error message
+//add something for defined constant checks
+
+
+function buildTypeErrors(array, obj){
+        var helpfulErrors =[];
+        var curr;
+        var k;
+        for(var i = 0; i<array.length; i++){
+                curr = getParent(array[i].id, [obj], undefined);
+                if(curr === undefined){
+                        console.log("no parent found");
+                        console.log(array[i]);
+                        curr = searchForIndex(array[i].id, [obj]);
+                }
+                console.log("getParent");
+                console.log(getParent(array[i].id, [obj], undefined));
+                console.log("searchForIndex");
+                console.log(searchForIndex(array[i].id, [obj]));
+                if(curr instanceof ExprDefineFunc){
+                        for(k =0; k<curr.contract.funcIDList.length; k++){
+                                if(curr.contract.funcIDList[k] === array[i].id || curr.funcIDList[k] === array[i].id){
+                                        if(k === 0){
+                                                //error in output type of contract
+                                                helpfulErrors.push(new errorMatch([array[i].id, curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
+                                                                                        + curr.contract.argumentTypes[k]+"\" but found output type \""+ curr.expr.outputType + "\" in the expression"));
+                                        }else{
+                                                //error in one of the contract positions representing an argument name
+                                                helpfulErrors.push(new errorMatch(getVariables(curr.argumentNames[k-1], [obj]), "The variable \"" + curr.argumentNames[k-1] + "\" was assigned type \"" + curr.contract.argumentTypes[k] + "\" in the contract, but at least one instance of this variable had a different type."));
+                                        }
+                                        break;
+                                }
+                        }
+                }else if(curr instanceof ExprConst){
+                        //error at variable instance
+                        helpfulErrors.push(new errorMatch([getVariables(curr.constName, [obj])], "The variable \"" + curr.constName + "\" is not consistently the same type. Either it contradicts the contract or one or more of the highlighted uses is not being used as the same type as the others."))
+                }else if(isLiteral(curr)){
+                        //not sure if this will happen
+                        console.log("This happened, not an error, just unexpected")
+                        helpfulErrors.push(new errorMatch([curr.id], "This block has type \"" + curr.outputType + "\", but the spot it occupies expected a different type"));
+                }else if(curr instanceof ExprApp){
+                        if(curr.id === array[i].id){
+                                //occupies incorrect spot
+                                helpfulErrors.push(new errorMatch([curr.id], "This block has type \"" + curr.outputType + "\", but the spot it occupies expected a different type"));
+                        }else{
+                                for(k=0; k<curr.funcIDList.length; k++){
+                                        if(curr.args[k] !== undefined && (curr.funcIDList[k] === array[i].id || curr.args[k].id === array[i].id)){
+                                                if(curr.args[k].outputType !== undefined){
+                                                        //bad arguments
+                                                        helpfulErrors.push(new errorMatch([curr.args[k].id], "This spot should have a block of type \"" + funcConstruct[curr.funcName].elemList[k+1].type + "\" but found something of type \"" +
+                                                                                                                                                                curr.args[k].outputType+"\""));
+                                                }else{
+                                                        //bad argument, but argument does not have output type
+                                                        console.log("did not find argument output type");
+                                                        helpfulErrors.push(new errorMatch([curr.args[k].id], "This spot should have a block of type \"" + funcConstruct[curr.funcName].elemList[k+1].type + "\" but found a block with a different type"));
+                                                }
+                                        } 
+                                }
+                        }
+                }else if(curr instanceof ExprDefineConst){
+                        //there shouldn't be an error here
+                        console.log("ExprDefineConst Failure");
+                        console.log(obj);
+                        console.log(array[i].id)
+                }else if(curr instanceof ExprCond){
+                        var idList = [curr.id];
+                        var boolError = false;
+                        if(curr.id === array[i].id){
+                                //this might happen, say if you did (+ (cond [true "a"]) 3)
+                                console.log("Cond failure");
+                        }
+                        for(k=0; k<curr.listOfBooleanAnswer.length; k++){
+                                if(curr.listOfBooleanAnswer[k].bool !== undefined && (curr.listOfBooleanAnswer[k].funcIDList[0] === array[i].id || curr.listOfBooleanAnswer[k].bool.id === array[i].id)){
+                                        if(curr.listOfBooleanAnswer[k].bool.outputType !== undefined){
+                                                helpfulErrors.push(new errorMatch([curr.listOfBooleanAnswer[k].bool.id], "This spot should have a block of type \"Booleans\" but found something of type \"" +
+                                                                                                                                                                curr.listOfBooleanAnswer[k].bool.outputType));
+                                        }else{
+                                                console.log("did not find argument output type in Cond bool");
+                                                helpfulErrors.push(new errorMatch([curr.listOfBooleanAnswer[k].bool.id], "This spot should have a block of type \"Booleans\" but found a block with a different type"));
+                                        }
+                                        boolError = true;
+                                        break;
+                                }
+                                if(curr.listOfBooleanAnswer[k].answer !== undefined){
+                                        idList.push(curr.listOfBooleanAnswer[k].answer.id)
+                                }else{
+                                        console.log("I'm not adding the empty positions in a cond block to this error because of reasons (like it isn't a type error)")
+                                }
+                        }
+                        if(!boolError){
+                                helpfulErrors.push(new errorMatch(idList, "Not all of the results of this conditional match the expected output. First check that all the conditional answers have the same type. Then check that each of these answers matches the expected output of the conditional."))
+                        }
+                }
+        }
+        return helpfulErrors;
+}
+
+
+function getParent(id, array, parent){
+            var toReturn = undefined;
+        for(var i = 0; i< array.length; i++){
+                if(array[i] === undefined){
+                        //just skip
+                }else if(array[i] === id || array[i].id===id){
+                        //the first part of the or statement handles funcIDLists
+                        toReturn = parent;
+                }else if(isDefine(array[i])){
+                        toReturn = getParent(id, [array[i].expr], array[i]);
+                }else if(array[i] instanceof ExprApp){
+                        toReturn = getParent(id, array[i].args, array[i]);
+                }else if(array[i] instanceof ExprBoolAnswer){
+                        toReturn = getParent(id, flatten(array[i]), parent);
+                }else if(array[i] instanceof ExprCond){
+                        toReturn = getParent(id, array[i].listOfBooleanAnswer, array[i]);
+                }
+                if(toReturn === undefined && array[i] !== undefined && array[i].hasOwnProperty("funcIDList")){
+                                toReturn = getParent(id, array[i].funcIDList, array[i]);
+                        }
+                if(toReturn !== undefined){
+                        return toReturn;
+                }
+        }
+        return undefined;
+}
+//returns the ids of the given variable in the objects in the objArr
+function getVariables(name, objArr){
+                var idArr
+                var curr;
+                var i;
+        while(objArr.length>0){
+                curr = objArr.pop();
+            if(curr === undefined){
+                                //do nothing
+                        }else if(curr instanceof ExprConst && curr.constName === name){
+                idArr.push(curr.id);
+            }else if(isDefine(curr)){
+                for(i=0; i<curr.argumentNames.length; i++){
+                        if(curr.argumentNames[i] === name){
+                                idArr.push(curr.contract.funcIDList[i+1])
+                        }
+                }
+                objArr.push(curr.expr);
+            }else if(curr instanceof ExprApp){
+                for(i = 0; i< curr.args.length; i++){
+                        objArr.push(curr.args[i]);
+                }
+            }else if(array[i] instanceof ExprCond){
+                for(i=0; i<curr.listOfBooleanAnswer.length; i++){
+                        objArr.push(curr.listOfBooleanAnswer[i].answer);
+                        objArr.push(curr.listOfBooleanAnswer[i].bool);
+                }
+            }
+        }
+        return idArr;
 }
