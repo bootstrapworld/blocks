@@ -1873,6 +1873,10 @@ $(function() {
                 droppedInDroppableFromList = false;
                 programCarrying = null;
                 carrying = null;
+                                    for(var i=0;i<program.length;i++){
+                        removeErrorMessages($(document.getElementById(program[i].id)));
+                        createErrorMessages(typeInfer(program[i]).typeErrors);
+                    }
 	    }
         },
         receive:function(event,ui){
@@ -1984,6 +1988,9 @@ var makeDrawersDraggable = function(){
                 return false;
 	    }
         },
+        stop: function(event,ui){
+                    
+        },
         helper: function(event, ui){
 	    programCarrying = makeCodeFromOptions($(this).text());
 	    carrying = createBlock(programCarrying,constants,functions);
@@ -2067,6 +2074,7 @@ var addDraggingFeature = function(jQuerySelection) {
                 },
                 stop:function(event, ui){
 
+
 		    if (programCarrying != undefined && carrying != undefined){
                         program = tempProgram;
                         renderProgram(createProgramHTML());
@@ -2117,10 +2125,12 @@ var addDroppableFeature = function(jQuerySelection) {
 		    $(this).css("border", "none");
 
 		    ui.draggable.detach();
-                                                                    var curParent=searchForIndex(jQuerySelection.closest("table").attr('id'),program);
-                    console.log(curParent);
-                    console.log(typeInfer(curParent));
-                    createErrorMessages(typeInfer(curParent).typeErrors);
+            console.log(program)
+                    // for(var i=0;i<program.length;i++){
+                    //     removeErrorMessages($(document.getElementById(program[i].id)));
+                    //     createErrorMessages(typeInfer(program[i]).typeErrors);
+                    // }
+                    
 		    
                 }
 	    }
@@ -2381,7 +2391,9 @@ function typeInfer(obj){
 
 /*removeErrorMessages will, starting at a parent selection, recursively remove all messages and highliting from itself and its children*/
 function removeErrorMessages(jQuerySelection){
-
+    jQuerySelection.attr("title","");
+    console.log("removed title from",jQuerySelection)
+    jQuerySelection.find("table").each(function(){removeErrorMessages($(this))});
 }
 
 function createErrorMessages(typeErrors){
@@ -2397,7 +2409,7 @@ function createErrorMessages(typeErrors){
                         else{
                                 $(document.getElementById(typeErrors[i].idArr[j])).attr('title', $(document.getElementById(typeErrors[i].idArr[j])).attr('title')+"\n"+typeErrors[i].message);                                
                         }
-                        $(document.getElementById(typeErrors[i].idArr[j])).css('background-color',"red");
+                        $(document.getElementById(typeErrors[i].idArr[j])).addClass("ERROR");
                         console.log("After changing the",$(document.getElementById(typeErrors[i].idArr[j])).attr('title'))
                         console.log("Should have changed",typeErrors[i].idArr[j])
 
@@ -2658,10 +2670,6 @@ function buildTypeErrors(array, obj){
                         console.log(array[i]);
                         curr = searchForIndex(array[i].id, [obj]);
                 }
-                console.log("getParent");
-                console.log(getParent(array[i].id, [obj], undefined));
-                console.log("searchForIndex");
-                console.log(searchForIndex(array[i].id, [obj]));
                 if(curr instanceof ExprDefineFunc){
                         for(k =0; k<curr.contract.funcIDList.length; k++){
                                 if(curr.contract.funcIDList[k] === array[i].id || curr.funcIDList[k] === array[i].id){

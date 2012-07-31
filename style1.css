@@ -176,3 +176,7 @@ form{
     width:100%;
     height:15px;
 }
+
+table .ERROR{
+    background-color:red;
+}
