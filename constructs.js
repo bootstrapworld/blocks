@@ -2109,16 +2109,19 @@ var addDroppableFeature = function(jQuerySelection) {
 		    if($(ui.draggable).closest('div').attr('id') === 'code'){
 			droppedInDroppableFromList = true;
 		    }
+
 		    $(this).html(carrying);
 		    setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying, program);
-                            var curParent=searchForIndex(jQuerySelection.closest("table").attr('id'),program);
-                console.log(curParent);
-                console.log(typeInfer(curParent));
-                createErrorMessages(typeInfer(curParent).typeErrors);
 		    addDroppableFeature($(this).find('.droppable'));
 		    addDraggableToTable($(this).find("table"));
 		    $(this).css("border", "none");
+
 		    ui.draggable.detach();
+                                                                    var curParent=searchForIndex(jQuerySelection.closest("table").attr('id'),program);
+                    console.log(curParent);
+                    console.log(typeInfer(curParent));
+                    createErrorMessages(typeInfer(curParent).typeErrors);
+		    
                 }
 	    }
         });
