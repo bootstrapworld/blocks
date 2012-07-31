@@ -2439,7 +2439,6 @@ function createInferTypes(typeMap){
 
 
 function createErrorMessages(typeErrors){
-        console.log(typeErrors);
         for(var i=0;i<typeErrors.length;i++){
                 for(var j=0;j<typeErrors[i].idArr.length;j++){
                         //console.log(typeErrors[i].idArr[j]);//the id to which the message is added
@@ -2499,7 +2498,17 @@ function buildConstraints(obj, parentId){
         //if(obj.argumentNames.length + 1 !== obj.funcIDList.length){
     //          throw new Error("Each argument did not have an id or vice versa")
     //  }
+
         elemList = [];
+        //expr
+        //this needs to come first, fixes problem with error pointing to define rather than the exprapp
+        if(obj.expr !== undefined){
+            next = buildConstraints(obj.expr, obj.funcIDList[0]);
+            constraints = constraints.concat(next.constraints);
+            errors = errors.concat(next.errors);
+        }else{
+                errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
+        }
         //also check for invalid names
         if(obj.contract.funcName === undefined || obj.contract.funcName === ""){
                 errors = errors.concat([new error(obj.id, "No function name found")]);
@@ -2517,14 +2526,7 @@ function buildConstraints(obj, parentId){
                 }
         }
         constraints = constraints.concat([new constraint(new elemId(obj.id), new construct("func", elemList), obj.id)]);
-        //expr
-        if(obj.expr !== undefined){
-            next = buildConstraints(obj.expr, obj.funcIDList[0]);
-            constraints = constraints.concat(next.constraints);
-            errors = errors.concat(next.errors);
-        }else{
-                errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
-        }
+
         //contracts
         if(obj.funcIDList.length !== obj.contract.funcIDList.length){
                 throw new Error("This should never ever happen unless you break things. Meaning the contract's id list and the define's id list are of different length");
@@ -2708,25 +2710,27 @@ function buildTypeErrors(array, obj){
         var k;
         for(var i = 0; i<array.length; i++){
                 curr = getParent(array[i].id, [obj], undefined);
+                console.log("parent found")
                 if(curr === undefined){
                         console.log("no parent found");
                         console.log(array[i]);
                         curr = searchForIndex(array[i].id, [obj]);
                 }
                 if(curr instanceof ExprDefineFunc){
-                        for(k =0; k<curr.contract.funcIDList.length; k++){
-                                if(curr.contract.funcIDList[k] === array[i].id || curr.funcIDList[k] === array[i].id){
-                                        if(k === 0){
-                                                //error in output type of contract
-                                                helpfulErrors.push(new errorMatch([array[i].id, curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
-                                                                                        + curr.contract.argumentTypes[k-1]+"\" but found output type \""+ curr.expr.outputType + "\" in the expression"));
-                                        }else{
-                                                //error in one of the contract positions representing an argument name
-                                                helpfulErrors.push(new errorMatch(getVariables(curr.argumentNames[k-1], [obj]), "The variable \"" + curr.argumentNames[k-1] + "\" was assigned type \"" + curr.contract.argumentTypes[k-1] + "\" in the contract, but at least one instance of this variable had a different type."));
-                                        }
-                                        break;
-                                }
-                        }
+                    if(curr.id === array[i].id){console.log("Error: define block error")};
+                    for(k =0; k<curr.contract.funcIDList.length; k++){
+                            //if the id at index k matches the id in the contract, or the id in the define's funcIDList, or the expressions id
+                            if(curr.contract.funcIDList[k] === array[i].id || curr.funcIDList[k] === array[i].id || (curr.expr !== undefined && array[i].id === curr.expr.id)){
+                                if(k === 0){
+                                    //error in output type of contract
+                                     helpfulErrors.push(new errorMatch([curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
+                                                                             + curr.contract.outputType+"\" but found output type \""+ curr.expr.outputType + "\" in the expression"));
+                                }else{
+                                    //error in one of the contract positions representing an argument name
+                                    helpfulErrors.push(new errorMatch(getVariables(curr.argumentNames[k-1], [obj]), "The variable \"" + curr.argumentNames[k-1] + "\" was assigned type \"" + curr.contract.argumentTypes[k-1] + "\" in the contract, but at least one instance of this variable had a different type."));
+                            }
+                        break;                                }
+                    }
                 }else if(curr instanceof ExprConst){
                         //error at variable instance
                         helpfulErrors.push(new errorMatch([getVariables(curr.constName, [obj])], "The variable \"" + curr.constName + "\" is not consistently the same type. Either it contradicts the contract or one or more of the highlighted uses is not being used as the same type as the others."))
