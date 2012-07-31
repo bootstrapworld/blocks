@@ -2505,9 +2505,7 @@ function buildConstraints(obj, parentId){
 	    constraints: constraints};
 }
 
-<<<<<<< HEAD
-//}());
-=======
+
 //unifies constraints
 function unify(constr){
     var subst = [];
@@ -2601,4 +2599,3 @@ function objectEquality(obj1, obj2, ignoreArr){
     }
     return true;
 }
->>>>>>> d29f96eb28562bb78b3865d2b94feab989b88742
