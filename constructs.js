@@ -2442,9 +2442,8 @@ function createErrorMessages(typeErrors){
         console.log(typeErrors);
         for(var i=0;i<typeErrors.length;i++){
                 for(var j=0;j<typeErrors[i].idArr.length;j++){
-                        console.log(typeErrors[i].idArr[j]);//the id to which the message is added
-                        console.log(typeErrors[i].message);//the message that needs to be added
-                        console.log("The current message is",$(document.getElementById(typeErrors[i].idArr[j])).attr('title'))
+                        //console.log(typeErrors[i].idArr[j]);//the id to which the message is added
+                        //console.log(typeErrors[i].message);//the message that needs to be added
                         if($(document.getElementById(typeErrors[i].idArr[j])).attr('title')=="" || $(document.getElementById(typeErrors[i].idArr[j])).attr('title') == undefined){
                                 $(document.getElementById(typeErrors[i].idArr[j])).attr('title',typeErrors[i].message);
                         }
@@ -2452,9 +2451,11 @@ function createErrorMessages(typeErrors){
                                 $(document.getElementById(typeErrors[i].idArr[j])).attr('title', $(document.getElementById(typeErrors[i].idArr[j])).attr('title')+"\n"+typeErrors[i].message);                                
                         }
                         $(document.getElementById(typeErrors[i].idArr[j])).addClass("ERROR");
-                        console.log("After changing the",$(document.getElementById(typeErrors[i].idArr[j])).attr('title'))
-                        console.log("Should have changed",typeErrors[i].idArr[j])
-
+                        for(var type in colors){
+                            if(colors.hasOwnProperty(type)){
+                                $(document.getElementById(typeErrors[i].idArr[j])).removeClass(type);
+                            }
+                        }
                 }
         }
 }
