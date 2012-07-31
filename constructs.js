@@ -1318,10 +1318,7 @@ var renderProgram = function(){
     // });
     setLiWidth($("#List li"));
     setLiWidth($("#storagePopup li"));
-                                        for(var i=0;i<program.length;i++){
-                        removeErrorMessages($(document.getElementById(program[i].id)));
-                        createErrorMessages(typeInfer(program[i]).typeErrors);
-                    }
+    typeCheck(program);
 };
 
 /*
@@ -1877,10 +1874,7 @@ $(function() {
                 droppedInDroppableFromList = false;
                 programCarrying = null;
                 carrying = null;
-                                    for(var i=0;i<program.length;i++){
-                        removeErrorMessages($(document.getElementById(program[i].id)));
-                        createErrorMessages(typeInfer(program[i]).typeErrors);
-                    }
+                typeCheck(program);
 	    }
         },
         receive:function(event,ui){
@@ -2395,8 +2389,53 @@ function typeInfer(obj){
 /*removeErrorMessages will, starting at a parent selection, recursively remove all messages and highliting from itself and its children*/
 function removeErrorMessages(jQuerySelection){
     jQuerySelection.attr("title","");
+    jQuerySelection.removeClass("ERROR");
     jQuerySelection.find("table").each(function(){removeErrorMessages($(this))});
 }
+
+function typeCheck(ArrayofBlocks){
+    for(var i=0;i<ArrayofBlocks.length;i++){
+        var blockTypeInfer=typeInfer(ArrayofBlocks[i])
+        removeErrorMessages($(document.getElementById(ArrayofBlocks[i].id)));
+        removeInferTypes($(document.getElementById(ArrayofBlocks[i].id)));
+        createInferTypes(blockTypeInfer.types);
+        createErrorMessages(blockTypeInfer.typeErrors);
+    }
+}
+
+function removeInferTypes(jQuerySelection){
+    for(var type in colors){
+        if(colors.hasOwnProperty(type)){
+            jQuerySelection.removeClass(type);
+        }
+    }
+    jQuerySelection.find("table").each(function(){removeInferTypes($(this))});
+
+}
+
+function createInferTypes(typeMap){
+    var id;
+    var type;
+    for(var i =0; i< typeMap.length; i++){
+        if(typeMap[i].lhs instanceof elemId && typeMap[i].rhs instanceof elemType){
+            id = typeMap[i].lhs.id;
+            type = typeMap[i].rhs.type;
+        }else if(typeMap[i].rhs instanceof elemId &&typeMap[i].lhs instanceof elemType){
+            id = typeMap[i].rhs.id;
+            type = typeMap[i].lhs.type;
+        }else if(typeMap[i].lhs instanceof elemId && typeMap[i].rhs instanceof construct){
+            id = typeMap[i].lhs.id;
+            type = typeMap[i].rhs.elemList[0].type;
+        }else if(typeMap[i].rhs instanceof elemId && typeMap[i].lhs instanceof construct){
+            id = typeMap[i].rhs.id;
+            type = typeMap[i].lhs.elemList[0].type;
+        }
+        if(isNaN(type)){
+            $(document.getElementById(id)).addClass(type)
+        }
+    }
+}
+
 
 function createErrorMessages(typeErrors){
         console.log(typeErrors);
@@ -2678,10 +2717,10 @@ function buildTypeErrors(array, obj){
                                         if(k === 0){
                                                 //error in output type of contract
                                                 helpfulErrors.push(new errorMatch([array[i].id, curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
-                                                                                        + curr.contract.argumentTypes[k]+"\" but found output type \""+ curr.expr.outputType + "\" in the expression"));
+                                                                                        + curr.contract.argumentTypes[k-1]+"\" but found output type \""+ curr.expr.outputType + "\" in the expression"));
                                         }else{
                                                 //error in one of the contract positions representing an argument name
-                                                helpfulErrors.push(new errorMatch(getVariables(curr.argumentNames[k-1], [obj]), "The variable \"" + curr.argumentNames[k-1] + "\" was assigned type \"" + curr.contract.argumentTypes[k] + "\" in the contract, but at least one instance of this variable had a different type."));
+                                                helpfulErrors.push(new errorMatch(getVariables(curr.argumentNames[k-1], [obj]), "The variable \"" + curr.argumentNames[k-1] + "\" was assigned type \"" + curr.contract.argumentTypes[k-1] + "\" in the contract, but at least one instance of this variable had a different type."));
                                         }
                                         break;
                                 }
@@ -2702,7 +2741,7 @@ function buildTypeErrors(array, obj){
                                         if(curr.args[k] !== undefined && (curr.funcIDList[k] === array[i].id || curr.args[k].id === array[i].id)){
                                                 if(curr.args[k].outputType !== undefined){
                                                         //bad arguments
-                                                        helpfulErrors.push(new errorMatch([curr.args[k].id], "This spot should have a block of type \"" + funcConstruct[curr.funcName].elemList[k+1].type + "\" but found something of type \"" +
+                                                        helpfulErrors.push(new errorMatch([curr.args[k].id], "This spot should have a block of type \"" + funcConstruct[curr.funcName].elemList[k+1].type + "\" but found a block of type \"" +
                                                                                                                                                                 curr.args[k].outputType+"\""));
                                                 }else{
                                                         //bad argument, but argument does not have output type

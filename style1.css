@@ -180,3 +180,9 @@ form{
 table .ERROR{
     background-color:red;
 }
+.expr .ERROR{
+    background-color:red;
+}
+table{
+    background-color:white;
+}
