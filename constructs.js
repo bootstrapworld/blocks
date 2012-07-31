@@ -2177,10 +2177,6 @@ var addDroppableFeature = function(jQuerySelection) {
 		    throw new Error ("addDroppableFeature drop: $(this) is undefined");
                 } 
                 else if($(this).children().length === 0){
-                        var curParent=searchForIndex(jQuerySelection.closest("table").attr('id'),program);
-                        console.log(curParent)
-                        console.log(typeInfer(curParent))
-                        createErrorMessages(typeInfer(curParent).typeErrors);
 		    $(this).html(carrying);
 		    setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying, program);
 		    addDroppableFeature($(this).find('.droppable'));
@@ -2196,7 +2192,11 @@ var addDroppableFeature = function(jQuerySelection) {
                     }
                     else{
 		      droppedInDroppable = true;
-                }
+                    }
+                    var curParent=searchForIndex(jQuerySelection.closest("table").attr('id'),program);
+                    console.log(curParent);
+                    console.log(typeInfer(curParent));
+                    createErrorMessages(typeInfer(curParent).typeErrors);
                 }
 	    }
         });
@@ -2435,6 +2435,7 @@ function createErrorMessages(typeErrors){
                 for(var j=0;j<typeErrors[i].idArr.length;j++){
                         console.log(typeErrors[i].idArr[j]);//the id to which the message is added
                         console.log(typeErrors[i].message);//the message that needs to be added
+                        console.log("The current message is",$(document.getElementById(typeErrors[i].idArr[j])).attr('title'))
                         if($(document.getElementById(typeErrors[i].idArr[j])).attr('title')=="" || $(document.getElementById(typeErrors[i].idArr[j])).attr('title') == undefined){
                                 $(document.getElementById(typeErrors[i].idArr[j])).attr('title',typeErrors[i].message);
                         }
@@ -2442,6 +2443,9 @@ function createErrorMessages(typeErrors){
                                 $(document.getElementById(typeErrors[i].idArr[j])).attr('title', $(document.getElementById(typeErrors[i].idArr[j])).attr('title')+"\n"+typeErrors[i].message);                                
                         }
                         $(document.getElementById(typeErrors[i].idArr[j])).css('background-color',"red");
+                        console.log("After changing the",$(document.getElementById(typeErrors[i].idArr[j])).attr('title'))
+                        console.log("Should have changed",typeErrors[i].idArr[j])
+
                 }
         }
 }
@@ -2733,12 +2737,12 @@ function buildTypeErrors(array, obj){
                                         if(curr.args[k] !== undefined && (curr.funcIDList[k] === array[i].id || curr.args[k].id === array[i].id)){
                                                 if(curr.args[k].outputType !== undefined){
                                                         //bad arguments
-                                                        helpfulErrors.push(new errorMatch([curr.args[k].id], "This spot should have a block of type \"" + funcConstruct[curr.funcName].elemList[k+1] + "\" but found something of type \"" +
-                                                                                                                                                                curr.args[k].outputType));
+                                                        helpfulErrors.push(new errorMatch([curr.args[k].id], "This spot should have a block of type \"" + funcConstruct[curr.funcName].elemList[k+1].type + "\" but found something of type \"" +
+                                                                                                                                                                curr.args[k].outputType+"\""));
                                                 }else{
                                                         //bad argument, but argument does not have output type
                                                         console.log("did not find argument output type");
-                                                        helpfulErrors.push(new errorMatch([curr.args[k].id], "This spot should have a block of type \"" + funcConstruct[curr.funcName].elemList[k+1] + "\" but found a block with a different type"));
+                                                        helpfulErrors.push(new errorMatch([curr.args[k].id], "This spot should have a block of type \"" + funcConstruct[curr.funcName].elemList[k+1].type + "\" but found a block with a different type"));
                                                 }
                                         } 
                                 }
@@ -2799,7 +2803,7 @@ function getParent(id, array, parent){
                 }else if(array[i] instanceof ExprCond){
                         toReturn = getParent(id, array[i].listOfBooleanAnswer, array[i]);
                 }
-                if(toReturn === undefined && array[i].hasOwnProperty("funcIDList")){
+                if(toReturn === undefined && array[i] !== undefined && array[i].hasOwnProperty("funcIDList")){
                                 toReturn = getParent(id, array[i].funcIDList, array[i]);
                         }
                 if(toReturn !== undefined){
