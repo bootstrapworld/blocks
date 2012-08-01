@@ -2115,19 +2115,19 @@ var addDroppableFeature = function(jQuerySelection) {
                 if ($(this) === undefined){
 		    throw new Error ("addDroppableFeature drop: $(this) is undefined");
                 } 
-                else if($(this).children().length === 0){
-		    console.log('dropping');
-		    if($(ui.draggable).closest('div').attr('id') === 'code'){
-			droppedInDroppableFromList = true;
-		    }
+                else if($(this).children().length === 0 && searchForIndex(programCarrying.id,program)==undefined){
+		          console.log('dropping');
+		          if($(ui.draggable).closest('div').attr('id') === 'code'){
+			         droppedInDroppableFromList = true;
+		          }
 
-		    $(this).html(carrying);
-		    setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying, program);
-		    addDroppableFeature($(this).find('.droppable'));
-		    addDraggableToTable($(this).find("table"));
-		    $(this).css("border", "none");
+		          $(this).html(carrying);
+		          setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying, program);
+		          addDroppableFeature($(this).find('.droppable'));
+		          addDraggableToTable($(this).find("table"));
+		          $(this).css("border", "none");
 
-		    ui.draggable.detach();
+		          ui.draggable.detach();
                     // for(var i=0;i<program.length;i++){
                     //     removeErrorMessages($(document.getElementById(program[i].id)));
                     //     createErrorMessages(typeInfer(program[i]).typeErrors);
@@ -2135,7 +2135,7 @@ var addDroppableFeature = function(jQuerySelection) {
                     
 		    
                 }
-	    }
+	       }
         });
     }
 };
@@ -2412,6 +2412,9 @@ function removeInferTypes(jQuerySelection){
     for(var type in colors){
         if(colors.hasOwnProperty(type)){
             jQuerySelection.removeClass(type);
+            if(jQuerySelection.hasClass("Cond")){
+                searchForIndex(jQuerySelection.attr("id"),program).outputType=undefined;
+            }
         }
     }
     jQuerySelection.find("table").each(function(){removeInferTypes($(this))});
@@ -2437,6 +2440,9 @@ function createInferTypes(typeMap){
             type = typeMap[i].lhs.elemList[0].type;
         }
         if(isNaN(type) && !$(document.getElementById(id)).hasClass("ContractType")){
+            if($(document.getElementById(id)).hasClass("Cond")){
+                searchForIndex(id,program).outputType=type;
+            }
             $(document.getElementById(id)).addClass(type)
         }
     }
@@ -2728,8 +2734,14 @@ function buildTypeErrors(array, obj){
                             if(curr.contract.funcIDList[k] === array[i].id || curr.funcIDList[k] === array[i].id || (curr.expr !== undefined && array[i].id === curr.expr.id)){
                                 if(k === 0){
                                     //error in output type of contract
-                                     helpfulErrors.push(new errorMatch([curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
+                                    if(curr.contract.outputType === undefined){console.log("ERROR! CONTRACT OUPUT TYPE UNDEFINED")};
+                                    if(curr.expr.outputType !== undefined){
+                                        helpfulErrors.push(new errorMatch([curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
                                                                              + curr.contract.outputType+"\" but found output type \""+ curr.expr.outputType + "\" in the expression"));
+                                    }else{
+                                        helpfulErrors.push(new errorMatch([curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
+                                                                             + curr.contract.outputType+"\" but a block with a different output type in the expression"));
+                                    }
                                 }else{
                                     //error in one of the contract positions representing an argument name
                                     helpfulErrors.push(new errorMatch(getVariables(curr.argumentNames[k-1], [obj]), "The variable \"" + curr.argumentNames[k-1] + "\" was assigned type \"" + curr.contract.argumentTypes[k-1] + "\" in the contract, but at least one instance of this variable had a different type."));
@@ -2778,7 +2790,7 @@ function buildTypeErrors(array, obj){
                                 if(curr.listOfBooleanAnswer[k].bool !== undefined && (curr.listOfBooleanAnswer[k].funcIDList[0] === array[i].id || curr.listOfBooleanAnswer[k].bool.id === array[i].id)){
                                         if(curr.listOfBooleanAnswer[k].bool.outputType !== undefined){
                                                 helpfulErrors.push(new errorMatch([curr.listOfBooleanAnswer[k].bool.id], "This spot should have a block of type \"Booleans\" but found something of type \"" +
-                                                                                                                                                                curr.listOfBooleanAnswer[k].bool.outputType));
+                                                                                                                                                                curr.listOfBooleanAnswer[k].bool.outputType + "\""));
                                         }else{
                                                 console.log("did not find argument output type in Cond bool");
                                                 helpfulErrors.push(new errorMatch([curr.listOfBooleanAnswer[k].bool.id], "This spot should have a block of type \"Booleans\" but found a block with a different type"));
