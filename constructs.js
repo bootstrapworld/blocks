@@ -2428,6 +2428,7 @@ function typeCheck(ArrayofBlocks){
     for(var i=0;i<ArrayofBlocks.length;i++){
         var blockTypeInfer=typeInfer(ArrayofBlocks[i])
         removeErrorMessages($(document.getElementById(ArrayofBlocks[i].id)));
+        //NEED TO FIX THIS
         removeInferTypes($(document.getElementById(ArrayofBlocks[i].id)));
         createInferTypes(blockTypeInfer.types);
         createErrorMessages(blockTypeInfer.typeErrors);
