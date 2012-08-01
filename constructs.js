@@ -46,919 +46,957 @@ if (!window.console){
 
 // Returns a string representing an ID used for an HTML element and its corresp. code object
 function makeID(){
-    return String(ID++);
-}
+     return String(ID++);
+ }
 
-/* 
-   Returns an array of strings representing IDs. Used for functions such that every argument
-   can have an ID
-*/
-function makeIDList(num){
-    var toReturn = [];
-    for(var i = 0; i<num; i++){
-        toReturn[i] = makeID();
-    }
-    return toReturn;
-}
-
-/*
-  cloneProgram takes in an array of code objects (arr) and outputs a clone of arr
-*/
-var cloneProgram = function(arr){
-    var tempArr = [];
-    for (var i = 0; i < arr.length; i++){
-        tempArr[i] = arr[i].clone();
-    }
-    return tempArr;
-};
-
-/**
- *flatten : object -> array
- *turns a ExprBoolAnswer into a single level array
+ /* 
+    Returns an array of strings representing IDs. Used for functions such that every argument
+    can have an ID
  */
-function flatten(obj){
-    var toReturn = [];
-    if(obj.bool !== undefined){
-        toReturn.push(obj.bool)
+ function makeIDList(num){
+     var toReturn = [];
+     for(var i = 0; i<num; i++){
+	 toReturn[i] = makeID();
+     }
+     return toReturn;
+ }
+
+ /*
+   cloneProgram takes in an array of code objects (arr) and outputs a clone of arr
+ */
+ var cloneProgram = function(arr){
+     var tempArr = [];
+     for (var i = 0; i < arr.length; i++){
+	 tempArr[i] = arr[i].clone();
+     }
+     return tempArr;
+ };
+
+ /**
+  *flatten : object -> array
+  *turns a ExprBoolAnswer into a single level array
+  */
+ function flatten(obj){
+     var toReturn = [];
+     if(obj.bool !== undefined){
+	 toReturn.push(obj.bool)
+     }
+     if(obj.answer !== undefined){
+	 toReturn.push(obj.answer)
+     }
+     return toReturn;
+ }
+
+ /*
+   searchForIndex takes in an a string (id) and and array filled within code Objects (one of which should
+   contain an object with the id). 
+
+   @return: The object with the corresponding id.
+ */
+ function searchForIndex(id, array){
+
+     var toReturn = undefined;
+     for(var i = 0; i< array.length; i++){
+	 if(array[i] === undefined){
+	     //just skip
+	 }else if(array[i].id===id){
+	     toReturn = array[i]
+	 }else if(isDefine(array[i])){
+	     toReturn = searchForIndex(id, [array[i].expr]);
+	 }else if(array[i] instanceof ExprApp){
+	     toReturn = searchForIndex(id, array[i].args);
+	 }else if(array[i] instanceof ExprBoolAnswer){
+	     toReturn = searchForIndex(id, flatten(array[i]));
+	 }else if(array[i] instanceof ExprCond){
+	     toReturn = searchForIndex(id, array[i].listOfBooleanAnswer);
+	 }
+	 if(toReturn !== undefined){
+	     return toReturn;
+	 }
+     }
+     return undefined;
+ }
+
+ /*
+   addProgram adds a code object (obj) to the program array given the id of the parent (parentId)
+   and the id of the child (childId).
+   MAYBE: childID won't work and we'll need array position
+ */
+ function setChildInProgram(parentId, childId, obj,prog){
+     var parent = searchForIndex(parentId, prog);
+     if(parent === undefined){
+	 throw new Error("setChildInProgram failure: parentId not found.");
+     }
+     if(isLiteral(parent)){
+	 throw new Error("setChildInProgram failure: parent was a literal, and cannot be added to");
+     }
+     if(parent.hasOwnProperty("funcIDList")){
+	 var index;
+	 if(obj !== undefined){
+	     index = getAddIndex(parent, childId);
+	 }
+	 else{
+	     index = getRemoveIndex(parent, childId);
+	 }
+	 if(index === -1){
+	     throw new Error("setChildInProgram failure: childId not found");
+	 }
+	 else{
+	     if(parent instanceof ExprApp){
+		 parent.args[index] = obj;
+	     }
+	     else if(isDefine(parent)){
+		 parent.expr = obj;
+	     }
+	     else if(parent instanceof ExprBoolAnswer){
+		 if(index === 0){
+		     parent.bool = obj;
+		 }
+		 else{
+		     parent.answer = obj;
+		 }
+	     }
+	     else if(parent instanceof ExprCond){
+		 throw new Error("setChildInProgram failure: parent was top level of cond, that doesn't work");
+	     }
+	     else{
+		 throw new Error("setChildInProgram failure: parent looked like: " +interpreter(parent));
+	     }
+	 }
+     }
+ }
+
+ function getRemoveIndex(parent, childID){
+     var i;
+     var toReturn = -1;
+     if(isDefine(parent)){
+	 if(parent.expr != undefined && parent.expr.id === childID){
+	     toReturn = 0;
+	 }
+     }else if(parent instanceof ExprApp){
+	 for(i=0; i<parent.args.length; i++){
+	     if(parent.args[i] !== undefined){
+		 if(parent.args[i].id === childID){
+		     toReturn = i;
+		 }
+	     }
+	 }
+     }else if(parent instanceof ExprBoolAnswer){
+	 if(parent.bool !== undefined && parent.bool.id === childID){
+	     toReturn = 0;
+	 }
+	 if(parent.answer !== undefined && parent.answer.id === childID){
+	     toReturn = 1;
+	 }
+     }
+     return toReturn;
+ }
+ function getAddIndex(parent, childID){
+     for(var i =0; i<parent.funcIDList.length; i++){
+	 if(parent.funcIDList[i] === childID){
+	     return i
+	 }
+     }
+     return -1;
+ }
+
+
+ /*
+   Constucts the define function block given a contract, a list of arguments (a list of variables), 
+   and an expression which is an expression object
+
+   (define (add2 x) (+ x 2)) =>
+   makeDefineFunc(contract1, ["x"], makeApp("+", [makeVariable("x"), 2]))
+
+   contract1 = makeContract("add2", ["Numbers"], "Numbers")
+
+   expr = the expr, not a list, an object
+   funcIDList: first id refers to the expr block, all others refer to aruguments in order
+ */
+ var ExprDefineFunc = function(){
+
+     this.contract = new ExprContract();
+     this.selfType="ExprDefineFunc";
+     this.argumentNames = [""];
+     this.expr = undefined;
+     this.id = makeID();
+     this.funcIDList = makeIDList(2);
+     this.purpose = "";
+     this.clone=function(){
+	 var temp=new ExprDefineFunc();
+	 temp.contract=this.contract.clone();
+	 temp.argumentNames=this.argumentNames.slice(0);
+	 if (this.expr != undefined){
+	     temp.expr=this.expr.clone();
+	 }
+	 temp.id=this.id;
+	 temp.funcIDList=this.funcIDList.slice(0);
+	 temp.purpose = this.purpose;
+	 return temp;
+     };
+ };
+
+ var ExprContract = function(){
+     this.funcName = "";
+     this.selfType = "ExprContract"
+     this.argumentTypes = [undefined];
+     this.outputType = undefined;
+     this.id = makeID();
+     this.funcIDList=makeIDList(2);
+     this.clone=function(){
+	 var temp=new ExprContract();
+	 temp.funcName=this.funcName;
+	 temp.argumentTypes=this.argumentTypes.slice(0);
+	 temp.funcIDList=this.funcIDList.slice(0);
+	 temp.outputType=this.outputType;
+	 temp.id=this.id;
+	 return temp;
+     };
+ };
+
+ /*
+   Constucts the define variable block given a name (string), an expression which is an expression 
+   object, and an output type
+
+   (define x 3) =>
+   ExprDefineConst("x", ExprNumber(3), "Numbers")
+
+   (define y (+ 2 x)) =>
+   ExprDefineConst("y", (ExprApp("+", [ExprNumber("2"), ExprConst("x")))
+ */
+ var ExprDefineConst = function(){
+
+     this.constName = undefined;
+     this.selfType="ExprDefineConst";
+     this.expr = undefined;
+     this.outputType = undefined; //MAKE SURE THIS WILL BE DEFINED!!!!
+     this.id = makeID();
+     this.funcIDList = makeIDList(1);
+     this.clone=function(){
+	 var temp=new ExprDefineConst();
+	 temp.constName=this.constName;
+	 if (this.expr != undefined){
+	     temp.expr=this.expr.clone();
+	 }
+	 temp.outputType=this.outputType;
+	 temp.id=this.id;
+	 temp.funcIDList=this.funcIDList.slice(0);
+	 return temp;
+     };
+ };
+
+ /*
+   Returns true if the object is a literal or constant, false otherwise.
+ */
+ function isLiteral (obj){
+     return (
+	 obj instanceof ExprString ||
+	     obj instanceof ExprNumber ||
+	     obj instanceof ExprBoolean ||
+	     obj instanceof ExprConst);
+ }
+
+ /*
+   Returns true if the object is a definition, false otherwise
+ */
+ function isDefine (obj){
+     return (obj instanceof ExprDefineConst || obj instanceof ExprDefineFunc);
+ }
+
+
+
+ /*
+   Constructs an application of an operator given the name, arguments, and output type. The arguments 
+   is an array of expressions. Value is initially initialized to null.
+   args is a list of objects (one for each argument)
+ */
+ var ExprApp = function(funcName){
+     this.funcName = funcName;
+     this.selfType="ExprApp";
+     this.id = makeID();
+     this.funcIDList = makeIDList(functions[containsName(functions, funcName)].input.length);
+     this.args = [];
+     this.outputType = getOutput(funcName);
+     this.clone=function(){
+	 var temp=new ExprApp(this.funcName);
+	 temp.id=this.id;
+	 temp.funcIDList=this.funcIDList.slice(0);
+	 for(var i=0;i<this.args.length;i++){
+	     if (this.args[i] != undefined){
+		 temp.args.push(this.args[i].clone());
+	     } else{
+		 temp.args.push(undefined);
+	     }
+	 }
+	 temp.outputType=this.outputType;
+	 return temp;
+     };
+ };
+
+ /*
+   Constructs a string given the contents of the string (str).
+   The value of the string is initialized as an empty string "". 
+ */
+ var ExprString= function(){
+     this.value="insert string here";
+     this.selfType="ExprString";
+     this.outputType = "Strings";
+     this.id = makeID();
+     this.clone=function(){
+	 var temp=new ExprString();
+	 temp.value=this.value;
+	 temp.outputType=this.outputType;
+	 temp.id=this.id;
+	 return temp;
+     };
+ };
+
+ /*
+   Constructs a number given a number num.
+ */
+ var ExprNumber = function(){
+     this.value = 20;
+     this.selfType="ExprNumber"
+     this.outputType = "Numbers";
+     this.id = makeID();
+     this.clone=function(){
+	 var temp=new ExprNumber();
+	 temp.value=this.value;
+	 temp.outputType=this.outputType;
+	 temp.id=this.id;
+	 return temp;
+     };
+ };
+
+ /*
+   NOTE: Not sure if necessary
+   Constructs a variable object given a name of type string.
+ */
+ var ExprConst = function(constName){
+     this.constName = constName;
+     this.selfType="ExprConst"
+     this.outputType = undefined;
+     this.id = makeID();
+     this.clone=function(){
+	 var temp=new ExprConst(this.constName);
+	 temp.outputType=this.outputType;
+	 temp.id=this.id;
+	 return temp;
+     };
+
+ };
+
+ /*
+   Constructs a boolean true or false (else == true)
+ */
+ var ExprBoolean = function(value){
+     this.value=value;
+     this.selfType="ExprBoolean";
+     this.outputType = "Booleans";
+     this.id = makeID();
+     this.clone=function(){
+	 var temp=new ExprBoolean(this.value);
+	 temp.outputType=this.outputType;
+	 temp.id=this.id;
+	 return temp;
+     };
+ };
+
+ /*
+   Constructs a tuple of boolean and answer to use in a cond expression
+ */
+ var ExprBoolAnswer=function(){
+     this.bool = undefined;
+     this.answer = undefined;
+     this.selfType="ExprBoolAnswer";
+     this.outputType = undefined;
+     this.id = makeID();
+     this.funcIDList = makeIDList(2);
+     this.clone=function(){
+	 var temp=new ExprBoolAnswer();
+	 if (this.bool != undefined){
+	     temp.bool=this.bool.clone();
+	 }
+	 if (this.answer != undefined){
+	     temp.answer=this.answer.clone();
+	 }
+	 temp.outputType=this.outputType;
+	 temp.id=this.id;
+	 temp.funcIDList=this.funcIDList.slice(0);
+	 return temp;
+     };
+ };
+
+
+ /*
+   Constructs a conditional statement given a list of tuples, formatted: (expr, expr)
+   The first expression has to be a boolean
+
+   (cond
+   [(true) 2]
+   [(false) 1]
+   ) =>
+   ExprCond(list1)
+   list1 = [ExprBoolAnswer(ExprBoolean(true),ExprNumber(2)).ExprBoolAnswer(ExprBoolean(False),ExprNumber(1))]
+ */
+ var ExprCond = function(){
+     this.listOfBooleanAnswer=[new ExprBoolAnswer()];
+     this.selfType="ExprCond";
+     this.outputType = undefined;
+     this.id = makeID();
+     this.clone=function(){
+	 var temp=new ExprCond();
+	 for(var i=0;i<this.listOfBooleanAnswer.length;i++){
+	     temp.listOfBooleanAnswer[i]=this.listOfBooleanAnswer[i].clone();
+	 }
+	 temp.outputType=this.outputType;
+	 temp.id=this.id;
+	 return temp;
+     };
+ };
+
+
+ function objectArrayToProgram(JSONArrayObject){
+     ID=0;
+     for(var i=0;i<JSONArrayObject.length;i++){
+	 program.push(objectToCodeObject(JSONArrayObject[i]));
+     }
+ }
+
+ function objectToCodeObject(JSONObject){
+     if(JSONObject==undefined){
+	 return undefined;
+     }
+     var curType=JSONObject.selfType;
+     var tempObject;
+     if(curType==="ExprNumber"){
+	 tempObject=new ExprNumber();
+	 tempObject.value=JSONObject.value;
+     }
+     else if(curType==="ExprString"){
+	 tempObject=new ExprString();
+	 tempObject.value=JSONObject.value;
+     }
+     else if(curType==="ExprBoolean"){
+	 tempObject=new ExprBoolean();
+	 tempObject.value=JSONObject.value;
+     }
+     else if(curType==="ExprDefineFunc"){
+	 tempObject=new ExprDefineFunc();
+	 tempObject.argumentNames=JSONObject.argumentNames.slice(0);
+	 tempObject.funcIDList=makeIDList(JSONObject.funcIDList.length)
+	 tempObject.expr=objectToCodeObject(JSONObject.expr);
+	 tempObject.contract=objectToCodeObject(JSONObject.contract);
+     }
+     else if(curType==="ExprContract"){
+	 tempObject=new ExprContract();
+	 tempObject.funcName=JSONObject.funcName;
+	 tempObject.funcIDList=makeIDList(JSONObject.funcIDList.length)
+	 tempObject.argumentTypes=JSONObject.argumentTypes.slice(0);
+	 tempObject.outputType=JSONObject.outputType;
+
+     }
+     else if(curType==="ExprDefineConst"){
+	 tempObject=new ExprDefineConst();
+	 tempObject.constName=JSONObject.constName;
+	 tempObject.expr=objectToCodeObject(JSONObject.expr);
+	 tempObject.outputType=JSONObject.outputType;
+     }
+     else if(curType==="ExprApp"){
+	 tempObject=new ExprApp(JSONObject.funcName);
+	 for(var j=0;j<JSONObject.args.length;j++){
+	     tempObject.args[j]=objectToCodeObject(JSONObject.args[j]);
+	 }
+     }
+     else if(curType==="ExprConst"){
+	 tempObject=new ExprConst(JSONObject.constName);
+	 tempObject.outputType=JSONObject.outputType
+     }
+     else if(curType==="ExprBoolAnswer"){
+	 tempObject=new ExprBoolAnswer();
+	 tempObject.bool=objectToCodeObject(JSONObject.bool);
+	 tempObject.answer=objectToCodeObject(JSONObject.answer);
+	 tempObject.outputType=JSONObject.outputType;
+     }
+     else if(curType==="ExprCond"){
+	 tempObject=new ExprCond();
+	 for(var j=0;j<JSONObject.listOfBooleanAnswer.length;j++){
+	     tempObject.listOfBooleanAnswer[j]=objectToCodeObject(JSONObject.listOfBooleanAnswer[j]);
+	 }
+	 tempObject.outputType=JSONObject.outputType;
+     }
+     return tempObject;
+ };
+
+
+ //Functions is an array of objects containing a name, tuples of type and name corresponding to their inputs and an output type
+ var functions=[];
+ functions[0]={};
+ functions[0].name="+";
+ functions[0].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
+ functions[0].output="Numbers";
+ functions[1]={};
+ functions[1].name="-";
+ functions[1].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
+ functions[1].output="Numbers";
+ functions[2]={};
+ functions[2].name="*";
+ functions[2].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
+ functions[2].output="Numbers";
+ functions[3]={};
+ functions[3].name="/";
+ functions[3].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
+ functions[3].output="Numbers";
+ functions[4]={};
+ functions[4].name="remainder";
+ functions[4].input=[{type:"Numbers",name:"Dividend"},{type:"Numbers",name:"Divisor"}];
+ functions[4].output="Numbers";
+ functions[5]={};
+ functions[5].name="sqrt";
+ functions[5].input=[{type:"Numbers",name:"Number"}];
+ functions[5].output="Numbers";
+ functions[6]={};
+ functions[6].name="sqr";
+ functions[6].input=[{type:"Numbers",name:"Number"}];
+ functions[6].output="Numbers";
+ functions[7]={};
+ functions[7].name="expt";
+ functions[7].input=[{type:"Numbers",name:"Base"},{type:"Numbers",name:"Exponent"}];
+ functions[7].output="Numbers";
+ functions[8]={};
+ functions[8].name="=";
+ functions[8].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
+ functions[8].output="Booleans";
+ functions[9]={};
+ functions[9].name=">";
+ functions[9].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
+ functions[9].output="Booleans";
+ functions[10]={};
+ functions[10].name="<";
+ functions[10].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
+ functions[10].output="Booleans";
+ functions[11]={};
+ functions[11].name="<=";
+ functions[11].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
+ functions[11].output="Booleans";
+ functions[12]={};
+ functions[12].name=">=";
+ functions[12].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
+ functions[12].output="Booleans";
+ functions[13]={};
+ functions[13].name="even?";
+ functions[13].input=[{type:"Numbers",name:"Number"}];
+ functions[13].output="Booleans";
+ functions[14]={};
+ functions[14].name="odd?";
+ functions[14].input=[{type:"Numbers",name:"Number"}];
+ functions[14].output="Booleans";
+ functions[15]={};
+ functions[15].name="string-append";
+ functions[15].input=[{type:"Strings",name:"String"},{type:"Strings",name:"String"}];
+ functions[15].output="Strings";
+ functions[16]={};
+ functions[16].name="string-length";
+ functions[16].input=[{type:"Strings",name:"String"}];
+ functions[16].output="Numbers";
+ functions[17]={};
+ functions[17].name="string=?";
+ functions[17].input=[{type:"Strings",name:"String"},{type:"Strings",name:"String"}];
+ functions[17].output="Booleans";
+ functions[18]={};
+ functions[18].name="and";
+ functions[18].input=[{type:"Booleans",name:"Boolean"},{type:"Booleans",name:"Boolean"}];
+ functions[18].output="Booleans";
+ functions[19]={};
+ functions[19].name="or";
+ functions[19].input=[{type:"Booleans",name:"Boolean"},{type:"Booleans",name:"Boolean"}];
+ functions[19].output="Booleans";
+ functions[20]={};
+ functions[20].name="not";
+ functions[20].input=[{type:"Booleans",name:"Boolean"}];
+ functions[20].output="Booleans";
+ functions[21]={};
+ functions[21].name="rectangle";
+ functions[21].input=[{type:"Numbers",name:"Width"},{type:"Numbers",name:"Height"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"}];
+ functions[21].output="Images";
+ functions[22]={};
+ functions[22].name="circle";
+ functions[22].input=[{type:"Numbers",name:"Radius"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"}];
+ functions[22].output="Images";
+ functions[23]={};
+ functions[23].name="triangle";
+ functions[23].input=[{type:"Numbers",name:"Length"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"}];
+ functions[23].output="Images";
+ functions[24]={};
+ functions[24].name="ellipse";
+ functions[24].input=[{type:"Numbers",name:"A"},{type:"Numbers",name:"B"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"}];
+ functions[24].output="Images";
+ functions[25]={};
+ functions[25].name="star";
+ functions[25].input=[{type:"Numbers",name:"Side-Length"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"}];
+ functions[25].output="Images";
+ functions[26]={};
+ functions[26].name="scale";
+ functions[26].input=[{type:"Numbers",name:"Multiple"},{type:"Images",name:"Image"}];
+ functions[26].output="Images";
+ functions[27]={};
+ functions[27].name="rotate";
+ functions[27].input=[{type:"Numbers",name:"Degrees"},{type:"Images",name:"Image"}];
+ functions[27].output="Images";
+ functions[28]={};
+ functions[28].name="place-image";
+ functions[28].input=[{type:"Images",name:"Image"}, {type:"Numbers",name:"x"},{type:"Numbers",name:"y"},{type:"Images",name:"Background"}];
+ functions[28].output="Images";
+
+ var initFunctions=functions.length;
+ //constants is an array of user defined variables containing their name and type
+ var constants=[];
+ /*
+ userFunctions is an array of user defined functions in the form of ExprDefineConst and xprDefineFunc
+ */
+ var userFunctions = [];
+ var initConstants=constants.length;
+
+ //restricted contains a list of key words in racket that we aren't allowing the user to redefine
+ var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map","let","local"];
+
+ //pre-defined and user-defined types
+ var types=["Numbers","Strings","Booleans","Images"];
+
+ //Colors is an object containing kv pairs of type to color
+ var colors={};
+ colors.Numbers="#33CCFF";
+ colors.Strings="#FFA500";
+ colors.Images="#66FF33";
+ colors.Booleans="#CC33FF";
+ colors.Define="#FFFFFF";
+ colors.Expressions="#FFFFFF";
+ colors.Constants="#FFFFFF";
+
+ /*
+   historyarr stores the program/storage state. Updated when the user changes something about the program (i.e.
+   adds a block, moves a block, moves something to storage, etc.)
+
+   historyarr is an array of objects in which the first element of the object is the program state and the second
+   is the storage state
+ */
+ var historyarr = [];
+
+
+ /*
+   addToHistory takes in a program state and adds it to history while setting the future array 
+   (connected to the redo button) to an empty array
+ */
+ var addToHistory = function(programState, storageState) {
+     historyarr.push({program: programState, storage: storageState});
+     $("#undoButton").removeAttr('disabled');
+     future = [];
+ };
+
+
+ /*
+   future is an array of the program states and storage states. Updated when the user undos something.
+ */
+ var future = [];
+
+ /*
+   program is an array of makeDefineFunc/makeDefineVar/Expressions that make up the user's program
+   on the screen.
+ */
+ var program = [];
+
+
+ /*
+   storageProgram stores the state of the stroage div
+ */
+ var storageProgram = [];
+
+
+ /*====================================================================================
+   ___ _     _          _  __   __        _      _    _        
+   / __| |___| |__  __ _| | \ \ / /_ _ _ _(_)__ _| |__| |___ ___
+   | (_ | / _ \ '_ \/ _` | |  \ V / _` | '_| / _` | '_ \ / -_|_-<
+   \___|_\___/_.__/\__,_|_| _ \_/\__,_|_| |_\__,_|_.__/_\___/__/
+   / _|___  | __|  _ _ _  __| |_(_)___ _ _  ___                  
+   > _|_ _| | _| || | ' \/ _|  _| / _ \ ' \(_-<                  
+   \_____|  |_| \_,_|_||_\__|\__|_\___/_||_/__/                  
+
+   =====================================================================================*/
+
+ // These variables store what the height and width of the code div should be
+ var contentHeight;
+ var contentWidth;
+ // Which Drawer type is currently being displayed
+ var activated = [];
+ // which text block in the #code div is currently being focused
+ var focused=null;
+ var initvalue=null;
+ // ID that matches together a code object and an HTML element
+ var ID =0;
+
+ var numberofvalidations=0;
+ var errorVal=false;
+
+
+ //resizes code div when the window is resized
+ function onResize(){
+     contentHeight = $(window).height() - $("#header").height();
+     contentWidth = $(window).width();
+     $("#content").height(contentHeight);
+     $("#graybox").height($(window).height());
+     $("#graybox").width($(window).width());
+     $("#content").width(contentWidth);
+     $("#code").height(contentHeight);
+     $("#code").width(contentWidth - $("#Drawer").width());
+     $("#List").height(contentHeight - 30);
+     $("#List").width($("#code").width() - 55);
+     $("#options").height(contentHeight - $("#storage").height());
+ //    resizeStorage();
+ }
+
+ var resizeStorage = function() {
+     $("#storagePopup").width($("#code").width()-$("#Drawers").width() - 300);
+     $("#storagePopup").height($("#code").height() - 100);
+ };
+
+ /*
+ removeFromStorageOnClick takes in a jquery selection (jQuerySelection) and adds a function to it
+ such that when it's double clicked, it gets removed from storagePopup div and gets added
+ to the end of the sortable #List
+ */
+ var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
+     $(jQuerySelection).dblclick(function() {
+	 var index = $("#storagePopup li").index(jQuerySelection);
+	 $("#List").append("<li>" + html + "</li>");
+	 program.push(codeObject);
+	 addDroppableFeature($("#List li:last").find(('.droppable')));
+	 storageProgram.splice(index, 1);
+	 $(jQuerySelection).remove();
+     });
+ };
+
+ $(document).ready(function(){
+     //When the window is resized, the height of the width of the code div changes
+     $(window).resize(onResize);
+
+
+     //draws drawers when the page is loaded
+     makeDrawers(functions,constants);
+     onResize();
+     // activated is initially set to "Numbers"
+     // activated = $("#options #Numbers");
+     // activated.css("visibility", "visible");
+     /*
+       adds a stylesheet to <head> such that blocks can be colored according to their type
+     */
+     renderTypeColors();
+
+     /*
+       storage pops up when clicked
+     */
+     $("#storage").click(function() {
+	 $("#storagePopup").css('visibility','visible');
+ //	$("#graybox").css('visibility','visible').fadeIn('slow');;
+     });
+
+     $("#closestorage").click(function() {
+	 $("#storagePopup").css('visibility','hidden');
+ //	$("#graybox").css('visibility','hidden');
+     });
+
+     /*
+       sets focus equal to the input that is focused. 
+     */
+     $("#List input").live('focus',function(e){
+	 var toContinue=formValidation(e);
+	 focused=$(this);
+	 initvalue=focused.value;
+	 tempProgram=cloneProgram(program);
+	 return toContinue;
+     });
+
+
+     $(document.body).live('mousedown', function(e){
+	 return formValidation(e)
+     });
+
+     //Sets undo and redo buttons to disabled on startup
+     $("#undoButton").attr('disabled','disabled');
+     $("#redoButton").attr('disabled','disabled');
+
+     /*
+       Binds undo functionality with undo button
+     */
+     $("#undoButton").bind('click', function(){
+	 if (historyarr.length !== 0){
+	     future.unshift({program: cloneProgram(program), storage: cloneProgram(storageProgram)});
+	     $("#redoButton").removeAttr('disabled');
+	     var x = historyarr.pop();
+	     program = x.program;
+	     storageProgram = x.storage;
+	     renderProgram();
+	     if (historyarr.length === 0){
+		 $(this).attr('disabled','disabled');
+	     }
+	 }
+     });
+
+
+     /*
+       Binds redo functionality with redo button
+     */
+     $("#redoButton").bind('click', function(){
+	 if (future.length !== 0){
+	     historyarr.push({program: cloneProgram(program), storage: cloneProgram(storageProgram)});
+	     var x = future.shift();
+	     program = x.program;
+	     storageProgram = x.storage;
+	     renderProgram();
+	     if (future.length === 0){
+		 $("#redoButton").attr('disabled','disabled');
+	     }
+	 }
+	 $("#undoButton").removeAttr('disabled');
+     });
+
+     $("#saveButton").bind('click',function(){
+	 if(typeof(Storage)!=="undefined"){
+	     var valid=true;
+	     var confirmed=true;
+	     var saveName=prompt("Please enter a name to which to save your file.");
+	     if(saveName==undefined){
+		 return;
+	     }
+	     if(saveName===""){
+		 valid=false;
+	     }
+	     else if(localStorage.getItem(saveName)!=undefined){
+		 confirmed=confirm("There already exists a file with this name.  Would you like to overwrite?");
+	     }
+	     while(!valid || !confirmed){
+		 if(!valid){
+		     saveName=prompt("You have failed to enter anything as your file name.  To cancel, please hit the cancel button.");
+		     valid=true;
+		     confirmed=true;
+		 }
+		 else if(!confirmed){
+		     saveName=prompt("Please enter a name to which to save your file.");
+		     valid=true;
+		     confirmed=true;
+		 }
+		 if(saveName===""){
+		     valid=false;
+		 }
+		 else if(saveName==undefined){
+		     return;
+		 }
+		 else if(localStorage.getItem(saveName)!=undefined){
+		     confirmed=confirm("There already exists a file with this name.  Would you like to overwrite?");
+		 }
+	     }
+	     //save id, program... maybe history, future, trash
+	     localStorage[saveName]=JSON.stringify(cloneProgram(program));
+	 }
+	 else{
+	     alert("I am sorry but your browser does not support storage.");
+	 }
+     }) ;
+
+     $("#loadButton").bind('click',function(){
+	 var loadName=prompt("Please enter the name of the file you wish to load.  Your current program will be removed from screen.");
+	 if(loadName==undefined){
+	     return;
+	 }
+	 else if(localStorage.getItem(loadName)==undefined){
+	     alert("There was no local file by that name.");
+	     return;
+	 }
+	 else{
+	     var programString=localStorage.getItem(loadName);
+	     program=[];
+	     objectArrayToProgram(JSON.parse(programString));
+	     //do I change the history and trash? overwrite it?
+	     renderProgram(createProgramHTML(program));
+	     historyarr=[];
+	     future=[];
+	     $("#undoButton").attr('disabled','disabled');
+	     $("#redoButton").attr('disabled','disabled');
+	 }
+     });
+
+     $("#exportButton").bind('click',function(){
+	 alert("Here is the racket representation of the current program:\n\n"+parseProgram(program));
+     });
+
+
+     $(".addCond").live('click',function(){
+	 addToHistory(cloneProgram(program), cloneProgram(storageProgram));
+	 searchForIndex($(this).closest('table').attr('id'),program).listOfBooleanAnswer.push(new ExprBoolAnswer());
+	 renderProgram(createProgramHTML())
+     });
+
+     $(".removeCond").live('click',function(){
+	 var listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),program).listOfBooleanAnswer
+	 if(listOfTuples.length!=1){
+	     addToHistory(cloneProgram(program), cloneProgram(storageProgram));
+	     for(var i=0;i<listOfTuples.length;i++){
+		 if(listOfTuples[i].id===$(this).closest('table').attr('id')){
+		     listOfTuples.splice(i,1)
+		 }
+	     }  
+	     renderProgram(createProgramHTML());
+	 }    
+     });
+ });
+
+ /*
+ allows user to add argument to contract in define block
+ */
+ $(".addArgument").live('click',function(){
+     addToHistory(cloneProgram(program), cloneProgram(storageProgram));
+     var defineExpr=searchForIndex($(this).closest('table').attr('id'),userFunctions)
+     defineExpr.funcIDList.push(makeID())
+     defineExpr.contract.funcIDList.push(makeID())
+     defineExpr.argumentNames.push("");
+
+     //makes contract dropdown
+     var contractdropdown = $(makeContractDropdown(defineExpr.contract.funcIDList[defineExpr.contract.funcIDList.length - 1], defineExpr));
+     $(this).closest('th').before(contractdropdown);
+     
+     //makes argument type-in
+     var argIndex = defineExpr.funcIDList.length - 2;
+     var argHTML = "<th width=\"10px\" class=\"expr argument\"><input style=\"width:70px;\" id=\"" + defineExpr.funcIDList[defineExpr.funcIDList.length - 1] +"\" onkeyup=\"sync(" + defineExpr.id + ",$(this))\" class=\"argName\" disabled=\"disabled\" value=\"\"></th><th></th>";
+     $(this).closest('table').find('tr').eq(2).find('th').eq(1 + argIndex * 2).after($(argHTML));
+  //   $(this).closest('table').find('tr').eq(3).find('th').eq(1).attr('colspan', $(this).colspan + 5);
+
+
+     toggleDeleteButtons(defineExpr.funcIDList, defineExpr.id, contractdropdown);
+ });
+
+/*
+  toggleDeleteButtons changes the contract of a define block such that delete buttons are visible and invisible
+  when appropriate
+
+  @param funcIDList is the funcIDList that corresponds with the define block you are dealing with
+  @param defineExprID is the string of the id refering to the define block which you are working with
+  @param latestArg a jQuery selector representing the latest argument you've added. latestArg is only defined
+  if it toggleDeleteButtons is called after adding an argument
+*/
+function toggleDeleteButtons(funcIDList, defineExprID, latestArg) {
+    var closebutton = $("<button class=\"deleteArg\" onclick=\"deleteArg($(this).closest('th').prev().find('select').attr('id')," + defineExprID+ ")\">x</button>");
+
+//    closebutton.click(deleteArg( ,defineExprID));
+
+    if (funcIDList.length === 3 && latestArg != undefined){ //add x button to all
+	$("#"+ defineExprID + " .buttonHolder").prepend($(closebutton));	    
     }
-    if(obj.answer !== undefined){
-        toReturn.push(obj.answer)
+    else if (funcIDList.length > 3 && latestArg != undefined) { //add x button to latest
+	latestArg.eq(1).prepend($(closebutton));
     }
-    return toReturn;
+    else if (funcIDList.length < 3) { //delete x button just from the one arg left
+	$("#" + defineExprID).find('.buttonHolder').find(".deleteArg").remove();
+    }
 }
-
-/*
-  searchForIndex takes in an a string (id) and and array filled within code Objects (one of which should
-  contain an object with the id). 
-
-  @return: The object with the corresponding id.
-*/
-function searchForIndex(id, array){
-
-    var toReturn = undefined;
-    for(var i = 0; i< array.length; i++){
-        if(array[i] === undefined){
-            //just skip
-        }else if(array[i].id===id){
-            toReturn = array[i]
-        }else if(isDefine(array[i])){
-            toReturn = searchForIndex(id, [array[i].expr]);
-        }else if(array[i] instanceof ExprApp){
-            toReturn = searchForIndex(id, array[i].args);
-        }else if(array[i] instanceof ExprBoolAnswer){
-            toReturn = searchForIndex(id, flatten(array[i]));
-        }else if(array[i] instanceof ExprCond){
-            toReturn = searchForIndex(id, array[i].listOfBooleanAnswer);
-        }
-        if(toReturn !== undefined){
-            return toReturn;
-	}
-    }
-    return undefined;
-}
-
-/*
-  addProgram adds a code object (obj) to the program array given the id of the parent (parentId)
-  and the id of the child (childId).
-  MAYBE: childID won't work and we'll need array position
-*/
-function setChildInProgram(parentId, childId, obj,prog){
-    var parent = searchForIndex(parentId, prog);
-    if(parent === undefined){
-        throw new Error("setChildInProgram failure: parentId not found.");
-    }
-    if(isLiteral(parent)){
-        throw new Error("setChildInProgram failure: parent was a literal, and cannot be added to");
-    }
-    if(parent.hasOwnProperty("funcIDList")){
-        var index;
-        if(obj !== undefined){
-            index = getAddIndex(parent, childId);
-        }
-	else{
-            index = getRemoveIndex(parent, childId);
-        }
-        if(index === -1){
-            throw new Error("setChildInProgram failure: childId not found");
-        }
-	else{
-            if(parent instanceof ExprApp){
-                parent.args[index] = obj;
-            }
-	    else if(isDefine(parent)){
-                parent.expr = obj;
-            }
-	    else if(parent instanceof ExprBoolAnswer){
-                if(index === 0){
-                    parent.bool = obj;
-                }
-		else{
-                    parent.answer = obj;
-                }
-            }
-	    else if(parent instanceof ExprCond){
-		throw new Error("setChildInProgram failure: parent was top level of cond, that doesn't work");
-	    }
-	    else{
-		throw new Error("setChildInProgram failure: parent looked like: " +interpreter(parent));
-	    }
-	}
-    }
-}
-
-function getRemoveIndex(parent, childID){
-    var i;
-    var toReturn = -1;
-    if(isDefine(parent)){
-        if(parent.expr != undefined && parent.expr.id === childID){
-	    toReturn = 0;
-        }
-    }else if(parent instanceof ExprApp){
-        for(i=0; i<parent.args.length; i++){
-	    if(parent.args[i] !== undefined){
-                if(parent.args[i].id === childID){
-		    toReturn = i;
-                }
-	    }
-        }
-    }else if(parent instanceof ExprBoolAnswer){
-        if(parent.bool !== undefined && parent.bool.id === childID){
-	    toReturn = 0;
-        }
-        if(parent.answer !== undefined && parent.answer.id === childID){
-	    toReturn = 1;
-        }
-    }
-    return toReturn;
-}
-function getAddIndex(parent, childID){
-    for(var i =0; i<parent.funcIDList.length; i++){
-        if(parent.funcIDList[i] === childID){
-	    return i
-        }
-    }
-    return -1;
-}
-
-
-/*
-  Constucts the define function block given a contract, a list of arguments (a list of variables), 
-  and an expression which is an expression object
-
-  (define (add2 x) (+ x 2)) =>
-  makeDefineFunc(contract1, ["x"], makeApp("+", [makeVariable("x"), 2]))
-
-  contract1 = makeContract("add2", ["Numbers"], "Numbers")
-
-  expr = the expr, not a list, an object
-  funcIDList: first id refers to the expr block, all others refer to aruguments in order
-*/
-var ExprDefineFunc = function(){
-
-    this.contract = new ExprContract();
-    this.selfType="ExprDefineFunc";
-    this.argumentNames = [""];
-    this.expr = undefined;
-    this.id = makeID();
-    this.funcIDList = makeIDList(2);
-    this.clone=function(){
-        var temp=new ExprDefineFunc();
-        temp.contract=this.contract.clone();
-        temp.argumentNames=this.argumentNames.slice(0);
-        if (this.expr != undefined){
-            temp.expr=this.expr.clone();
-        }
-        temp.id=this.id;
-        temp.funcIDList=this.funcIDList.slice(0);
-        return temp;
-    };
-};
-
-var ExprContract = function(){
-    this.funcName = "";
-    this.selfType = "ExprContract"
-    this.argumentTypes = [undefined];
-    this.outputType = undefined;
-    this.id = makeID();
-    this.funcIDList=makeIDList(2);
-    this.clone=function(){
-        var temp=new ExprContract();
-        temp.funcName=this.funcName;
-        temp.argumentTypes=this.argumentTypes.slice(0);
-        temp.funcIDList=this.funcIDList.slice(0);
-        temp.outputType=this.outputType;
-        temp.id=this.id;
-        return temp;
-    };
-};
-
-/*
-  Constucts the define variable block given a name (string), an expression which is an expression 
-  object, and an output type
-
-  (define x 3) =>
-  ExprDefineConst("x", ExprNumber(3), "Numbers")
-
-  (define y (+ 2 x)) =>
-  ExprDefineConst("y", (ExprApp("+", [ExprNumber("2"), ExprConst("x")))
-*/
-var ExprDefineConst = function(){
-
-    this.constName = undefined;
-    this.selfType="ExprDefineConst";
-    this.expr = undefined;
-    this.outputType = undefined; //MAKE SURE THIS WILL BE DEFINED!!!!
-    this.id = makeID();
-    this.funcIDList = makeIDList(1);
-    this.clone=function(){
-        var temp=new ExprDefineConst();
-        temp.constName=this.constName;
-        if (this.expr != undefined){
-            temp.expr=this.expr.clone();
-        }
-        temp.outputType=this.outputType;
-        temp.id=this.id;
-        temp.funcIDList=this.funcIDList.slice(0);
-        return temp;
-    };
-};
-
-/*
-  Returns true if the object is a literal or constant, false otherwise.
-*/
-function isLiteral (obj){
-    return (
-        obj instanceof ExprString ||
-	    obj instanceof ExprNumber ||
-	    obj instanceof ExprBoolean ||
-	    obj instanceof ExprConst);
-}
-
-/*
-  Returns true if the object is a definition, false otherwise
-*/
-function isDefine (obj){
-    return (obj instanceof ExprDefineConst || obj instanceof ExprDefineFunc);
-}
-
-
-
-/*
-  Constructs an application of an operator given the name, arguments, and output type. The arguments 
-  is an array of expressions. Value is initially initialized to null.
-  args is a list of objects (one for each argument)
-*/
-var ExprApp = function(funcName){
-    this.funcName = funcName;
-    this.selfType="ExprApp";
-    this.id = makeID();
-    this.funcIDList = makeIDList(functions[containsName(functions, funcName)].input.length);
-    this.args = [];
-    this.outputType = getOutput(funcName);
-    this.clone=function(){
-        var temp=new ExprApp(this.funcName);
-        temp.id=this.id;
-        temp.funcIDList=this.funcIDList.slice(0);
-        for(var i=0;i<this.args.length;i++){
-            if (this.args[i] != undefined){
-                temp.args.push(this.args[i].clone());
-            } else{
-                temp.args.push(undefined);
-            }
-        }
-        temp.outputType=this.outputType;
-        return temp;
-    };
-};
-
-/*
-  Constructs a string given the contents of the string (str).
-  The value of the string is initialized as an empty string "". 
-*/
-var ExprString= function(){
-    this.value="insert string here";
-    this.selfType="ExprString";
-    this.outputType = "Strings";
-    this.id = makeID();
-    this.clone=function(){
-        var temp=new ExprString();
-        temp.value=this.value;
-        temp.outputType=this.outputType;
-        temp.id=this.id;
-        return temp;
-    };
-};
-
-/*
-  Constructs a number given a number num.
-*/
-var ExprNumber = function(){
-    this.value = 20;
-    this.selfType="ExprNumber"
-    this.outputType = "Numbers";
-    this.id = makeID();
-    this.clone=function(){
-        var temp=new ExprNumber();
-        temp.value=this.value;
-        temp.outputType=this.outputType;
-        temp.id=this.id;
-        return temp;
-    };
-};
-
-/*
-  NOTE: Not sure if necessary
-  Constructs a variable object given a name of type string.
-*/
-var ExprConst = function(constName){
-    this.constName = constName;
-    this.selfType="ExprConst"
-    this.outputType = undefined;
-    this.id = makeID();
-    this.clone=function(){
-        var temp=new ExprConst(this.constName);
-        temp.outputType=this.outputType;
-        temp.id=this.id;
-        return temp;
-    };
-
-};
-
-/*
-  Constructs a boolean true or false (else == true)
-*/
-var ExprBoolean = function(value){
-    this.value=value;
-    this.selfType="ExprBoolean";
-    this.outputType = "Booleans";
-    this.id = makeID();
-    this.clone=function(){
-        var temp=new ExprBoolean(this.value);
-        temp.outputType=this.outputType;
-        temp.id=this.id;
-        return temp;
-    };
-};
-
-/*
-  Constructs a tuple of boolean and answer to use in a cond expression
-*/
-var ExprBoolAnswer=function(){
-    this.bool = undefined;
-    this.answer = undefined;
-    this.selfType="ExprBoolAnswer";
-    this.outputType = undefined;
-    this.id = makeID();
-    this.funcIDList = makeIDList(2);
-    this.clone=function(){
-        var temp=new ExprBoolAnswer();
-        if (this.bool != undefined){
-            temp.bool=this.bool.clone();
-        }
-        if (this.answer != undefined){
-            temp.answer=this.answer.clone();
-        }
-        temp.outputType=this.outputType;
-        temp.id=this.id;
-        temp.funcIDList=this.funcIDList.slice(0);
-        return temp;
-    };
-};
-
-
-/*
-  Constructs a conditional statement given a list of tuples, formatted: (expr, expr)
-  The first expression has to be a boolean
-
-  (cond
-  [(true) 2]
-  [(false) 1]
-  ) =>
-  ExprCond(list1)
-  list1 = [ExprBoolAnswer(ExprBoolean(true),ExprNumber(2)).ExprBoolAnswer(ExprBoolean(False),ExprNumber(1))]
-*/
-var ExprCond = function(){
-    this.listOfBooleanAnswer=[new ExprBoolAnswer()];
-    this.selfType="ExprCond";
-    this.outputType = undefined;
-    this.id = makeID();
-    this.clone=function(){
-        var temp=new ExprCond();
-        for(var i=0;i<this.listOfBooleanAnswer.length;i++){
-            temp.listOfBooleanAnswer[i]=this.listOfBooleanAnswer[i].clone();
-        }
-        temp.outputType=this.outputType;
-        temp.id=this.id;
-        return temp;
-    };
-};
-
-
-function objectArrayToProgram(JSONArrayObject){
-    ID=0;
-    for(var i=0;i<JSONArrayObject.length;i++){
-        program.push(objectToCodeObject(JSONArrayObject[i]));
-    }
-}
-
-function objectToCodeObject(JSONObject){
-    if(JSONObject==undefined){
-        return undefined;
-    }
-    var curType=JSONObject.selfType;
-    var tempObject;
-    if(curType==="ExprNumber"){
-        tempObject=new ExprNumber();
-        tempObject.value=JSONObject.value;
-    }
-    else if(curType==="ExprString"){
-        tempObject=new ExprString();
-        tempObject.value=JSONObject.value;
-    }
-    else if(curType==="ExprBoolean"){
-        tempObject=new ExprBoolean();
-        tempObject.value=JSONObject.value;
-    }
-    else if(curType==="ExprDefineFunc"){
-        tempObject=new ExprDefineFunc();
-        tempObject.argumentNames=JSONObject.argumentNames.slice(0);
-        tempObject.funcIDList=makeIDList(JSONObject.funcIDList.length)
-        tempObject.expr=objectToCodeObject(JSONObject.expr);
-        tempObject.contract=objectToCodeObject(JSONObject.contract);
-    }
-    else if(curType==="ExprContract"){
-        tempObject=new ExprContract();
-        tempObject.funcName=JSONObject.funcName;
-        tempObject.funcIDList=makeIDList(JSONObject.funcIDList.length)
-        tempObject.argumentTypes=JSONObject.argumentTypes.slice(0);
-        tempObject.outputType=JSONObject.outputType;
-
-    }
-    else if(curType==="ExprDefineConst"){
-        tempObject=new ExprDefineConst();
-        tempObject.constName=JSONObject.constName;
-        tempObject.expr=objectToCodeObject(JSONObject.expr);
-        tempObject.outputType=JSONObject.outputType;
-    }
-    else if(curType==="ExprApp"){
-        tempObject=new ExprApp(JSONObject.funcName);
-        for(var j=0;j<JSONObject.args.length;j++){
-            tempObject.args[j]=objectToCodeObject(JSONObject.args[j]);
-        }
-    }
-    else if(curType==="ExprConst"){
-        tempObject=new ExprConst(JSONObject.constName);
-        tempObject.outputType=JSONObject.outputType
-    }
-    else if(curType==="ExprBoolAnswer"){
-        tempObject=new ExprBoolAnswer();
-        tempObject.bool=objectToCodeObject(JSONObject.bool);
-        tempObject.answer=objectToCodeObject(JSONObject.answer);
-        tempObject.outputType=JSONObject.outputType;
-    }
-    else if(curType==="ExprCond"){
-        tempObject=new ExprCond();
-        for(var j=0;j<JSONObject.listOfBooleanAnswer.length;j++){
-            tempObject.listOfBooleanAnswer[j]=objectToCodeObject(JSONObject.listOfBooleanAnswer[j]);
-        }
-        tempObject.outputType=JSONObject.outputType;
-    }
-    return tempObject;
-};
-
-
-//Functions is an array of objects containing a name, tuples of type and name corresponding to their inputs and an output type
-var functions=[];
-functions[0]={};
-functions[0].name="+";
-functions[0].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
-functions[0].output="Numbers";
-functions[1]={};
-functions[1].name="-";
-functions[1].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
-functions[1].output="Numbers";
-functions[2]={};
-functions[2].name="*";
-functions[2].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
-functions[2].output="Numbers";
-functions[3]={};
-functions[3].name="/";
-functions[3].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
-functions[3].output="Numbers";
-functions[4]={};
-functions[4].name="remainder";
-functions[4].input=[{type:"Numbers",name:"Dividend"},{type:"Numbers",name:"Divisor"}];
-functions[4].output="Numbers";
-functions[5]={};
-functions[5].name="sqrt";
-functions[5].input=[{type:"Numbers",name:"Number"}];
-functions[5].output="Numbers";
-functions[6]={};
-functions[6].name="sqr";
-functions[6].input=[{type:"Numbers",name:"Number"}];
-functions[6].output="Numbers";
-functions[7]={};
-functions[7].name="expt";
-functions[7].input=[{type:"Numbers",name:"Base"},{type:"Numbers",name:"Exponent"}];
-functions[7].output="Numbers";
-functions[8]={};
-functions[8].name="=";
-functions[8].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
-functions[8].output="Booleans";
-functions[9]={};
-functions[9].name=">";
-functions[9].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
-functions[9].output="Booleans";
-functions[10]={};
-functions[10].name="<";
-functions[10].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
-functions[10].output="Booleans";
-functions[11]={};
-functions[11].name="<=";
-functions[11].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
-functions[11].output="Booleans";
-functions[12]={};
-functions[12].name=">=";
-functions[12].input=[{type:"Numbers",name:"Number"},{type:"Numbers",name:"Number"}];
-functions[12].output="Booleans";
-functions[13]={};
-functions[13].name="even?";
-functions[13].input=[{type:"Numbers",name:"Number"}];
-functions[13].output="Booleans";
-functions[14]={};
-functions[14].name="odd?";
-functions[14].input=[{type:"Numbers",name:"Number"}];
-functions[14].output="Booleans";
-functions[15]={};
-functions[15].name="string-append";
-functions[15].input=[{type:"Strings",name:"String"},{type:"Strings",name:"String"}];
-functions[15].output="Strings";
-functions[16]={};
-functions[16].name="string-length";
-functions[16].input=[{type:"Strings",name:"String"}];
-functions[16].output="Numbers";
-functions[17]={};
-functions[17].name="string=?";
-functions[17].input=[{type:"Strings",name:"String"},{type:"Strings",name:"String"}];
-functions[17].output="Booleans";
-functions[18]={};
-functions[18].name="and";
-functions[18].input=[{type:"Booleans",name:"Boolean"},{type:"Booleans",name:"Boolean"}];
-functions[18].output="Booleans";
-functions[19]={};
-functions[19].name="or";
-functions[19].input=[{type:"Booleans",name:"Boolean"},{type:"Booleans",name:"Boolean"}];
-functions[19].output="Booleans";
-functions[20]={};
-functions[20].name="not";
-functions[20].input=[{type:"Booleans",name:"Boolean"}];
-functions[20].output="Booleans";
-functions[21]={};
-functions[21].name="rectangle";
-functions[21].input=[{type:"Numbers",name:"Width"},{type:"Numbers",name:"Height"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"}];
-functions[21].output="Images";
-functions[22]={};
-functions[22].name="circle";
-functions[22].input=[{type:"Numbers",name:"Radius"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"}];
-functions[22].output="Images";
-functions[23]={};
-functions[23].name="triangle";
-functions[23].input=[{type:"Numbers",name:"Length"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"}];
-functions[23].output="Images";
-functions[24]={};
-functions[24].name="ellipse";
-functions[24].input=[{type:"Numbers",name:"A"},{type:"Numbers",name:"B"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"}];
-functions[24].output="Images";
-functions[25]={};
-functions[25].name="star";
-functions[25].input=[{type:"Numbers",name:"Side-Length"}, {type:"Strings", name:"Outline"}, {type:"Strings",name:"Color"}];
-functions[25].output="Images";
-functions[26]={};
-functions[26].name="scale";
-functions[26].input=[{type:"Numbers",name:"Multiple"},{type:"Images",name:"Image"}];
-functions[26].output="Images";
-functions[27]={};
-functions[27].name="rotate";
-functions[27].input=[{type:"Numbers",name:"Degrees"},{type:"Images",name:"Image"}];
-functions[27].output="Images";
-functions[28]={};
-functions[28].name="place-image";
-functions[28].input=[{type:"Images",name:"Image"}, {type:"Numbers",name:"x"},{type:"Numbers",name:"y"},{type:"Images",name:"Background"}];
-functions[28].output="Images";
-
-var initFunctions=functions.length;
-//constants is an array of user defined variables containing their name and type
-var constants=[];
-/*
-userFunctions is an array of user defined functions in the form of ExprDefineConst and xprDefineFunc
-*/
-var userFunctions = [];
-var initConstants=constants.length;
-
-//restricted contains a list of key words in racket that we aren't allowing the user to redefine
-var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map","let","local"];
-
-//pre-defined and user-defined types
-var types=["Numbers","Strings","Booleans","Images"];
-
-//Colors is an object containing kv pairs of type to color
-var colors={};
-colors.Numbers="#33CCFF";
-colors.Strings="#FFA500";
-colors.Images="#66FF33";
-colors.Booleans="#CC33FF";
-colors.Define="#FFFFFF";
-colors.Expressions="#FFFFFF";
-colors.Constants="#FFFFFF";
-
-/*
-  historyarr stores the program/storage state. Updated when the user changes something about the program (i.e.
-  adds a block, moves a block, moves something to storage, etc.)
-
-  historyarr is an array of objects in which the first element of the object is the program state and the second
-  is the storage state
-*/
-var historyarr = [];
-
-
-/*
-  addToHistory takes in a program state and adds it to history while setting the future array 
-  (connected to the redo button) to an empty array
-*/
-var addToHistory = function(programState, storageState) {
-    historyarr.push({program: programState, storage: storageState});
-    $("#undoButton").removeAttr('disabled');
-    future = [];
-};
-
-
-/*
-  future is an array of the program states and storage states. Updated when the user undos something.
-*/
-var future = [];
-
-/*
-  program is an array of makeDefineFunc/makeDefineVar/Expressions that make up the user's program
-  on the screen.
-*/
-var program = [];
-
-
-/*
-  storageProgram stores the state of the stroage div
-*/
-var storageProgram = [];
-
-
-/*====================================================================================
-  ___ _     _          _  __   __        _      _    _        
-  / __| |___| |__  __ _| | \ \ / /_ _ _ _(_)__ _| |__| |___ ___
-  | (_ | / _ \ '_ \/ _` | |  \ V / _` | '_| / _` | '_ \ / -_|_-<
-  \___|_\___/_.__/\__,_|_| _ \_/\__,_|_| |_\__,_|_.__/_\___/__/
-  / _|___  | __|  _ _ _  __| |_(_)___ _ _  ___                  
-  > _|_ _| | _| || | ' \/ _|  _| / _ \ ' \(_-<                  
-  \_____|  |_| \_,_|_||_\__|\__|_\___/_||_/__/                  
-  
-  =====================================================================================*/
-
-// These variables store what the height and width of the code div should be
-var contentHeight;
-var contentWidth;
-// Which Drawer type is currently being displayed
-var activated = [];
-// which text block in the #code div is currently being focused
-var focused=null;
-var initvalue=null;
-// ID that matches together a code object and an HTML element
-var ID =0;
-
-var numberofvalidations=0;
-var errorVal=false;
-
-
-//resizes code div when the window is resized
-function onResize(){
-    contentHeight = $(window).height() - $("#header").height();
-    contentWidth = $(window).width();
-    $("#content").height(contentHeight);
-    $("#graybox").height($(window).height());
-    $("#graybox").width($(window).width());
-    $("#content").width(contentWidth);
-    $("#code").height(contentHeight);
-    $("#code").width(contentWidth - $("#Drawer").width());
-    $("#List").height(contentHeight - 30);
-    $("#List").width($("#code").width() - 55);
-    $("#options").height(contentHeight - $("#storage").height());
-//    resizeStorage();
-}
-
-var resizeStorage = function() {
-    $("#storagePopup").width($("#code").width()-$("#Drawers").width() - 300);
-    $("#storagePopup").height($("#code").height() - 100);
-};
-
-/*
-removeFromStorageOnClick takes in a jquery selection (jQuerySelection) and adds a function to it
-such that when it's double clicked, it gets removed from storagePopup div and gets added
-to the end of the sortable #List
-*/
-var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
-    $(jQuerySelection).dblclick(function() {
-	var index = $("#storagePopup li").index(jQuerySelection);
-	$("#List").append("<li>" + html + "</li>");
-	program.push(codeObject);
-	addDroppableFeature($("#List li:last").find(('.droppable')));
-	storageProgram.splice(index, 1);
-	$(jQuerySelection).remove();
-    });
-};
-
-$(document).ready(function(){
-    //When the window is resized, the height of the width of the code div changes
-    $(window).resize(onResize);
-
-
-    //draws drawers when the page is loaded
-    makeDrawers(functions,constants);
-    onResize();
-    // activated is initially set to "Numbers"
-    // activated = $("#options #Numbers");
-    // activated.css("visibility", "visible");
-    /*
-      adds a stylesheet to <head> such that blocks can be colored according to their type
-    */
-    renderTypeColors();
-    
-    /*
-      storage pops up when clicked
-    */
-    $("#storage").click(function() {
-	$("#storagePopup").css('visibility','visible');
-//	$("#graybox").css('visibility','visible').fadeIn('slow');;
-    });
-
-    $("#closestorage").click(function() {
-	$("#storagePopup").css('visibility','hidden');
-//	$("#graybox").css('visibility','hidden');
-    });
-
-    /*
-      sets focus equal to the input that is focused. 
-    */
-    $("#List input").live('focus',function(e){
-        var toContinue=formValidation(e);
-        focused=$(this);
-        initvalue=focused.value;
-        tempProgram=cloneProgram(program);
-        return toContinue;
-    });
-
-    
-    $(document.body).live('mousedown', function(e){
-        return formValidation(e)
-    });
-
-    //Sets undo and redo buttons to disabled on startup
-    $("#undoButton").attr('disabled','disabled');
-    $("#redoButton").attr('disabled','disabled');
-
-    /*
-      Binds undo functionality with undo button
-    */
-    $("#undoButton").bind('click', function(){
-        if (historyarr.length !== 0){
-	    future.unshift({program: cloneProgram(program), storage: cloneProgram(storageProgram)});
-	    $("#redoButton").removeAttr('disabled');
-	    var x = historyarr.pop();
-	    program = x.program;
-	    storageProgram = x.storage;
-	    renderProgram();
-	    if (historyarr.length === 0){
-		$(this).attr('disabled','disabled');
-	    }
-        }
-    });
-
-
-    /*
-      Binds redo functionality with redo button
-    */
-    $("#redoButton").bind('click', function(){
-        if (future.length !== 0){
-	    historyarr.push({program: cloneProgram(program), storage: cloneProgram(storageProgram)});
-	    var x = future.shift();
-	    program = x.program;
-	    storageProgram = x.storage;
-	    renderProgram();
-	    if (future.length === 0){
-		$("#redoButton").attr('disabled','disabled');
-	    }
-        }
-        $("#undoButton").removeAttr('disabled');
-    });
-
-    $("#saveButton").bind('click',function(){
-        if(typeof(Storage)!=="undefined"){
-            var valid=true;
-            var confirmed=true;
-            var saveName=prompt("Please enter a name to which to save your file.");
-            if(saveName==undefined){
-                return;
-            }
-            if(saveName===""){
-                valid=false;
-            }
-            else if(localStorage.getItem(saveName)!=undefined){
-                confirmed=confirm("There already exists a file with this name.  Would you like to overwrite?");
-            }
-            while(!valid || !confirmed){
-                if(!valid){
-                    saveName=prompt("You have failed to enter anything as your file name.  To cancel, please hit the cancel button.");
-                    valid=true;
-                    confirmed=true;
-                }
-                else if(!confirmed){
-                    saveName=prompt("Please enter a name to which to save your file.");
-                    valid=true;
-                    confirmed=true;
-                }
-                if(saveName===""){
-                    valid=false;
-                }
-                else if(saveName==undefined){
-                    return;
-                }
-                else if(localStorage.getItem(saveName)!=undefined){
-                    confirmed=confirm("There already exists a file with this name.  Would you like to overwrite?");
-                }
-            }
-            //save id, program... maybe history, future, trash
-            localStorage[saveName]=JSON.stringify(cloneProgram(program));
-        }
-        else{
-            alert("I am sorry but your browser does not support storage.");
-        }
-    }) ;
-
-    $("#loadButton").bind('click',function(){
-        var loadName=prompt("Please enter the name of the file you wish to load.  Your current program will be removed from screen.");
-        if(loadName==undefined){
-            return;
-        }
-        else if(localStorage.getItem(loadName)==undefined){
-            alert("There was no local file by that name.");
-            return;
-        }
-        else{
-            var programString=localStorage.getItem(loadName);
-            program=[];
-            objectArrayToProgram(JSON.parse(programString));
-            //do I change the history and trash? overwrite it?
-            renderProgram(createProgramHTML(program));
-            historyarr=[];
-            future=[];
-            $("#undoButton").attr('disabled','disabled');
-            $("#redoButton").attr('disabled','disabled');
-        }
-    });
-
-    $("#exportButton").bind('click',function(){
-        alert("Here is the racket representation of the current program:\n\n"+parseProgram(program));
-    });
-
-
-    $(".addCond").live('click',function(){
-        addToHistory(cloneProgram(program), cloneProgram(storageProgram));
-        searchForIndex($(this).closest('table').attr('id'),program).listOfBooleanAnswer.push(new ExprBoolAnswer());
-        renderProgram(createProgramHTML())
-    });
-
-    $(".removeCond").live('click',function(){
-        var listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),program).listOfBooleanAnswer
-        if(listOfTuples.length!=1){
-	    addToHistory(cloneProgram(program), cloneProgram(storageProgram));
-	    for(var i=0;i<listOfTuples.length;i++){
-                if(listOfTuples[i].id===$(this).closest('table').attr('id')){
-		    listOfTuples.splice(i,1)
-                }
-	    }  
-	    renderProgram(createProgramHTML());
-        }    
-    });
-});
-
-/*
-allows user to add argument to contract in define block
-*/
-$(".addArgument").live('click',function(){
-    addToHistory(cloneProgram(program), cloneProgram(storageProgram));
-    var defineExpr=searchForIndex($(this).closest('table').attr('id'),userFunctions)
-    defineExpr.funcIDList.push(makeID())
-    defineExpr.contract.funcIDList.push(makeID())
-    defineExpr.argumentNames.push("");
-    $(this).closest('th').after(makeDefineArgInContract(defineExpr.contract.funcIDList[defineExpr.contract.funcIDList.length - 1], defineExpr));
-//    renderProgram(createProgramHTML());
-});
 
 function formValidation(e){
     var toContinue=true;
@@ -1345,10 +1383,10 @@ $("#functionButton").click(function() {
 });
 
 /*
-makeDefineArgInContract creates a new selection and plus button for the contract part of define
+makeContractDropdown creates a new selection and plus button for the contract part of define
 */
-function makeDefineArgInContract(funcIDListID, defineExpr) {
-    return "<th>" + generateTypeDrop(funcIDListID, defineExpr)  + "</th><th> <button class=\"addArgument\">+</button> </th>";
+function makeContractDropdown(funcIDListID, defineExpr) {
+    return "<th>" + generateTypeDrop(funcIDListID, defineExpr)  + "</th><th class=\"buttonHolder\"></th>";
 }
 /*
 makeDefinePopup creates a new ExprDefine
@@ -1358,7 +1396,7 @@ function makeDefinePopup(codeObject) {
     var popupHTML = "<div class=\"definePopup\"><table  class=\"DefineFun Define\" id=\"" + codeObject.id+ "\"><tr><button class=\"closeFunctionButton\"></tr>"
 
     //CONTRACT name
-    popupHTML += "<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+")\" ";
+    popupHTML += "<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+",$(this))\" ";
     if(codeObject.contract.funcName!=undefined){
         popupHTML += "value=\""+encode(codeObject.contract.funcName)+"\"";
     }
@@ -1366,7 +1404,7 @@ function makeDefinePopup(codeObject) {
 
     //CONTRACT args
     for(i=0; i<codeObject.argumentNames.length; i++){
-        popupHTML += " <th>"+generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject)+"</th>";
+        popupHTML += " <th>"+generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject)+"</th><th class=\"buttonHolder\"></th>";
     }
     popupHTML += "<th> <button class=\"addArgument\">+</button> </th>";
 
@@ -1375,7 +1413,7 @@ function makeDefinePopup(codeObject) {
 
     //DEFINE BLOCK NAME
     popupHTML+="<tr><th>define</th>";
-    popupHTML += "<th class=\"expr\"> <input class=\"definitionName\" onkeyup=\"sync("+codeObject.id+")\" ";
+    popupHTML += "<th class=\"expr\"> <input class=\"definitionName\" onkeyup=\"sync("+codeObject.id+",$(this))\" ";
     if(codeObject.contract.funcName!=undefined){
         popupHTML += "value=\""+encode(codeObject.contract.funcName)+"\"";
     }
@@ -1387,13 +1425,16 @@ function makeDefinePopup(codeObject) {
         if(codeObject.contract.argumentTypes[i]!=undefined){
 	    popupHTML+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
         }
-        popupHTML+="><input style=\"width:70px;\" id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+")\" class=\"argName\" ";
+        popupHTML+="><input style=\"width:70px;\" id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+",$(this))\"  disabled=\"disabled\" class=\"argName\" ";
         if(codeObject.argumentNames[i]!=undefined){
 	    popupHTML+="value=\""+encode(codeObject.argumentNames[i])+"\"";
         }
-        popupHTML+=" /></th><th>";
+        popupHTML+=" /></th>";
     }
     popupHTML+="<th></th>";
+
+    //PURPOSE
+    popupHTML += "<tr><th colspan=\"8\">purpose: <input width=\"700px\" class=\"contractPurpose\" value=\"\"></th></tr>";
 
     //DEFINE EXPRESSION
     popupHTML+="<tr><th ";
@@ -1406,7 +1447,7 @@ function makeDefinePopup(codeObject) {
         popupHTML+="</th>";
     }
     else{
-        popupHTML+="name=\"Expr\" class=\"functionExpr droppable expr\" id="+codeObject.funcIDList[0]+">Expr</th>";
+        popupHTML+="name=\"Expr\" class=\"functionExpr droppable expr\" id="+codeObject.funcIDList[0]+" colspan=\"6\">Expr</th>";
     }
 
 
@@ -1490,8 +1531,49 @@ function decode(string){
         .replace('&gt;',">");
 }
 
+/*
+changeName changes the name of a define block
 
-function sync(objectID){
+@param defineExpr - the ExprDefineFunc you want to change
+@param newName - (string) the name you want to give to defineExpr
+@return void. changes a ExprDefineFunc
+*/
+function changeName(defineExpr, newName){
+    defineExpr.argument = newName;
+}
+
+/*
+changeArgName changes the name of an argument in a define block
+
+@param defineExpr - the ExprDefinFunc you want to change
+@param newName - (string) the name you want to give to defineExpr
+@param argIndex - (int) the index of the argument in relation to the other arguments
+@return void. changes a ExprDefineFunc
+*/
+function changeArgName(defineExpr, newName, argIndex){
+    defineExpr.argumentNames[argIndex] = newName;
+}
+
+/*
+contains determines whether or not an element already exists within an array
+
+@param elm - an element
+@param arr - an array of the type of element
+@return - boolean. true if it's repeated, false otherwise
+*/
+function contains(elm, arr) {
+    for (var i = 0; i < arr.length; i++){
+	if (arr[i] === elm){
+	    return true;
+	}
+    }
+    return false;
+}
+
+/*
+gets called on keyup of input
+*/
+function sync(objectID, $input){
     var block=searchForIndex(objectID+"",program);
     if (block == undefined){
 	block = searchForIndex(objectID+"", userFunctions);
@@ -1506,6 +1588,22 @@ function sync(objectID){
         DOMBlock.find('.constName').attr('value',DOMBlock.find('.constName').attr('value'));
     }
     else if(block instanceof ExprDefineFunc){
+	//updateGUI
+	var newInput = $input.attr('value') + "";
+	if($input.hasClass('contractName')){
+	     $("#" + objectID).find('.definitionName').first().attr('value',(newInput));
+	    changeName(block, newInput);
+	} 
+	else if ($input.hasClass('definitionName')){
+	    $("#" + objectID).find('.contractName').first().attr('value',(newInput));
+	    changeName(block, newInput);
+	}
+	else if ($input.hasClass('argName')) {
+	    changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList));
+	}
+    }
+
+/*
         var prevName=block.contract.funcName;
         if(!(prevName===DOMBlock.find('.contractName').attr('value') && prevName===DOMBlock.find('.definitionName').attr('value'))){
 	    if(DOMBlock.find('.contractName').attr('value')===prevName){
@@ -1519,20 +1617,20 @@ function sync(objectID){
                 DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
                 DOMBlock.find('.contractName').attr('value',DOMBlock.find('.contractName').attr('value'));
 	    }
-        }
-        var i=0;
+        }*/
+      /*  var i=0;
         DOMBlock.find('.argName').each(function(){
 
 	    block.argumentNames[i]=$(this).attr('value');
 	    $(this).attr('value',$(this).attr('value'));
 	    if($(this).attr('value') !== ""){
-                addDraggableToArgument($(this).closest(".argument"),block,$(this).attr('value'));
+		//         ddDraggableToArgument($(this).closest(".argument"),block,$(this).attr('value'));
 	    } else{               
                 $(this).closest(".argument").removeClass('ui-draggable');
 	    }
 	    i++;
         });
-    }
+    }*/
     //    else{
     //   throw new Error("sync: block type not found", block);
     //  }
@@ -1731,13 +1829,13 @@ function createBooleanBlock(codeObject,constantEnvironment,functionEnvironment){
 }
 
 function createNumBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input Numbers\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\"";
+    var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input Numbers\" onkeyup=\"sync("+codeObject.id+", $(this))\" style=\"width:50px;\"";
     block+=" value=\""+codeObject.value+"\">";
     return block + "</th></tr></table>";
 }
 
 function createStringBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"</th><th><input class=\"input Strings\" onkeyup=\"sync("+codeObject.id+")\" class=\"Strings\"";
+    var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"</th><th><input class=\"input Strings\" onkeyup=\"sync("+codeObject.id+", $(this))\" class=\"Strings\"";
     block += " value=\"" + encode(codeObject.value) + "\">";
     return block + "</th><th>\"</th></tr></table>";
 }
@@ -1776,39 +1874,44 @@ function generateTypeDrop(newID,codeObject){
         HTML+=">"+ encode(types[i]) +"</option>";
     }
     HTML+="</select>";
-    HTML+= (typeIndex!==-1 && codeObject.contract.funcIDList.length !== 2) ? "<button onclick=\"deleteArg("+newID+","+codeObject.id+")\">x</button>" : "";
+/*    HTML+= (typeIndex!==-1 && codeObject.contract.funcIDList.length !== 2) ? "<button class=\"deleteArg\" onclick=\"deleteArg("+newID+","+codeObject.id+")\">x</button>" : "";*/
     return HTML;
 }
 
 /*
 changeType links the contract with the arguments in the actual define block
 
-@param curValue - a string representing the type that was selected by the user within the contract
-@param selectID - a string that is the ID of the code object representing the drop-down for selecting
+@param curValue - (string) the type that was selected by the user within the contract
+@param selectID - (string)the ID of the code object representing the drop-down for selecting
 types within the contract
-@param codeObjectID - a string representing the ID of the code object representing the define block
+@param codeObjectID - (string) ID of the code object representing the define block
 */
 function changeType(curValue,selectID,defineExprID){
     selectID+="";
     var defineExpr=searchForIndex(defineExprID+"",userFunctions); 
 
-    //columnIndex represents the index at which the current drop-down is in the table
-    var columnIndex = $("#"+selectID).closest('th').prevAll().length;
+    var funcIDIndex = getElmIndexInArray(selectID, defineExpr.contract.funcIDList);
+    var argBlockID = defineExpr.funcIDList[funcIDIndex];
 
     //modifiedblock refers to the GUI element whose background color will change
-    var modifiedblock = undefined;
-
-    //modifying the GUI
-    if (columnIndex >= 3 + defineExpr.contract.funcIDList.length){
-	modifiedblock =  $("#" + defineExprID+ " tr:eq(3) th:eq(0)");
-    } else{
-	modifiedblock = $("#" + defineExprID + " tr:eq(2) th:eq(" + columnIndex + ")");
-    }
-    
+    var modifiedblock =  $("#" + argBlockID).closest('th');
+      
     if (modifiedblock != undefined){
+	deleteTypeClass(modifiedblock);
 	if(curValue !== "Type"){
-	    deleteTypeClass(modifiedblock);
 	    modifiedblock.addClass(decode(curValue));
+	    if (funcIDIndex === 0){ //add droppable to expr
+		addDroppableToDefineExpr($(modifiedblock));
+	    } 
+	    else { //add typeable to arg
+		$(modifiedblock).find('input').attr('disabled',false);
+	    }
+	}
+	else if (curValue === "Type" && funcIDIndex === 0){//remove droppable from expr
+
+	}
+	else if (curValue === "Type"){ //remove typeable from arg
+	    $(modifiedblock).find('input').attr('disabled', true);
 	}
     } else {
 	throw new Error('changeType: modifiedblock is not defined')
@@ -1826,6 +1929,60 @@ function changeType(curValue,selectID,defineExprID){
     }
 }
 
+//adds droppable to define expressions
+function addDroppableToDefineExpr(defineExpr) {
+    $(defineExpr).droppable({
+	tolerance:'pointer',
+	drop:function(event, ui) {
+	    if (carrying != null && programCarrying != null && $(this).children().length === 0){
+		$(this).html(carrying);
+		var defineExpr = searchForIndex($(this).closest('.DefineFun').attr('id'), userFunctions);
+		defineExpr.expr = programCarrying;
+		$(this).find('.droppable').each(function () {
+		    addDroppableWithinDefineExpr($(this));
+		});
+		carrying = null;
+		programCarrying = null;
+	    }
+	}
+    });
+}
+
+//adds droppable to things within define expressions
+function addDroppableWithinDefineExpr(jQuerySelection){
+    $(jQuerySelection).droppable({
+	tolerance:'pointer',
+	drop:function(event, ui){
+	    if (carrying != null && programCarrying != null && $(this).children().length === 0){
+		$(this).html(carrying);
+		setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying,userFunctions);
+		$(this).css('border','none');
+		$(this).find('.droppable').each(function() {
+		    addDroppableWithinDefineExpr($(this));
+		});
+		programCarrying = null;
+		carrying = null;
+	    }
+	}
+    });
+}
+
+/*
+getElmIndexInArray gets the index of elm within the array arr
+
+@param elm - an element within arr
+@param arr - an array of the type of elm
+@return int - (integer) the index of the elm within the array
+*/
+function getElmIndexInArray(elm, arr) {
+    for (var i = 0; i < arr.length; i++){
+	if (arr[i] === elm){
+ 	    return i;
+	}
+    }
+    return -1;
+}
+
 /*
 deleteTypeClass deletes classes that correspond to a type
 
@@ -1840,15 +1997,31 @@ function deleteTypeClass(jQueryElm) {
     }
 }
 
+
 /*
 deleteArg deletes arguments from the contract part of the define block
 
 @param selectID - a string that is the ID of the selection box
 @param codeObjectID - a string that is the ID of the define block that selectID is contained within
 */
-function deleteArg(selectID,codeObjectID){
+function deleteArg(selectID,codeObjectID) {
     selectID+="";
     var codeObject=searchForIndex(codeObjectID+"",userFunctions);
+
+    //updateGUI
+    var selectIndex = getElmIndexInArray(selectID, codeObject.contract.funcIDList);
+    var argBlockID = codeObject.funcIDList[selectIndex];
+    var toDeleteBlock = $("#" + argBlockID).closest('th');
+    var toDeleteTh = toDeleteBlock.next('th');
+    toDeleteBlock.remove();
+    toDeleteTh.remove();
+
+    //update contractGUI
+    var buttons = $("#" + selectID).closest('th').next();
+    buttons.remove();
+    $("#" + selectID).closest('th').remove();
+
+    //update codeObject
     if(codeObject.contract.funcIDList.length>2){
         for(var i=0;i<codeObject.contract.funcIDList.length;i++){
 	    if(selectID===codeObject.contract.funcIDList[i] && i!==0){
@@ -1860,6 +2033,8 @@ function deleteArg(selectID,codeObjectID){
 	    }
         }      
     }
+
+    toggleDeleteButtons(codeObject.funcIDList, codeObject.id, undefined);
 }
 
 
@@ -2003,7 +2178,6 @@ $(function() {
 	    }
         },
         stop: function(event, ui) {
-	   // console.log(carrying);
 	    if (carrying != undefined && programCarrying !=undefined){
                 var replacement = $('<li>').append(carrying);
                 addDroppableFeature(replacement.find(('.droppable')));
@@ -2016,6 +2190,8 @@ $(function() {
                 droppedInDroppableFromList = false;
                 programCarrying = null;
                 carrying = null;
+	    } else {
+		$(ui.item).remove();
 	    }
         },
         receive:function(event,ui){
@@ -2141,17 +2317,22 @@ var makeDrawersDraggable = function(){
 
 /*
   Adds draggable feature to a single argument (jQuerySelection) in defines blocks
-  functionCodeObject is the function from which the argument originates
-  name is a string representing the name of the argument 
+
+  @param jQuerySelection - a $ of what you want to drag
+  @param functionCodeObject is the function from which the argument originates
+  @param name is a string representing the name of the argument 
 */
 var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
-    var parentDefine=searchForIndex(jQuerySelection.closest(".DefineFun").attr("id"),program)
-    for(var i=0;i<parentDefine.argumentNames.length;i++){
-        if(parentDefine.argumentNames[i]==name){
-            var newOutputType=parentDefine.contract.argumentTypes[i];
+    var parentDefine=searchForIndex(jQuerySelection.closest(".DefineFun").attr("id"),userFunctions)
+    var newOutputType;
+    for(var i=1;i<parentDefine.argumentNames.length;i++){
+        if(parentDefine.argumentNames[i]===name){
+            newOutputType=parentDefine.contract.argumentTypes[i-1];
         }
     }
+    console.log(newOutputType);
     if (jQuerySelection != null && newOutputType!=undefined){
+	console.log('adding draggable');
 	$(jQuerySelection).draggable({
 	    start: function(event, ui) {
 		if(!errorVal){
@@ -2177,7 +2358,7 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
 	    connectToSortable:'#options'
 	});
     } else {
-        //throw new Error("addDraggableToArgument: jQuerySelection is null");
+     //   throw new Error("addDraggableToArgument: jQuerySelection is null");
     }
 };
 
