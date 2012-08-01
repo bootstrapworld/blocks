@@ -1851,11 +1851,9 @@ $(function() {
                         tempProgram = cloneProgram(program);
                         carrying = ui.item.html();
                         var index = ui.item.index();
-                        removeOneType(ui.helper);
                         ui.helper.addClass("wired");
                         ui.helper=$(carrying).clone().addClass("wired");
                         ui.helper.addClass("ui-sortable-helper");
-                        removeOneType(ui.helper);
                         console.log(ui.helper);
                         programCarrying = program[index];
                         program.splice(index, 1);
@@ -1928,7 +1926,6 @@ $(function() {
 	start:function(event, ui) {
 	    tempStorageProgram = cloneProgram(storageProgram);
 	    carrying = ui.item.html();
-                        removeOneType(ui.helper);
                 ui.helper.addClass("wired");
                 console.log(ui.helper);
 	    programCarrying = storageProgram[$("#storagePopup li").index(ui.item)];
@@ -2017,7 +2014,6 @@ var makeDrawersDraggable = function(){
 	    programCarrying = makeCodeFromOptions($(this).text());
 	    carrying = createBlock(programCarrying,constants,functions);
         var carryingClass=$(createBlock(programCarrying,constants,functions)).addClass("wired")
-                        removeOneType(carryingClass);
 	    return carryingClass;
         },
         connectToSortable: "#List",
@@ -2042,7 +2038,6 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
 	    start: function(event, ui) {
 		if(!errorVal){
 		    tempProgram = cloneProgram(program);
-                removeOneType(ui.helper);
                 ui.helper.addClass("wired");
                 }
                 else{
@@ -2088,7 +2083,6 @@ var addDraggingFeature = function(jQuerySelection) {
 			    draggedClone = $(this);
 			    programCarrying = searchForIndex($(this).attr("id"), program);
 			    carrying = getHTML($(this));
-                                removeOneType(ui.helper);
                 ui.helper.addClass("wired");
                 console.log(ui.helper);
 			    setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined,program);
@@ -2421,27 +2415,20 @@ function typeInfer(obj){
 function removeErrorMessages(jQuerySelection){
     jQuerySelection.attr("title","");
     jQuerySelection.removeClass("ERROR");
-    jQuerySelection.find("table").each(function(){removeErrorMessages($(this))});
 }
 
 function typeCheck(ArrayofBlocks){
     for(var i=0;i<ArrayofBlocks.length;i++){
         var blockTypeInfer=typeInfer(ArrayofBlocks[i])
-        removeErrorMessages($(document.getElementById(ArrayofBlocks[i].id)));
         //NEED TO FIX THIS
-        removeInferTypes($(document.getElementById(ArrayofBlocks[i].id)));
+        $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeErrorMessages($(this))});
+            $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeInferTypes($(this))});
+            $(document.getElementById(ArrayofBlocks[i].id)).find("th").each(function(){removeInferTypes($(this))});
         createInferTypes(blockTypeInfer.types);
         createErrorMessages(blockTypeInfer.typeErrors);
     }
 }
 
-function removeOneType(jQuerySelection){
-        for(var type in colors){
-        if(colors.hasOwnProperty(type)){
-            jQuerySelection.removeClass(type);
-        }
-    }
-}
 
 function removeInferTypes(jQuerySelection){
     for(var type in colors){
@@ -2452,8 +2439,6 @@ function removeInferTypes(jQuerySelection){
             }
         }
     }
-    jQuerySelection.find("table").each(function(){removeInferTypes($(this))});
-    jQuerySelection.find("th").each(function(){removeInferTypes($(this))});
 
 }
 
