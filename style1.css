@@ -187,4 +187,10 @@ table{
     background-color:white;
 }
 
+.wired{
+    background-color:black !important;
+}
 
+.highlighted{
+    background-color:yellow !important;
+}

@@ -803,6 +803,8 @@ $(document).ready(function(){
     if (e.keyCode == 27) { $("#storagePopup").css('visibility','hidden'); }   // esc
     });
 
+
+
     /*
       sets focus equal to the input that is focused. 
     */
@@ -1849,8 +1851,15 @@ $(function() {
                         tempProgram = cloneProgram(program);
                         carrying = ui.item.html();
                         var index = ui.item.index();
+                        removeOneType(ui.helper);
+                        ui.helper.addClass("wired");
+                        ui.helper=$(carrying).clone().addClass("wired");
+                        ui.helper.addClass("ui-sortable-helper");
+                        removeOneType(ui.helper);
+                        console.log(ui.helper);
                         programCarrying = program[index];
                         program.splice(index, 1);
+                        return ui.helper
 		}
 		    else{
                         event.stopPropagation();
@@ -1865,6 +1874,13 @@ $(function() {
                 } 
 	    }
         },
+        // helper: function(event,ui){
+        //             if (ui.item === null){
+        //         throw new Error("sortable start: ui.item is undefined");
+        // } else {
+        //         $(carrying).addClass("wired")
+        //         return $(carrying);
+        // }},
         stop: function(event, ui) {
 	   // console.log(carrying);
 	    if (carrying != undefined && programCarrying !=undefined){
@@ -1912,6 +1928,9 @@ $(function() {
 	start:function(event, ui) {
 	    tempStorageProgram = cloneProgram(storageProgram);
 	    carrying = ui.item.html();
+                        removeOneType(ui.helper);
+                ui.helper.addClass("wired");
+                console.log(ui.helper);
 	    programCarrying = storageProgram[$("#storagePopup li").index(ui.item)];
 	    storageProgram.splice($("#storagePopup li").index(ui.item), 1);
 	    tempProgram = cloneProgram(program);
@@ -1997,7 +2016,9 @@ var makeDrawersDraggable = function(){
         helper: function(event, ui){
 	    programCarrying = makeCodeFromOptions($(this).text());
 	    carrying = createBlock(programCarrying,constants,functions);
-	    return carrying;
+        var carryingClass=$(createBlock(programCarrying,constants,functions)).addClass("wired")
+                        removeOneType(carryingClass);
+	    return carryingClass;
         },
         connectToSortable: "#List",
 	zIndex:999
@@ -2021,6 +2042,8 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
 	    start: function(event, ui) {
 		if(!errorVal){
 		    tempProgram = cloneProgram(program);
+                removeOneType(ui.helper);
+                ui.helper.addClass("wired");
                 }
                 else{
 		    event.stopPropagation();
@@ -2033,7 +2056,7 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
 	    helper: function(event, ui){
 		programCarrying= new ExprConst(name);
                 programCarrying.outputType=newOutputType;
-		carrying = createBlock(programCarrying, constants.concat(createNewConstants(functionCodeObject)), functions);
+		        carrying = createBlock(programCarrying, constants.concat(createNewConstants(functionCodeObject)), functions);
 		return carrying;
 	    },
 	    stop:function(event, ui){
@@ -2065,6 +2088,9 @@ var addDraggingFeature = function(jQuerySelection) {
 			    draggedClone = $(this);
 			    programCarrying = searchForIndex($(this).attr("id"), program);
 			    carrying = getHTML($(this));
+                                removeOneType(ui.helper);
+                ui.helper.addClass("wired");
+                console.log(ui.helper);
 			    setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined,program);
                         }
                         else{
@@ -2111,6 +2137,7 @@ var addDroppableFeature = function(jQuerySelection) {
 	    // hoverClass:"highlight",
 	    tolerance:"pointer",
 	    greedy:true,
+        hoverClass:"highlighted",
 	    drop: function(event, ui){
                 if ($(this) === undefined){
 		    throw new Error ("addDroppableFeature drop: $(this) is undefined");
@@ -2120,7 +2147,6 @@ var addDroppableFeature = function(jQuerySelection) {
 		          if($(ui.draggable).closest('div').attr('id') === 'code'){
 			         droppedInDroppableFromList = true;
 		          }
-
 		          $(this).html(carrying);
 		          setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying, program);
 		          addDroppableFeature($(this).find('.droppable'));
@@ -2405,6 +2431,14 @@ function typeCheck(ArrayofBlocks){
         removeInferTypes($(document.getElementById(ArrayofBlocks[i].id)));
         createInferTypes(blockTypeInfer.types);
         createErrorMessages(blockTypeInfer.typeErrors);
+    }
+}
+
+function removeOneType(jQuerySelection){
+        for(var type in colors){
+        if(colors.hasOwnProperty(type)){
+            jQuerySelection.removeClass(type);
+        }
     }
 }
 
