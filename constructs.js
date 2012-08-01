@@ -799,6 +799,10 @@ $(document).ready(function(){
 //	$("#graybox").css('visibility','hidden');
     });
 
+    $(document).keyup(function(e) {
+    if (e.keyCode == 27) { $("#storagePopup").css('visibility','hidden'); }   // esc
+    });
+
     /*
       sets focus equal to the input that is focused. 
     */
@@ -964,7 +968,8 @@ function formValidation(e){
         var inputtext=focused.val();
         var codeObject = searchForIndex(focused.closest($("table")).attr("id"),program);
         //NUMBERS
-        if(focused.closest($("table")).hasClass("Numbers")){
+        if(focused.closest($("table")).hasClass("NumBlock")){
+            console.log("Formvalidating numbers")
 	    if(isNaN(Number(inputtext))){
                 toContinue=false;
                 errorVal=true
@@ -1526,11 +1531,11 @@ function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
 
     //CONTRACT ARGUMENTS
     for(i=0;i<codeObject.argumentNames.length;i++){
-        block+=" <th>"+generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject)+"</th>";
+        block+=" <th class=\"ContractType\" id=\""+codeObject.contract.funcIDList[i+1]+"\">"+generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject)+"</th>";
     }
 
     //CONTRACT OUTPUT
-    block+="<th> <button class=\"addArgument\">+</button> </th><th> -> </th><th>"+generateTypeDrop(codeObject.contract.funcIDList[0],codeObject)+"</th></tr>";
+    block+="<th> <button class=\"addArgument\">+</button> </th><th> -> </th><th class=\"ContractType\" id=\""+codeObject.contract.funcIDList[0]+"\">"+generateTypeDrop(codeObject.contract.funcIDList[0],codeObject)+"</th></tr>";
     
     
     block+="<tr><th>define</th>";
@@ -1634,23 +1639,23 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
 }
 
 function createConstantBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"expr " + encode(codeObject.outputType)+"\" " + "id=\""+codeObject.id+"\"><tr><th>"+encode(codeObject.constName)+"</tr>";
+    var block =  "<table class=\"expr ConstBlock" + encode(codeObject.outputType)+"\" " + "id=\""+codeObject.id+"\"><tr><th>"+encode(codeObject.constName)+"</tr>";
     return block + "</table>";
 }
 
 function createBooleanBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"Booleans expr\" " + "id=\""+codeObject.id+"\"><tr><th>"+codeObject.value+"</tr>";
+    var block =  "<table class=\"Booleans BoolBlock expr\" " + "id=\""+codeObject.id+"\"><tr><th>"+codeObject.value+"</tr>";
     return block + "</table>";
 }
 
 function createNumBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input Numbers\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\"";
+    var block =  "<table class=\"Numbers NumBlock expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input Numbers\" onkeyup=\"sync("+codeObject.id+")\" style=\"width:50px;\"";
     block+=" value=\""+codeObject.value+"\">";
     return block + "</th></tr></table>";
 }
 
 function createStringBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"</th><th><input class=\"input Strings\" onkeyup=\"sync("+codeObject.id+")\" class=\"Strings\"";
+    var block =  "<table class=\"Strings StringBlock expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"</th><th><input class=\"input Strings\" onkeyup=\"sync("+codeObject.id+")\" class=\"Strings\"";
     block += " value=\"" + encode(codeObject.value) + "\">";
     return block + "</th><th>\"</th></tr></table>";
 }
@@ -2431,7 +2436,7 @@ function createInferTypes(typeMap){
             id = typeMap[i].rhs.id;
             type = typeMap[i].lhs.elemList[0].type;
         }
-        if(isNaN(type)){
+        if(isNaN(type) && !$(document.getElementById(id)).hasClass("ContractType")){
             $(document.getElementById(id)).addClass(type)
         }
     }
@@ -2561,7 +2566,7 @@ function buildConstraints(obj, parentId){
             constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
         }
         if(obj.outputType !== undefined){
-                constraints = constraints.concat([new constraint(lhs, new elemType(obj.outpuType), obj.id)]);
+                constraints = constraints.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
         }
         if(containsName(constants, obj.constName) === -1 && containsName(functions, obj.constName)===-1){
             errors = errors.concat([new error(obj.id, "The variable or constant " + obj.constName + " does not exist.")]);
@@ -2831,7 +2836,7 @@ function getVariables(name, objArr){
                 curr = objArr.pop();
             if(curr === undefined){
                                 //do nothing
-                        }else if(curr instanceof ExprConst && curr.constName === name){
+            }else if(curr instanceof ExprConst && curr.constName === name){
                 idArr.push(curr.id);
             }else if(curr instanceof ExprDefineFunc){
                 for(i=0; i<curr.argumentNames.length; i++){
