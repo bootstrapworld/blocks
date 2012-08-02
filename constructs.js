@@ -2336,8 +2336,8 @@ $(function() {
 
 	    } else {
 		$(ui.item).remove();
-                typeCheck(program);
 	    }
+        typeCheck(program);
         },
         receive:function(event,ui){
 	    if(ui.item === null){
@@ -2452,7 +2452,7 @@ var makeDrawersDraggable = function(){
 	    }
         },
         stop: function(event,ui){
-                    
+          typeCheck(program)
         },
         helper: function(event, ui){
 	    programCarrying = makeCodeFromOptions($(this).text());
@@ -2566,11 +2566,8 @@ var addDroppableFeature = function(jQuerySelection) {
 	    greedy:true,
       over: function(event,ui){
           if(programCarrying!=undefined && carrying!=undefined){
-            //console.log(programCarrying)
-            console.log(flattenAllFuncIDLists(programCarrying))
                   if(flattenAllFuncIDLists(programCarrying).indexOf($(this).attr("id"))===-1){
                     $(this).addClass("highlighted")
-                      console.log($(this).attr("id"))
                   }
           }
       },
@@ -2592,7 +2589,7 @@ var addDroppableFeature = function(jQuerySelection) {
 		                $(this).css("border", "none");
                     $(this).removeClass("highlighted");
 		                ui.draggable.detach();
-                    typeCheck(program)
+                    typeCheck(program);
                 }
 	           }
         });
@@ -2888,9 +2885,11 @@ function typeCheck(ArrayofBlocks){
     for(var i=0;i<ArrayofBlocks.length;i++){
         var blockTypeInfer=typeInfer(ArrayofBlocks[i])
         //NEED TO FIX THIS
+        removeErrorMessages($(document.getElementById(ArrayofBlocks[i].id)));
+        removeInferTypes($(document.getElementById(ArrayofBlocks[i].id)));
         $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeErrorMessages($(this))});
-            $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeInferTypes($(this))});
-            $(document.getElementById(ArrayofBlocks[i].id)).find("th").each(function(){removeInferTypes($(this))});
+        $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeInferTypes($(this))});
+        $(document.getElementById(ArrayofBlocks[i].id)).find("th").each(function(){removeInferTypes($(this))});
         createInferTypes(blockTypeInfer.types);
         createErrorMessages(blockTypeInfer.typeErrors);
     }
