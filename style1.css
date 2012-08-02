@@ -1,9 +1,9 @@
 
 body{
-    background-color:#000;
+    background: steelblue url('canvas.jpg');
     font-family:Arial;
     font-size:11pt;
-    position:fixed;
+    position:absolute;
     left:0px;
     margin: 0px;
     -webkit-user-select: text;
@@ -12,11 +12,13 @@ body{
     -khtml-user-select: none;
     user-select: none;
     list-style:none;
+    overflow:hidden;
 }
 
 input,select,textarea{
     -webkit-user-select: text;
 }
+
 
 
 /*****************************
@@ -29,7 +31,8 @@ GENERAL
     top:0px;
     width:100%;
     height:50px;
-    background-color:gray;
+    background:black;
+    color: white;
     padding:0px;
 }
 
@@ -38,97 +41,96 @@ GENERAL
     top:50px;
     left:0px;
     padding:0px;
- }
+}
 
 #Drawer{
-     position:fixed;
-     left:0px;
-     background-color:darkslateblue;
-     height: 100%;
-     width: 200px;
- }
+    position:absolute;
+    left:0px;
+    height: 100%;
+    width: 200px;
+    background: #555;
+    border-right: 3px solid black;
+}
+
 
 #code{
-     position:absolute;
-     top:0px;
-     left:200px;
-     overflow:auto;
- }
+    position:absolute;
+    top:0px;
+    left:200px;
+}
 
- /*****************************
-  CODE / HEADER
-  *****************************/
+
+
+/*****************************
+ CODE / HEADER
+ *****************************/
+
 
 .header {
-     float: right;
-     margin: 15px;
+    float: right;
+    margin: 15px;
 }
+
 
 table{
-     border-style: solid; 
-     border-radius: 5px;
+    border-radius: 2px;
 }
-
-th table{
-    border:none;
-}
-
 th {
-     white-space:nowrap;
+  margin: 0px;
+  padding: 0px;
+  border: none;
+}
+
+input{ 
+  border: none;
+  text-align: center;
 }
 
 .expr{
-     border: gray; 
-     border-style: solid;
-     border-radius: 10px;
-     padding: 2px;
+    border:  outset 2px;
+    border-radius: 10px;
+    padding: 2px;
+    cursor: move;
 }
-
 #List{
-     list-style:none;
+    list-style:none;
 }
-
 #List li{
-     cursor:mover;
-     margin-bottom:5px;
+    cursor:mover;
+   // z-index:100;
+    margin: 20px 0px;
+//    background-color:red;
 }
-
 form{
-     height: 10px;
+    height: 10px;
 }
-
 .droppable{
-     border: gray;
-     border-style: solid; 
-     border-radius: 10px;
-     padding: 2px;
+    border: inset 2px;
+    border-radius: 10px;
+    padding: 2px;
+    min-width:  20px; /* deep nesting shouldn't squeeze a drop-target */
+    font-weight: normal;
 }
-
 .placeholder{
-     width:100%;
-     height:0px;
-     padding:0px;
+    width:100%;
+    height:15px;
 }
-
 /*****************************
  DRAWER
  *****************************/
 
 #options{
-     width:200px;
-     float:top;
-     background-color:darkslateblue;
-     z-index:100;
-     overflow-x:hidden;
-     overflow-y:auto;
+    width:200px;
+    height:100%;
+    z-index:100;
+    overflow:auto;
 }
 
 #options span {
-     padding: 5px;
-     border: 1px solid black;
-     border-radius: 5px;
-     line-height:30px;
-     white-space: nowrap;
+    border: 2px outset;
+    border-radius: 5px;
+    padding: 3px;
+    cursor: move;
 }
 
 #options .toggleHeader{
@@ -136,29 +138,63 @@ form{
     text-align:center;
     border-bottom: 1px solid #000;
     border-top:1px solid #000;
+    margin-bottom: 10px;
+    -moz-box-shadow: 3px 3px 4px #000;
+    -webkit-box-shadow: 3px 3px 4px #000;
+    box-shadow: 3px 3px 4px #000;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";     /* For IE 8 */
 }
 
 #options  div{
-    margin: 3px;
+    margin: 1px;
     display:none;
 }
 
 #options h1{
     margin-top:0px;
     margin-bottom:0px;
-    font-size:20px;
+    cursor: pointer;
 }
 
-#storage{
-    position:fixed;
-    bottom:0px;
-    padding-top: 5px;
-    padding-left:5px;
-    width:195px;
-    height:100px;
-    background-color:#fff;
-    list-style:none;
+#options div  br{display: none;}
+#options div  span{
+    display: inline-block; 
+    margin: 3px;
 }
+
+
+#selectors{
+    position:fixed;
+    background-color:gray;
+    width:100%;
+    bottom:0px;
+    height:50px;
+}
+
+.ui-draggable{
+    z-index: 10;
+}
+
+.noborder{
+    border:none;
+}
+
+/*****************************
+ Things we'd like shaded...
+ The header, the drawer, anything being dragged, and any non-nested expr
+ *****************************/
+.ui-sortable-helper, #List li>*, #header, #Drawer{
+    box-shadow: 3px 3px 4px #000;
+    -moz-box-shadow: 3px 3px 4px #000;
+    -webkit-box-shadow: 3px 3px 4px #000;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
+}
+
+.placeholder{
+    width:100%;
+    height:0px;
+}
+
 
 #storagePopup {
     visibility:hidden;
@@ -171,15 +207,6 @@ form{
     background-color:gray;
     padding:10px;
     overflow:auto;
-}
-
-.noborder{
-    border:none;
-}
-
-.placeholder{
-    width:100%;
-    height:15px;
 }
 
 table .ERROR{
