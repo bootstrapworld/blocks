@@ -2565,7 +2565,7 @@ var addDroppableFeature = function(jQuerySelection) {
 	    tolerance:"pointer",
 	    greedy:true,
       over: function(event,ui){
-          if(programCarrying!=undefined && carrying!=undefined){
+          if(programCarrying!=undefined && carrying!=undefined && $(this).children().length === 0){
                   if(flattenAllFuncIDLists(programCarrying).indexOf($(this).attr("id"))===-1){
                     $(this).addClass("highlighted")
                   }
