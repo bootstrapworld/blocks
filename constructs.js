@@ -2089,12 +2089,7 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
 
     var block =  "<table class=\"Cond expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th style=\"float:left\">cond</th></tr>";
     for(var i=0;i<codeObject.listOfBooleanAnswer.length;i++){
-        if(i===codeObject.listOfBooleanAnswer.length-1){
-            block+="<tr class=\"BoolAnswer empty\"><th><table class=\"noDrag\" id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";
-        }
-        else{
-            block+="<tr><th><table id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";
-        }       
+            block+="<tr class=\"BoolAnswer\"><th><table class=\"noDrag\" id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";      
         if(codeObject.listOfBooleanAnswer[i].bool!=undefined){
             block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"noborder droppable Booleans expr\" name=\"Boolean\">";
             block+=createBlock(codeObject.listOfBooleanAnswer[i].bool,constantEnvironment,functionEnvironment);
@@ -2699,9 +2694,9 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, dropDown
 var addDraggingFeature = function(jQuerySelection) {
     if (jQuerySelection !== null){
         if(!jQuerySelection.hasClass('noDrag')){
-	    jQuerySelection.draggable({
-                connectToSortable: "#List",
-		appendTo:'body',
+	         jQuerySelection.draggable({
+            connectToSortable: "#List",
+		        appendTo:'body',
                 helper:'clone',
                 start:function(event, ui){
 		    if ($(this) === undefined){
