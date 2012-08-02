@@ -221,7 +221,6 @@ function makeID(){
      this.expr = undefined;
      this.id = makeID();
      this.funcIDList = makeIDList(2);
-     this.purpose = "";
      this.clone=function(){
 	 var temp=new ExprDefineFunc();
 	 temp.contract=this.contract.clone();
@@ -231,7 +230,6 @@ function makeID(){
 	 }
 	 temp.id=this.id;
 	 temp.funcIDList=this.funcIDList.slice(0);
-	 temp.purpose = this.purpose;
 	 return temp;
      };
  };
@@ -243,6 +241,7 @@ function makeID(){
      this.outputType = undefined;
      this.id = makeID();
      this.funcIDList=makeIDList(2);
+     this.purpose = "";
      this.clone=function(){
 	 var temp=new ExprContract();
 	 temp.funcName=this.funcName;
@@ -250,6 +249,7 @@ function makeID(){
 	 temp.funcIDList=this.funcIDList.slice(0);
 	 temp.outputType=this.outputType;
 	 temp.id=this.id;
+	 temp.purpose = this.purpose;
 	 return temp;
      };
  };
@@ -965,10 +965,18 @@ function makeID(){
      
      //makes argument type-in
      var argIndex = defineExpr.funcIDList.length - 2;
-     var argHTML = "<th width=\"10px\" class=\"expr argument\"><input style=\"width:70px;\" id=\"" + defineExpr.funcIDList[defineExpr.funcIDList.length - 1] +"\" onkeyup=\"sync(" + defineExpr.id + ",$(this))\" class=\"argName\" disabled=\"disabled\" value=\"\"></th><th></th>";
-     $(this).closest('table').find('tr').eq(2).find('th').eq(1 + argIndex * 2).after($(argHTML));
-  //   $(this).closest('table').find('tr').eq(3).find('th').eq(1).attr('colspan', $(this).colspan + 5);
+     var argHTML = $("<th width=\"10px\" class=\"expr argument\"><input style=\"width:70px;\" id=\"" + defineExpr.funcIDList[defineExpr.funcIDList.length - 1] +"\" onkeyup=\"sync(" + defineExpr.id + ",$(this))\" class=\"argName\" disabled=\"disabled\" value=\"\"></th>");
 
+     addDraggableToArgument($(argHTML), defineExpr, $(contractdropdown).find('select').attr('id'));
+
+     $(this).closest('table').find('tr').eq(2).find('th').eq(1 + argIndex * 2).after($(argHTML));
+     $(argHTML).after("<th></th>");
+
+     //resize purpose and expression
+     var purposeTH = $(this).closest('table').find('.contractPurpose').closest('th');
+     purposeTH.attr('colspan', parseInt(purposeTH.attr('colspan')) + 3);
+     var exprTH = $(this).closest('table').find('.functionExpr');
+     exprTH.attr('colspan',parseInt(exprTH.attr('colspan')) + 3);
 
      toggleDeleteButtons(defineExpr.funcIDList, defineExpr.id, contractdropdown);
  });
@@ -1357,12 +1365,13 @@ functionButton brings up a popup of a 'define' window
 $("#functionButton").click(function() {
     var codeObject = new ExprDefineFunc;
     userFunctions.push(codeObject);
-    var popupHTML = makeDefinePopup(codeObject);
-    $('body').append($(popupHTML));
-    $(".definePopup").css('position','absolute');
-    $(".definePopup").css('top','50px');
-    $(".definePopup").css('left','220px');
-    $(".definePopup").draggable();
+    var $popupHTML = $(makeDefinePopup(codeObject));
+    $('body').append($($popupHTML));
+    $($popupHTML).css('position','absolute');
+    $($popupHTML).css('top','50px');
+    $($popupHTML).css('left','220px');
+    $($popupHTML).draggable();
+    addDroppableToDefineExpr($popupHTML.find('.functionExpr'));
     /*
       closes the corresponding 'define' window
     */
@@ -1393,7 +1402,7 @@ makeDefinePopup creates a new ExprDefine
 */
 function makeDefinePopup(codeObject) {
     var i;
-    var popupHTML = "<div class=\"definePopup\"><table  class=\"DefineFun Define\" id=\"" + codeObject.id+ "\"><tr><button class=\"closeFunctionButton\"></tr>"
+    var popupHTML = "<div class=\"definePopup\"><table class=\"DefineFun Define\" id=\"" + codeObject.id+ "\"><tr><button class=\"closeFunctionButton\"></tr>"
 
     //CONTRACT name
     popupHTML += "<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+",$(this))\" ";
@@ -1403,13 +1412,23 @@ function makeDefinePopup(codeObject) {
     popupHTML += " /></th><th> : </th>";
 
     //CONTRACT args
+    var typeDrop;
     for(i=0; i<codeObject.argumentNames.length; i++){
-        popupHTML += " <th>"+generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject)+"</th><th class=\"buttonHolder\"></th>";
+	typeDrop = generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject);
+	if (codeObject.contract.argumentTypes[i+1] != undefined){
+	    $(typeDrop).val(codeObject.contract.argumentTypes[i+1])
+	}
+        popupHTML += " <th>"+typeDrop+"</th><th class=\"buttonHolder\"></th>";
     }
     popupHTML += "<th> <button class=\"addArgument\">+</button> </th>";
 
     //CONTRACT output
-    popupHTML += " <th> -> </th><th>"+generateTypeDrop(codeObject.contract.funcIDList[0],codeObject)+"</th></tr>";
+    var outputDrop = generateTypeDrop(codeObject.contract.funcIDList[0],codeObject);
+    var outputType = codeObject.contract.outputType;
+    if (outputType != undefined){
+	$(outputDrop).val(outputType);
+    }
+    popupHTML += " <th> -> </th><th>"+outputDrop+"</th></tr>";
 
     //DEFINE BLOCK NAME
     popupHTML+="<tr><th>define</th>";
@@ -1418,7 +1437,6 @@ function makeDefinePopup(codeObject) {
         popupHTML += "value=\""+encode(codeObject.contract.funcName)+"\"";
     }
     popupHTML += " /></th>";
-
     //DEFINE BLOCK ARGUMENTS
     for(i=0;i<codeObject.argumentNames.length;i++){
         popupHTML += "<th width=\"10px\" class=\"expr argument\"";
@@ -1434,7 +1452,8 @@ function makeDefinePopup(codeObject) {
     popupHTML+="<th></th>";
 
     //PURPOSE
-    popupHTML += "<tr><th colspan=\"8\">purpose: <input width=\"700px\" class=\"contractPurpose\" value=\"\"></th></tr>";
+    var tableWidth = 4 +( (codeObject.funcIDList.length - 1) * 3);
+    popupHTML += "<tr><th style=\"text-align:left;\">purpose:</th><th colspan=\""+ tableWidth +"\"> <input style=\"width:100%\" class=\"contractPurpose\" value=\"\" onkeyup=\"sync("+codeObject.id + ",$(this))\"></th></tr>";
 
     //DEFINE EXPRESSION
     popupHTML+="<tr><th ";
@@ -1447,7 +1466,7 @@ function makeDefinePopup(codeObject) {
         popupHTML+="</th>";
     }
     else{
-        popupHTML+="name=\"Expr\" class=\"functionExpr droppable expr\" id="+codeObject.funcIDList[0]+" colspan=\"6\">Expr</th>";
+        popupHTML+="name=\"Expr\" class=\"functionExpr droppable expr\" id="+codeObject.funcIDList[0]+" colspan=\""+ tableWidth + "\">Expr</th>";
     }
 
 
@@ -1539,7 +1558,7 @@ changeName changes the name of a define block
 @return void. changes a ExprDefineFunc
 */
 function changeName(defineExpr, newName){
-    defineExpr.argument = newName;
+    defineExpr.contract.funcName = newName;
 }
 
 /*
@@ -1600,6 +1619,9 @@ function sync(objectID, $input){
 	}
 	else if ($input.hasClass('argName')) {
 	    changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList));
+	}
+	else if ($input.hasClass('contractPurpose')){
+	    block.contract.purpose = newInput;
 	}
     }
 
@@ -1900,17 +1922,12 @@ function changeType(curValue,selectID,defineExprID){
 	deleteTypeClass(modifiedblock);
 	if(curValue !== "Type"){
 	    modifiedblock.addClass(decode(curValue));
-	    if (funcIDIndex === 0){ //add droppable to expr
-		addDroppableToDefineExpr($(modifiedblock));
-	    } 
-	    else { //add typeable to arg
+	    $("#" + selectID).css('background-color','white');
+	    if (funcIDIndex !==0){ //arg is typeable
 		$(modifiedblock).find('input').attr('disabled',false);
 	    }
 	}
-	else if (curValue === "Type" && funcIDIndex === 0){//remove droppable from expr
-
-	}
-	else if (curValue === "Type"){ //remove typeable from arg
+	else { //remove typeable from arg
 	    $(modifiedblock).find('input').attr('disabled', true);
 	}
     } else {
@@ -1933,27 +1950,44 @@ function changeType(curValue,selectID,defineExprID){
 function addDroppableToDefineExpr(defineExpr) {
     $(defineExpr).droppable({
 	tolerance:'pointer',
+	greedy:true,
 	drop:function(event, ui) {
-	    if (carrying != null && programCarrying != null && $(this).children().length === 0){
+	    var outputSelect = $(this).closest('.DefineFun').find('tr').eq(1).find('th').last().find('select');
+	    if (carrying != null && programCarrying != null && $(this).children().length === 0 && outputSelect.val() !== 'Type'){
 		$(this).html(carrying);
-		var defineExpr = searchForIndex($(this).closest('.DefineFun').attr('id'), userFunctions);
-		defineExpr.expr = programCarrying;
+		var defineCode = searchForIndex($(this).closest('.DefineFun').attr('id'), userFunctions);
+		defineCode.expr = programCarrying;
 		$(this).find('.droppable').each(function () {
 		    addDroppableWithinDefineExpr($(this));
 		});
-		carrying = null;
-		programCarrying = null;
+	    } else{
+		if(outputSelect.val() === 'Type'){
+		    outputSelect.css('background-color','red');
+		}
+		$(ui.draggable).remove();
 	    }
+	    
+	    carrying = null;
+	    programCarrying = null;
 	}
     });
 }
 
 //adds droppable to things within define expressions
 function addDroppableWithinDefineExpr(jQuerySelection){
+    $(jQuerySelection).mousedown(function(e) {
+	if (e.which === 1){
+	    addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"), userFunctions);
+	}
+    });
+
     $(jQuerySelection).droppable({
 	tolerance:'pointer',
+	greedy:true,
 	drop:function(event, ui){
+	    console.log(carrying, programCarrying,$(this).children().length);
 	    if (carrying != null && programCarrying != null && $(this).children().length === 0){
+		console.log('here');
 		$(this).html(carrying);
 		setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying,userFunctions);
 		$(this).css('border','none');
@@ -1966,6 +2000,7 @@ function addDroppableWithinDefineExpr(jQuerySelection){
 	}
     });
 }
+
 
 /*
 getElmIndexInArray gets the index of elm within the array arr
@@ -2016,10 +2051,17 @@ function deleteArg(selectID,codeObjectID) {
     toDeleteBlock.remove();
     toDeleteTh.remove();
 
+
     //update contractGUI
     var buttons = $("#" + selectID).closest('th').next();
     buttons.remove();
     $("#" + selectID).closest('th').remove();
+
+     //resize purpose and expression
+    var purposeTH = $("#" + codeObjectID).find('.contractPurpose').closest('th');
+     purposeTH.attr('colspan', parseInt(purposeTH.attr('colspan')) - 3);
+     var exprTH = $('#' + codeObjectID).find('.functionExpr');
+     exprTH.attr('colspan',parseInt(exprTH.attr('colspan')) - 3);
 
     //update codeObject
     if(codeObject.contract.funcIDList.length>2){
@@ -2320,19 +2362,11 @@ var makeDrawersDraggable = function(){
 
   @param jQuerySelection - a $ of what you want to drag
   @param functionCodeObject is the function from which the argument originates
-  @param name is a string representing the name of the argument 
+  @param dropDownID - (string) ID of the dropdown connected to the argument
 */
-var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
-    var parentDefine=searchForIndex(jQuerySelection.closest(".DefineFun").attr("id"),userFunctions)
-    var newOutputType;
-    for(var i=1;i<parentDefine.argumentNames.length;i++){
-        if(parentDefine.argumentNames[i]===name){
-            newOutputType=parentDefine.contract.argumentTypes[i-1];
-        }
-    }
-    console.log(newOutputType);
-    if (jQuerySelection != null && newOutputType!=undefined){
-	console.log('adding draggable');
+var addDraggableToArgument=function(jQuerySelection,functionCodeObject, dropDownID){
+    console.log(jQuerySelection);
+    if (jQuerySelection != null){
 	$(jQuerySelection).draggable({
 	    start: function(event, ui) {
 		if(!errorVal){
@@ -2347,13 +2381,10 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, name){
 	    },
             containment:".DefineFun",
 	    helper: function(event, ui){
-		programCarrying= new ExprConst(name);
-                programCarrying.outputType=newOutputType;
+		programCarrying= new ExprConst($(this).find('select').val());
+                programCarrying.outputType=$("#" + dropDownID).val();
 		carrying = createBlock(programCarrying, constants.concat(createNewConstants(functionCodeObject)), functions);
 		return carrying;
-	    },
-	    stop:function(event, ui){
-		renderProgram(createProgramHTML());
 	    },
 	    connectToSortable:'#options'
 	});
@@ -2417,9 +2448,10 @@ var addDroppableFeature = function(jQuerySelection) {
         addDraggableToTable((jQuerySelection).find("table"));
 
 	//adds literal box upon click
+	console.log(jQuerySelection);
 	jQuerySelection.mousedown(function(e) {
 	    if (e.which === 1){
-		addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"));
+		addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"), program);
 	    }
 	});
         jQuerySelection.droppable({
@@ -2478,26 +2510,27 @@ var constantIsArgument = function(constant, $parentDefine) {
 /*
   addClickableLiteralBox creates a literal block when a blue or orange droppable is clicked
 */
-var addClickableLiteralBox = function(jQuerySelection, parent, child){
-
+var addClickableLiteralBox = function(jQuerySelection, parent, child, prog){
+    console.log(jQuerySelection, parent, child, prog);
     if (jQuerySelection.children().length === 0 && jQuerySelection.closest('div').attr('id') !== 'storage'){
 	if(jQuerySelection.hasClass("Numbers")){
-	    addClickableLiteralBoxHelper(jQuerySelection, new ExprNumber(), parent, child);
+	    addClickableLiteralBoxHelper(jQuerySelection, new ExprNumber(), parent, child, prog);
 	}
 	else if (jQuerySelection.hasClass("Strings")){
-	    addClickableLiteralBoxHelper(jQuerySelection, new ExprString(), parent, child);
+	    console.log('here');
+	    addClickableLiteralBoxHelper(jQuerySelection, new ExprString(), parent, child, prog);
 	}
 
     }
 };
 
-var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent, child) {
+var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent, child, prog) {
     addToHistory(cloneProgram(program), cloneProgram(storageProgram));
-    setChildInProgram(parent, child, codeObject, program);
+    setChildInProgram(parent, child, codeObject, prog);
     var html = createBlock(codeObject,constants,functions);
     $(jQuerySelection).css('border','none');
     jQuerySelection.html(html);
-    addDroppableFeature(jQuerySelection);
+//    addDroppableFeature(jQuerySelection);
 };
 
 /*
