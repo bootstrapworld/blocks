@@ -6,7 +6,7 @@ body{
     position:fixed;
     left:0px;
     margin: 0px;
-    -webkit-user-select: none;
+    -webkit-user-select: text;
     -moz-user-select: none;
     -o-user-select: none;
     -khtml-user-select: none;
