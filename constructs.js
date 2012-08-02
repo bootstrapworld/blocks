@@ -2452,7 +2452,7 @@ var makeDrawersDraggable = function(){
 	    }
         },
         stop: function(event,ui){
-                    
+          typeCheck(program)
         },
         helper: function(event, ui){
 	    programCarrying = makeCodeFromOptions($(this).text());
