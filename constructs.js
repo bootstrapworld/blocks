@@ -2579,26 +2579,6 @@ var addDroppableFeature = function(jQuerySelection) {
                 if ($(this) === undefined){
 		    throw new Error ("addDroppableFeature drop: $(this) is undefined");
                 } 
-<<<<<<< HEAD
-                else if($(this).children().length === 0 && searchForIndex(programCarrying.id,program)==undefined){
-		          if($(ui.draggable).closest('div').attr('id') === 'code'){
-			         droppedInDroppableFromList = true;
-		          }
-
-		          $(this).html(carrying);
-		          setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying, program);
-		          addDroppableFeature($(this).find('.droppable'));
-		          addDraggableToTable($(this).find("table"));
-		          $(this).css("border", "none");
-
-		          ui.draggable.detach();
-                    // for(var i=0;i<program.length;i++){
-                    //     removeErrorMessages($(document.getElementById(program[i].id)));
-                    //     createErrorMessages(typeInfer(program[i]).typeErrors);
-                    // }
-                    
-		    
-=======
                 else if($(this).children().length === 0){
 		    if($(ui.draggable).closest('div').attr('id') === 'code'){
 			droppedInDroppableFromList = true;
@@ -2609,7 +2589,6 @@ var addDroppableFeature = function(jQuerySelection) {
 		    addDraggableToTable($(this).find("table"));
 		    $(this).css("border", "none");
 		    ui.draggable.detach();
->>>>>>> 5cd11307415b8a7e2b6be6e55ec3b4ee1bb10fa5
                 }
 	    }
         });
