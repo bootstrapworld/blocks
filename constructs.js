@@ -2997,15 +2997,7 @@ function buildConstraints(obj, parentId){
     //  }
 
         elemList = [];
-        //expr
-        //this needs to come first, fixes problem with error pointing to define rather than the exprapp
-        if(obj.expr !== undefined){
-            next = buildConstraints(obj.expr, obj.funcIDList[0]);
-            constraints = constraints.concat(next.constraints);
-            errors = errors.concat(next.errors);
-        }else{
-                errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
-        }
+
         //also check for invalid names
         if(obj.contract.funcName === undefined || obj.contract.funcName === ""){
                 errors = errors.concat([new error(obj.id, "No function name found")]);
@@ -3031,6 +3023,15 @@ function buildConstraints(obj, parentId){
         next = buildConstraints(obj.contract, obj.id);
         errors = errors.concat(next.errors);
         constraints = constraints.concat(next.constraints);
+        //expr
+        //this needs to come first, fixes problem with error pointing to define rather than the exprapp
+        if(obj.expr !== undefined){
+            next = buildConstraints(obj.expr, obj.funcIDList[0]);
+            constraints = constraints.concat(next.constraints);
+            errors = errors.concat(next.errors);
+        }else{
+                errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
+        }
     }else if(obj instanceof ExprApp){
         lhs = new elemId(obj.id);
         elemList = [];
@@ -3078,6 +3079,8 @@ function buildConstraints(obj, parentId){
             constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
         }
         for(i=0; i<obj.listOfBooleanAnswer.length; i++){
+          //this ensures that boolAnswer pairs, which do not actually matter to constraints, get colored
+          constraints = constraints.concat([new constraint(lhs, new elemId(obj.listOfBooleanAnswer[i].id), obj.listOfBooleanAnswer[i].id)])
         //deal with answers
             if(obj.listOfBooleanAnswer[i].answer !== undefined){
                 next = buildConstraints(obj.listOfBooleanAnswer[i].answer, obj.listOfBooleanAnswer[i].funcIDList[1]);
@@ -3111,22 +3114,23 @@ function unify(constr){
                 if(objectEquality(next.lhs, next.rhs, ["source"])){
                         // do nothing, just to short circuit
                 }else if(next.lhs instanceof elemId || next.lhs instanceof variable){
+                  console.log(next);
                         substitute(next.rhs, next.lhs, constr);
                         substitute(next.rhs, next.lhs, subst);
-                        subst.push(new constraint(next.lhs, next.rhs, next.source));
+                        subst.unshift(new constraint(next.lhs, next.rhs, next.source));
                 }else if(next.rhs instanceof elemId || next.rhs instanceof variable){
                         substitute(next.lhs, next.rhs, constr);
                         substitute(next.lhs, next.rhs, subst);
-                        subst.push(new constraint(next.rhs, next.lhs, next.source));
+                        subst.unshift(new constraint(next.rhs, next.lhs, next.source));
                 }else if(next.rhs instanceof construct &&
                                  next.lhs instanceof construct &&
                                 (next.rhs.constructor === next.lhs.constructor) &&
                                 (next.rhs.elemList.length === next.lhs.elemList.length)){
                         for(var i = 0; i<next.rhs.elemList.length; i++){
-                                constr.push(new constraint(next.rhs.elemList[i], next.lhs.elemList[i], next.source));
+                                constr.unshift(new constraint(next.rhs.elemList[i], next.lhs.elemList[i], next.source));
                         }
                 }else{
-                        errors.push(new error(next.source, "Type mismatch"));
+                        errors.unshift(new error(next.source, "Type mismatch"));
                 }
         }
         //adding generic types
