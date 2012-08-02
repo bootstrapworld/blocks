@@ -653,9 +653,9 @@ function makeID(){
  //constants is an array of user defined variables containing their name and type
  var constants=[];
  /*
- userFunctions is an array of user defined functions in the form of ExprDefineConst and xprDefineFunc
+ functionProgram   is an array of user defined functions in the form of ExprDefineConst and xprDefineFunc
  */
- var userFunctions = [];
+ var functionProgram   = [];
  var initConstants=constants.length;
 
  //restricted contains a list of key words in racket that we aren't allowing the user to redefine
@@ -959,7 +959,7 @@ function makeID(){
  */
  $(".addArgument").live('click',function(){
      addToHistory(cloneProgram(program), cloneProgram(storageProgram));
-     var defineExpr=searchForIndex($(this).closest('table').attr('id'),userFunctions)
+     var defineExpr=searchForIndex($(this).closest('table').attr('id'),functionProgram  )
      defineExpr.funcIDList.push(makeID())
      defineExpr.contract.funcIDList.push(makeID())
      defineExpr.argumentNames.push("");
@@ -1141,12 +1141,12 @@ functionNameRepeated checks to see if a function's name already exists
 want to remove
 
 @return bool. true if the ExprDefineFunc represented by defineName already exists 
-in userFunctions, false otherwise
+in functionProgram  , false otherwise
 */
 function functionNameRepeated(defineName){
     var timesFound = 0;
-    for (var i = 0; i < userFunctions.length; i++){
-	if (userFunctions[i].contract.funcName === defineName){
+    for (var i = 0; i < functionProgram  .length; i++){
+	if (functionProgram  [i].contract.funcName === defineName){
 	    timesFound = timesFound + 1;
 	}
 	if (timesFound > 1){
@@ -1157,16 +1157,16 @@ function functionNameRepeated(defineName){
 }
 
 /*
-removeFunctionFromArray removes codeObject from userFunctions
+removeFunctionFromArray removes codeObject from functionProgram  
 
 @param defineName - a string representing the name of a ExprDefineFunc that
 you want to remove
 */
 function removeFunctionFromArray(defineName) {
     var foundName = false;
-    for (var i = 0; i < userFunctions.length && !foundName; i++){
-	if (userFunctions[i].contract.funcName === defineName) {
-	    userFunctions.splice(i, 1);
+    for (var i = 0; i < functionProgram  .length && !foundName; i++){
+	if (functionProgram  [i].contract.funcName === defineName) {
+	    functionProgram  .splice(i, 1);
 	    foundName = true;
 	}
     }
@@ -1391,7 +1391,7 @@ functionButton brings up a popup of a 'define' window
 */
 $("#functionButton").click(function() {
     var codeObject = new ExprDefineFunc;
-    userFunctions.push(codeObject);
+    functionProgram  .push(codeObject);
     var $popupHTML = $(makeDefinePopup(codeObject));
     $('body').append($($popupHTML));
     $($popupHTML).css('position','absolute');
@@ -1435,7 +1435,7 @@ makeDefinePopup creates a new ExprDefine
 */
 function makeDefinePopup(codeObject) {
     var i;
-    var popupHTML = "<div class=\"definePopup\"><table border class=\"DefineFun Define\" id=\"" + codeObject.id+ "\"><tr><button class=\"closeFunctionButton\"></tr>"
+    var popupHTML = "<div class=\"definePopup\"><table class=\"DefineFun Define\" id=\"" + codeObject.id+ "\"><tr><button class=\"closeFunctionButton\"></tr>"
 
     //CONTRACT name
     popupHTML += "<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+",$(this))\" ";
@@ -1629,7 +1629,7 @@ gets called on keyup of input
 function sync(objectID, $input){
     var block=searchForIndex(objectID+"",program);
     if (block == undefined){
-	block = searchForIndex(objectID+"", userFunctions);
+	block = searchForIndex(objectID+"", functionProgram  );
     } 
     var DOMBlock=$("#" + objectID);
     if(block instanceof ExprNumber || block instanceof ExprString){
@@ -1646,52 +1646,60 @@ function sync(objectID, $input){
 	if($input.hasClass('contractName')){
 	     $("#" + objectID).find('.definitionName').first().attr('value',(newInput));
 	    changeName(block, newInput);
+	    // add/remove from drawers
+	    if (contractCompleted(block.contract)){
+		console.log('add to drawer!');
+		addFunctionToDrawers(block);
+	    } else {
+		console.log('remove from drawer');
+	    }
 	} 
 	else if ($input.hasClass('definitionName')){
 	    $("#" + objectID).find('.contractName').first().attr('value',(newInput));
 	    changeName(block, newInput);
+	    // add/remove from drawers
+	    if (contractCompleted(block.contract)){
+		console.log('add to drawer!');
+		addFunctionToDrawers(block);
+	    }  else {
+		console.log('remove from drawer');
+	    }
 	}
 	else if ($input.hasClass('argName')) {
-	    changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList));
+	    console.log($input.val(), contains($input.val(), block.argumentNames));
+	    if ($input.val() !== "" && contains($input.val(), block.argumentNames)){
+		$input.css('background-color','red');
+	    } else {
+		$input.css('background-color','');
+		changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList));
+	    }
 	}
 	else if ($input.hasClass('contractPurpose')){
 	    block.contract.purpose = newInput;
 	}
+
     }
-
-/*
-        var prevName=block.contract.funcName;
-        if(!(prevName===DOMBlock.find('.contractName').attr('value') && prevName===DOMBlock.find('.definitionName').attr('value'))){
-	    if(DOMBlock.find('.contractName').attr('value')===prevName){
-                block.contract.funcName=decode(DOMBlock.find('.definitionName').attr('value'));
-                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
-                //no idea why the fuck this works or is needed
-                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.definitionName').attr('value'));
-	    }
-	    else if(DOMBlock.find('.definitionName').attr('value')===prevName){
-                block.contract.funcName=decode(DOMBlock.find('.contractName').attr('value'));
-                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
-                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.contractName').attr('value'));
-	    }
-        }*/
-      /*  var i=0;
-        DOMBlock.find('.argName').each(function(){
-
-	    block.argumentNames[i]=$(this).attr('value');
-	    $(this).attr('value',$(this).attr('value'));
-	    if($(this).attr('value') !== ""){
-		//         ddDraggableToArgument($(this).closest(".argument"),block,$(this).attr('value'));
-	    } else{               
-                $(this).closest(".argument").removeClass('ui-draggable');
-	    }
-	    i++;
-        });
-    }*/
-    //    else{
-    //   throw new Error("sync: block type not found", block);
-    //  }
 }
 
+/*
+addFunctionToDrawers adds the given function to the drawers and to the funcion array
+*/
+function addFunctionToDrawers(defineExpr){
+}
+
+/*
+contractCompleted determines whether or not the given contract is completed
+
+@param contractExpr - (ExprContract) the contract block you are checking
+@return boolean. True if the contractExpr's contract is completed, false otherwise
+*/
+function contractCompleted(contractExpr) {
+    if (contractExpr.funcName !== "" && contractExpr.outputType !== undefined && contractExpr.argumentTypes.length === contractExpr.funcIDList.length - 1){
+	return !contains(undefined, contractExpr.argumentTypes);
+    } else {
+	return false;
+    }
+}
 
 /*
   Gets the output type of a function
@@ -1911,12 +1919,7 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
 
     var block =  "<table class=\"Cond expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th style=\"float:left\">cond</th></tr>";
     for(var i=0;i<codeObject.listOfBooleanAnswer.length;i++){
-        if(i===codeObject.listOfBooleanAnswer.length-1){
-            block+="<tr class=\"BoolAnswer empty\"><th><table class=\"noDrag\" id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";
-        }
-        else{
-            block+="<tr><th><table id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";
-        }       
+            block+="<tr class=\"BoolAnswer\"><th><table class=\"noDrag\" id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";      
         if(codeObject.listOfBooleanAnswer[i].bool!=undefined){
             block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"noborder droppable Booleans expr\" name=\"Boolean\">";
             block+=createBlock(codeObject.listOfBooleanAnswer[i].bool,constantEnvironment,functionEnvironment);
@@ -2011,7 +2014,7 @@ types within the contract
 */
 function changeType(curValue,selectID,defineExprID){
     selectID+="";
-    var defineExpr=searchForIndex(defineExprID+"",userFunctions); 
+    var defineExpr=searchForIndex(defineExprID+"",functionProgram  ); 
 
     var funcIDIndex = getElmIndexInArray(selectID, defineExpr.contract.funcIDList);
     var argBlockID = defineExpr.funcIDList[funcIDIndex];
@@ -2039,12 +2042,22 @@ function changeType(curValue,selectID,defineExprID){
     for(var i=0; i<defineExpr.contract.funcIDList.length; i++){
 	addToHistory(cloneProgram(program), cloneProgram(storageProgram));
         if(selectID===defineExpr.contract.funcIDList[i] && i!==0){
-	    defineExpr.contract.argumentTypes[i-1]= curValue;
+	    if (curValue === "Type"){
+		defineExpr.contract.argumentTypes[i-1] = undefined;
+	    } else { 
+		defineExpr.contract.argumentTypes[i-1]= curValue;
+	    }
         }
         else if(selectID===defineExpr.contract.funcIDList[i] && i===0){
-	    defineExpr.contract.outputType= curValue;
+	    if (curValue === "Type"){
+		defineExpr.contract.outputType= undefined;
+	    } else {
+		defineExpr.contract.outputType = curValue;
+	    }
         }
     }
+    contractCompleted(defineExpr.contract);
+    
 }
 
 //adds draggable within define expressions
@@ -2053,14 +2066,14 @@ function addDraggableToDefineExpr($table) {
 	helper:'clone',
 	start:function(event, ui){
 	    draggedClone = $(this);
-	    programCarrying = searchForIndex($(this).attr("id"), userFunctions);
+	    programCarrying = searchForIndex($(this).attr("id"), functionProgram  );
 	    carrying = getHTML($(this));
 	    ui.helper.addClass("wired");
-	    setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined,userFunctions);
+	    setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined,functionProgram  );
 	},
 	stop:function(event, ui){
 	    if (programCarrying != null && carrying != null){
-		setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).closest('th').attr("id"), programCarrying, userFunctions);
+		setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).closest('th').attr("id"), programCarrying, functionProgram  );
 		programCarrying = null;
 		carrying = null;
 	    }
@@ -2078,7 +2091,7 @@ function addDroppableToDefineExpr(defineExpr) {
 	    var outputSelect = $(this).closest('.DefineFun').find('tr').eq(1).find('th').last().find('select');
 	    if (carrying != null && programCarrying != null && $(this).children().length === 0 && outputSelect.val() !== 'Type'){
 		$(this).html(carrying);
-		var defineCode = searchForIndex($(this).closest('.DefineFun').attr('id'), userFunctions);
+		var defineCode = searchForIndex($(this).closest('.DefineFun').attr('id'), functionProgram  );
 		defineCode.expr = programCarrying;
 
 		//make things within droppable
@@ -2097,7 +2110,6 @@ function addDroppableToDefineExpr(defineExpr) {
 		}
 		$(ui.helper).remove();
 	    }
-	    typeCheck(userFunctions);
 	    carrying = null;
 	    programCarrying = null;
 	}
@@ -2108,7 +2120,7 @@ function addDroppableToDefineExpr(defineExpr) {
 function addDroppableWithinDefineExpr(jQuerySelection){
     $(jQuerySelection).mousedown(function(e) {
 	if (e.which === 1){
-	    addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"), userFunctions);
+	    addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"), functionProgram  );
 	}
     });
 
@@ -2119,7 +2131,7 @@ function addDroppableWithinDefineExpr(jQuerySelection){
 	drop:function(event, ui){
 	    if (carrying != null && programCarrying != null && $(this).children().length === 0){
 		$(this).html(carrying);
-		setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying,userFunctions);
+		setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying,functionProgram  );
 		$(this).css('border','none');
 		$(this).find('.droppable').each(function() {
 		    addDroppableWithinDefineExpr($(this));
@@ -2132,7 +2144,6 @@ function addDroppableWithinDefineExpr(jQuerySelection){
 		    console.log('here');
 		    eliminateBorder($(ui.draggable).closest('th'));
 		}
-		typeCheck(userFunctions);
 		programCarrying = null;
 		carrying = null;
 	    }
@@ -2180,7 +2191,7 @@ deleteArg deletes arguments from the contract part of the define block
 */
 function deleteArg(selectID,codeObjectID) {
     selectID+="";
-    var codeObject=searchForIndex(codeObjectID+"",userFunctions);
+    var codeObject=searchForIndex(codeObjectID+"",functionProgram);
 
     //updateGUI
     var selectIndex = getElmIndexInArray(selectID, codeObject.contract.funcIDList);
@@ -2345,7 +2356,6 @@ $(function() {
                         ui.helper.addClass("wired");
                         ui.helper=$(carrying).clone().addClass("wired");
                         ui.helper.addClass("ui-sortable-helper");
-                        console.log(ui.helper);
                         programCarrying = program[index];
                         program.splice(index, 1);
                         return ui.helper
@@ -2386,8 +2396,8 @@ $(function() {
 
 	    } else {
 		$(ui.item).remove();
-                typeCheck(program);
 	    }
+        typeCheck(program);
         },
         receive:function(event,ui){
 	    if(ui.item === null){
@@ -2406,7 +2416,7 @@ $(function() {
 		    carrying = null;
          	}
                 else if (!ui.item.is('span.draggable')){
-		    eliminateBorder(ui.sender.parent().parent());
+		              eliminateBorder(ui.sender.parent().parent());
                 }
 	    }
         }
@@ -2421,7 +2431,6 @@ $(function() {
 	    tempStorageProgram = cloneProgram(storageProgram);
 	    carrying = ui.item.html();
                 ui.helper.addClass("wired");
-                console.log(ui.helper);
 	    programCarrying = storageProgram[$("#storagePopup li").index(ui.item)];
 	    storageProgram.splice($("#storagePopup li").index(ui.item), 1);
 	    tempProgram = cloneProgram(program);
@@ -2510,7 +2519,7 @@ var makeDrawersDraggable = function(){
 	    }
         },
         stop: function(event,ui){
-                    
+          typeCheck(program)
         },
         helper: function(event, ui){
 	    programCarrying = makeCodeFromOptions($(this).text());
@@ -2531,7 +2540,6 @@ var makeDrawersDraggable = function(){
   @param dropDownID - (string) ID of the dropdown connected to the argument
 */
 var addDraggableToArgument=function(jQuerySelection,functionCodeObject, dropDownID){
-
     if (jQuerySelection != null){
 	$(jQuerySelection).draggable({
             containment: $("#" + functionCodeObject.id),
@@ -2567,40 +2575,37 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, dropDown
 var addDraggingFeature = function(jQuerySelection) {
     if (jQuerySelection !== null){
         if(!jQuerySelection.hasClass('noDrag')){
-	    jQuerySelection.draggable({
-                connectToSortable: "#List",
-		appendTo:'body',
+	         jQuerySelection.draggable({
+            connectToSortable: "#List",
+		        appendTo:'body',
                 helper:'clone',
                 start:function(event, ui){
-		    if ($(this) === undefined){
+		                if ($(this) === undefined){
                         throw new Error ("addDraggingFeature start: $(this) is undefined");
-		    } else {
+		                } else {
                         if(!errorVal){
-			    tempProgram = cloneProgram(program);
-			    draggedClone = $(this);
-			    programCarrying = searchForIndex($(this).attr("id"), program);
-			    carrying = getHTML($(this));
-                ui.helper.addClass("wired");
-                console.log(ui.helper);
-			    setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined,program);
+			                     tempProgram = cloneProgram(program);
+			                     draggedClone = $(this);
+			                      programCarrying = searchForIndex($(this).attr("id"), program);
+			                     carrying = getHTML($(this));
+                            ui.helper.addClass("wired");
+			                     setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined,program);
                         }
                         else{
-			    event.stopPropagation();
-			    event.preventDefault();
-			    event.stopImmediatePropagation();
-			    return false;
+			                       event.stopPropagation();
+			                       event.preventDefault();
+			                       event.stopImmediatePropagation();
+			                       return false;
                         }
-		    }
+		                }
                 },
                 stop:function(event, ui){
-
-
-		    if (programCarrying != undefined && carrying != undefined){
+		              if (programCarrying != undefined && carrying != undefined){
                         program = tempProgram;
                         renderProgram(createProgramHTML());
-		    }
+		              }
                 }
-	    });
+	         });
         }
 	if (constantIsArgument(searchForIndex($(jQuerySelection).attr('id'),program), $(jQuerySelection).closest('.DefineFun'))){
 	    jQuerySelection.draggable('option','connectToSortable','');
@@ -2619,33 +2624,42 @@ var addDroppableFeature = function(jQuerySelection) {
         addDraggableToTable((jQuerySelection).find("table"));
 
 	//adds literal box upon click
-	console.log(jQuerySelection);
 	jQuerySelection.mousedown(function(e) {
 	    if (e.which === 1){
 		addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"), program);
 	    }
 	});
         jQuerySelection.droppable({
-	    // hoverClass:"highlight",
 	    tolerance:"pointer",
 	    greedy:true,
-        hoverClass:"highlighted",
+      over: function(event,ui){
+          if(programCarrying!=undefined && carrying!=undefined && $(this).children().length === 0){
+                  if(flattenAllFuncIDLists(programCarrying).indexOf($(this).attr("id"))===-1){
+                    $(this).addClass("highlighted")
+                  }
+          }
+      },
+      out: function(event,ui){
+            $(this).removeClass("highlighted");
+      },
 	    drop: function(event, ui){
                 if ($(this) === undefined){
-		    throw new Error ("addDroppableFeature drop: $(this) is undefined");
+		                throw new Error ("addDroppableFeature drop: $(this) is undefined");
                 } 
                 else if($(this).children().length === 0){
-		    if($(ui.draggable).closest('div').attr('id') === 'code'){
-			droppedInDroppableFromList = true;
-		    }
-		    $(this).html(carrying);
-		    setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying, program);
-		    addDroppableFeature($(this).find('.droppable'));
-		    addDraggableToTable($(this).find("table"));
-		    $(this).css("border", "none");
-		    ui.draggable.detach();
+		                if($(ui.draggable).closest('div').attr('id') === 'code'){
+			               droppedInDroppableFromList = true;
+		                }
+		                $(this).html(carrying);
+		                setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying, program);
+		                addDroppableFeature($(this).find('.droppable'));
+		                addDraggableToTable($(this).find("table"));
+		                $(this).css("border", "none");
+                    $(this).removeClass("highlighted");
+		                ui.draggable.detach();
+                    typeCheck(program);
                 }
-	    }
+	           }
         });
     }
 };
@@ -2657,6 +2671,32 @@ var addDraggableToTable = function (jQuerySelection){
         });
     }
 };
+
+function flattenAllFuncIDLists(programBlock){
+  var ret=[]
+  if(programBlock!=undefined && programBlock.funcIDList!=undefined){
+    ret=ret.concat(programBlock.funcIDList);
+    if(programBlock instanceof ExprApp && programBlock.args!=undefined){
+      for(var i=0;i<programBlock.args.length;i++){
+        ret=ret.concat(flattenAllFuncIDLists(programBlock.args[i]))
+      }
+    }
+    else if(programBlock instanceof ExprDefineFunc){
+      ret=ret.concat(flattenAllFuncIDLists(programBlock.expr),programBlock.contract.funcIDList)
+    }
+    else if(programBlock instanceof ExprCond){
+      for(var i=0;i<programBlock.listOfBooleanAnswer.length;i++){
+        ret=ret.concat(flattenAllFuncIDLists(programBlock.listOfBooleanAnswer[i]));
+      }
+    }
+    else if(programBlock instanceof ExprBoolAnswer){
+      return ret.concat(flattenAllFuncIDLists(programBlock.answer));
+    }
+
+  }
+  return ret;
+}
+
 
 /*
 constantIsArgument returns whether or not constant is an argument of $parentDefine
@@ -2727,6 +2767,7 @@ var eliminateBorder = function(jQuerySelection){
                          "border-color:grey");
     jQuerySelection.children().detach();
     jQuerySelection.append(jQuerySelection.attr('name'));
+    jQuerySelection.removeClass("highlighted");
 };
 
 /*
@@ -2921,28 +2962,30 @@ function typeCheck(ArrayofBlocks){
     for(var i=0;i<ArrayofBlocks.length;i++){
         var blockTypeInfer=typeInfer(ArrayofBlocks[i])
         //NEED TO FIX THIS
-        $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeErrorMessages($(this))});
-            $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeInferTypes($(this))});
-            $(document.getElementById(ArrayofBlocks[i].id)).find("th").each(function(){removeInferTypes($(this))});
-        createInferTypes(blockTypeInfer.types);
+        removeErrorMessages($(document.getElementById(ArrayofBlocks[i].id)));
+        removeInferTypes($(document.getElementById(ArrayofBlocks[i].id)), ArrayofBlocks);
+        $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeErrorMessages($(this), ArrayofBlocks)});
+        $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeInferTypes($(this), ArrayofBlocks)});
+        $(document.getElementById(ArrayofBlocks[i].id)).find("th").each(function(){removeInferTypes($(this), ArrayofBlocks)});
+        createInferTypes(blockTypeInfer.types, ArrayofBlocks);
         createErrorMessages(blockTypeInfer.typeErrors);
     }
 }
 
 
-function removeInferTypes(jQuerySelection){
+function removeInferTypes(jQuerySelection, ArrayofBlocks){
     for(var type in colors){
         if(colors.hasOwnProperty(type)){
             jQuerySelection.removeClass(type);
             if(jQuerySelection.hasClass("Cond")){
-                searchForIndex(jQuerySelection.attr("id"),program).outputType=undefined;
+                searchForIndex(jQuerySelection.attr("id"),ArrayofBlocks).outputType=undefined;
             }
         }
     }
 
 }
 
-function createInferTypes(typeMap){
+function createInferTypes(typeMap, ArrayofBlocks){
     var id;
     var type;
     for(var i =0; i< typeMap.length; i++){
@@ -2961,7 +3004,7 @@ function createInferTypes(typeMap){
         }
         if(isNaN(type) && !$(document.getElementById(id)).hasClass("ContractType")){
             if($(document.getElementById(id)).hasClass("Cond")){
-                searchForIndex(id,program).outputType=type;
+                searchForIndex(id,ArrayofBlocks).outputType=type;
             }
             $(document.getElementById(id)).addClass(type)
         }
@@ -2978,7 +3021,7 @@ function createErrorMessages(typeErrors){
                                 $(document.getElementById(typeErrors[i].idArr[j])).attr('title',typeErrors[i].message);
                         }
                         else{
-                                $(document.getElementById(typeErrors[i].idArr[j])).attr('title', $(document.getElementById(typeErrors[i].idArr[j])).attr('title')+"\n"+typeErrors[i].message);                                
+                                $(document.getElementById(typeErrors[i].idArr[j])).attr('title', typeErrors[i].message);                                
                         }
                         $(document.getElementById(typeErrors[i].idArr[j])).addClass("ERROR");
                         for(var type in colors){
@@ -3031,15 +3074,7 @@ function buildConstraints(obj, parentId){
     //  }
 
         elemList = [];
-        //expr
-        //this needs to come first, fixes problem with error pointing to define rather than the exprapp
-        if(obj.expr !== undefined){
-            next = buildConstraints(obj.expr, obj.funcIDList[0]);
-            constraints = constraints.concat(next.constraints);
-            errors = errors.concat(next.errors);
-        }else{
-                errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
-        }
+
         //also check for invalid names
         if(obj.contract.funcName === undefined || obj.contract.funcName === ""){
                 errors = errors.concat([new error(obj.id, "No function name found")]);
@@ -3065,6 +3100,15 @@ function buildConstraints(obj, parentId){
         next = buildConstraints(obj.contract, obj.id);
         errors = errors.concat(next.errors);
         constraints = constraints.concat(next.constraints);
+        //expr
+        //this needs to come first, fixes problem with error pointing to define rather than the exprapp
+        if(obj.expr !== undefined){
+            next = buildConstraints(obj.expr, obj.funcIDList[0]);
+            constraints = constraints.concat(next.constraints);
+            errors = errors.concat(next.errors);
+        }else{
+                errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
+        }
     }else if(obj instanceof ExprApp){
         lhs = new elemId(obj.id);
         elemList = [];
@@ -3112,6 +3156,8 @@ function buildConstraints(obj, parentId){
             constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
         }
         for(i=0; i<obj.listOfBooleanAnswer.length; i++){
+          //this ensures that boolAnswer pairs, which do not actually matter to constraints, get colored
+          constraints = constraints.concat([new constraint(lhs, new elemId(obj.listOfBooleanAnswer[i].id), obj.listOfBooleanAnswer[i].id)])
         //deal with answers
             if(obj.listOfBooleanAnswer[i].answer !== undefined){
                 next = buildConstraints(obj.listOfBooleanAnswer[i].answer, obj.listOfBooleanAnswer[i].funcIDList[1]);
@@ -3145,22 +3191,23 @@ function unify(constr){
                 if(objectEquality(next.lhs, next.rhs, ["source"])){
                         // do nothing, just to short circuit
                 }else if(next.lhs instanceof elemId || next.lhs instanceof variable){
+                  console.log(next);
                         substitute(next.rhs, next.lhs, constr);
                         substitute(next.rhs, next.lhs, subst);
-                        subst.push(new constraint(next.lhs, next.rhs, next.source));
+                        subst.unshift(new constraint(next.lhs, next.rhs, next.source));
                 }else if(next.rhs instanceof elemId || next.rhs instanceof variable){
                         substitute(next.lhs, next.rhs, constr);
                         substitute(next.lhs, next.rhs, subst);
-                        subst.push(new constraint(next.rhs, next.lhs, next.source));
+                        subst.unshift(new constraint(next.rhs, next.lhs, next.source));
                 }else if(next.rhs instanceof construct &&
                                  next.lhs instanceof construct &&
                                 (next.rhs.constructor === next.lhs.constructor) &&
                                 (next.rhs.elemList.length === next.lhs.elemList.length)){
                         for(var i = 0; i<next.rhs.elemList.length; i++){
-                                constr.push(new constraint(next.rhs.elemList[i], next.lhs.elemList[i], next.source));
+                                constr.unshift(new constraint(next.rhs.elemList[i], next.lhs.elemList[i], next.source));
                         }
                 }else{
-                        errors.push(new error(next.source, "Type mismatch"));
+                        errors.unshift(new error(next.source, "Type mismatch"));
                 }
         }
         //adding generic types
@@ -3202,32 +3249,17 @@ function substituteHelp(newItem, oldItem, replaceIn){
 //obj1 and obj2 are objects to compare, ignoreArr is an array of values to ignore when comparing
 function objectEquality(obj1, obj2, ignoreArr){
         var item1;
-        var item2;
         var found = false;
         if(obj1 === obj2){
                 return true;
         }
         for(item1 in obj1){
-                found = false;
-                if(obj1.hasOwnProperty(item1)){
-                        for(item2 in obj2){
-                                if(obj2.hasOwnProperty(item2)){
-                                        if(ignoreArr !== undefined && ignoreArr.indexOf(item1) !== -1){
-                                                found = true;
-                                                break;
-                                        }
-                                        if(item1 === item2){
-                                                if((obj1[item1] === obj2[item2]) || (obj1[item1] instanceof Object && obj2[item2] instanceof Object && objectEquality(obj1[item1], obj2[item2], ignoreArr))){
-                                                        found = true;
-                                                        break;
-                                                }
-                                        }
-                                }
-                        }
-                        if(!found){
-                                return false;
-                        }
+            if(obj1.hasOwnProperty(item1)){
+                if(!((obj2.hasOwnProperty(item1)&& (obj1[item1] === obj2[item1] || (obj1[item1] instanceof Object && obj2[item1] instanceof Object && objectEquality(obj1[item1], obj2[item1], ignoreArr))))
+                    || (ignoreArr !== undefined && ignoreArr.indexOf(item1) !== -1))){
+                    return false;
                 }
+            }
         }
         return true;
 }
@@ -3239,15 +3271,24 @@ function buildTypeErrors(array, obj){
         var helpfulErrors =[];
         var curr;
         var k;
+        var parent;
+        var item;
+        var condErr = [];
         for(var i = 0; i<array.length; i++){
-                curr = getParent(array[i].id, [obj], undefined);
-                console.log("parent found")
+                parent = getParent(array[i].id, [obj], undefined);
+                item = searchForIndex(array[i].id, [obj]);
+                curr = parent;
                 if(curr === undefined){
                         console.log("no parent found");
                         console.log(array[i]);
-                        curr = searchForIndex(array[i].id, [obj]);
+                        curr = item;
                 }
-                if(curr instanceof ExprDefineFunc){
+                if(item instanceof ExprCond){
+                    condErr = buildSpecialError(item.id, obj);
+                    for(k=0; k<condErr.length; k++){
+                        helpfulErrors.push(condErr[k]);
+                    }
+                }else if(curr instanceof ExprDefineFunc){
                     if(curr.id === array[i].id){console.log("Error: define block error")};
                     for(k =0; k<curr.contract.funcIDList.length; k++){
                             //if the id at index k matches the id in the contract, or the id in the define's funcIDList, or the expressions id
@@ -3300,7 +3341,7 @@ function buildTypeErrors(array, obj){
                         console.log(obj);
                         console.log(array[i].id)
                 }else if(curr instanceof ExprCond){
-                        var idList = [curr.id];
+                        var idList = [];
                         var boolError = false;
                         if(curr.id === array[i].id){
                                 //this might happen, say if you did (+ (cond [true "a"]) 3)
@@ -3325,13 +3366,90 @@ function buildTypeErrors(array, obj){
                                 }
                         }
                         if(!boolError){
-                                helpfulErrors.push(new errorMatch(idList, "Not all of the results of this conditional match the expected output. First check that all the conditional answers have the same type. Then check that each of these answers matches the expected output of the conditional."))
+                                //helpfulErrors.push(new errorMatch(idList, "Not all of the results of this conditional match the expected output. First check that all the conditional answers have the same type. Then check that each of these answers matches the expected output of the conditional."))
+                            condErr = buildSpecialError(curr.id, obj);
+                            for(k=0; k<condErr.length; k++){
+                                helpfulErrors.push(condErr[k]);
+                            }
                         }
                 }
         }
         return helpfulErrors;
 }
 
+function buildSpecialError(id, obj, type){
+    var toReturn = [];
+    var i;
+    if(obj instanceof ExprDefineFunc && obj.expr !== undefined){
+      //console.log("buildSpecialError: define function");
+        return buildSpecialError(id, obj.expr, obj.contract.outputType);
+    }else if(obj instanceof ExprDefineConst && obj.expr !== undefined){
+      //console.log("buildSpecialError: define constant");
+        return buildSpecialError(id, obj.expr, undefined);
+    }else if(obj instanceof ExprApp){
+      //console.log("buildSpecialError: expr app");
+        for(i = 0; i<obj.args.length; i++){
+            console.log(funcConstruct[obj.funcName])
+            toReturn = buildSpecialError(id, obj.args[i], funcConstruct[obj.funcName].elemList[i+1].type);
+            if(toReturn.length !== 0){
+                return toReturn;
+            }
+        }
+        return [];
+    }else if(obj instanceof ExprCond){
+      //console.log("buildSpecialError: cond");
+        var errorList = [];
+        var idList = [];
+        var depthError;
+        if(obj.id === id){
+            for(i=0; i<obj.listOfBooleanAnswer.length; i++){
+                if(obj.listOfBooleanAnswer[i].answer !== undefined){
+                    if(type !== undefined){
+                        if(obj.listOfBooleanAnswer[i].answer instanceof ExprCond/* && obj.listOfBooleanAnswer[i].answer.outputType !== type*/){
+                            var depthError = buildSpecialError(obj.listOfBooleanAnswer[i].answer.id, obj.listOfBooleanAnswer[i].answer, type);
+                            for(var k =0; k<depthError.length; k++){
+                                errorList.push(depthError[k]);
+                            }
+                        }else if(obj.listOfBooleanAnswer[i].answer.outputType !== undefined && obj.listOfBooleanAnswer[i].answer.outputType !== type){
+                            errorList.push(new errorMatch([obj.listOfBooleanAnswer[i].answer.id], "The cond block containing this answer was expected to return type \"" + type + "\" but this block has type \"" + obj.listOfBooleanAnswer[i].answer.outputType + "\""));
+                        }/*else if(obj.listOfBooleanAnswer[i].answer.outputType !== type){
+                            errorList.push(new errorMatch([obj.listOfBooleanAnswer[i].answer.id], "The cond block containing this answer was expected to return type \"" + type + "\" but this block has type \"" + obj.listOfBooleanAnswer[i].answer.outputType + "\""));
+                        }*/
+                    }else{
+                        idList.push(obj.listOfBooleanAnswer[i].answer.id);
+                    }
+                }
+            }
+            if(idList.length !== 0){
+                errorList.push(new errorMatch(idList, "The output type of this cond is not consistent, there are answers that return different types."));
+            }
+            return errorList;
+        }else{
+            for(i=0; i<obj.listOfBooleanAnswer.length; i++){
+                toReturn = buildSpecialError(id, obj.listOfBooleanAnswer[i].answer, type);
+                if(toReturn !== undefined && toReturn.length > 0){
+                    return toReturn;
+                }else{
+                  toReturn = buildSpecialError(id, obj.listOfBooleanAnswer[i].bool, "Booleans");
+                  if(toReturn !== undefined && toReturn.length > 0){
+                    return toReturn;
+                  }
+                }
+            }
+            return [];
+        }
+        
+    }else if(obj instanceof ExprConst){
+      //console.log("buildSpecialError: constant");
+        return [];
+    }else if(isLiteral(obj)){
+      //console.log("buildSpecialError: literal");
+        return [];
+    }else{
+      //console.log("buildSpecialError: no object");
+        return [];
+    }
+}
 
 function getParent(id, array, parent){
             var toReturn = undefined;
