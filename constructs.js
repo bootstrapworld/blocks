@@ -2944,7 +2944,7 @@ function createErrorMessages(typeErrors){
                                 $(document.getElementById(typeErrors[i].idArr[j])).attr('title',typeErrors[i].message);
                         }
                         else{
-                                $(document.getElementById(typeErrors[i].idArr[j])).attr('title', $(document.getElementById(typeErrors[i].idArr[j])).attr('title')+"\n"+typeErrors[i].message);                                
+                                $(document.getElementById(typeErrors[i].idArr[j])).attr('title', typeErrors[i].message);                                
                         }
                         $(document.getElementById(typeErrors[i].idArr[j])).addClass("ERROR");
                         for(var type in colors){
@@ -3299,19 +3299,24 @@ function buildTypeErrors(array, obj){
 function buildSpecialError(id, obj, type){
     var toReturn = [];
     var i;
-    if(obj instanceof ExprDefineFunc && obj.contract.outputType!==undefined && obj.expr !== undefined){
+    if(obj instanceof ExprDefineFunc && obj.expr !== undefined){
+      //console.log("buildSpecialError: define function");
         return buildSpecialError(id, obj.expr, obj.contract.outputType);
     }else if(obj instanceof ExprDefineConst && obj.expr !== undefined){
+      //console.log("buildSpecialError: define constant");
         return buildSpecialError(id, obj.expr, undefined);
     }else if(obj instanceof ExprApp){
-        for(var i; i<obj.args.length; i++){
-            toReturn = buildSpecialError(id, obj.args[i], funcConstruct[obj.funcName].elemList[k+1].type);
+      //console.log("buildSpecialError: expr app");
+        for(i = 0; i<obj.args.length; i++){
+            console.log(funcConstruct[obj.funcName])
+            toReturn = buildSpecialError(id, obj.args[i], funcConstruct[obj.funcName].elemList[i+1].type);
             if(toReturn.length !== 0){
                 return toReturn;
             }
         }
         return [];
     }else if(obj instanceof ExprCond){
+      //console.log("buildSpecialError: cond");
         var errorList = [];
         var idList = [];
         var depthError;
@@ -3321,7 +3326,7 @@ function buildSpecialError(id, obj, type){
                     if(type !== undefined){
                         if(obj.listOfBooleanAnswer[i].answer instanceof ExprCond/* && obj.listOfBooleanAnswer[i].answer.outputType !== type*/){
                             var depthError = buildSpecialError(obj.listOfBooleanAnswer[i].answer.id, obj.listOfBooleanAnswer[i].answer, type);
-                            for(var k; k<depthError.length; k++){
+                            for(var k =0; k<depthError.length; k++){
                                 errorList.push(depthError[k]);
                             }
                         }else if(obj.listOfBooleanAnswer[i].answer.outputType !== undefined && obj.listOfBooleanAnswer[i].answer.outputType !== type){
@@ -3343,16 +3348,24 @@ function buildSpecialError(id, obj, type){
                 toReturn = buildSpecialError(id, obj.listOfBooleanAnswer[i].answer, type);
                 if(toReturn !== undefined && toReturn.length > 0){
                     return toReturn;
+                }else{
+                  toReturn = buildSpecialError(id, obj.listOfBooleanAnswer[i].bool, "Booleans");
+                  if(toReturn !== undefined && toReturn.length > 0){
+                    return toReturn;
+                  }
                 }
             }
             return [];
         }
         
     }else if(obj instanceof ExprConst){
+      //console.log("buildSpecialError: constant");
         return [];
     }else if(isLiteral(obj)){
+      //console.log("buildSpecialError: literal");
         return [];
     }else{
+      //console.log("buildSpecialError: no object");
         return [];
     }
 }
