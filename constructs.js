@@ -124,6 +124,7 @@ function makeID(){
  */
  function setChildInProgram(parentId, childId, obj,prog){
      var parent = searchForIndex(parentId, prog);
+     console.log(parent);
      if(parent === undefined){
 	 throw new Error("setChildInProgram failure: parentId not found.");
      }
@@ -194,7 +195,7 @@ function makeID(){
  function getAddIndex(parent, childID){
      for(var i =0; i<parent.funcIDList.length; i++){
 	 if(parent.funcIDList[i] === childID){
-	     return i
+	     return i;
 	 }
      }
      return -1;
@@ -969,12 +970,12 @@ function makeID(){
      
      //makes argument type-in
      var argIndex = defineExpr.funcIDList.length - 2;
-     var argHTML = $("<th width=\"10px\" class=\"expr argument\"><input style=\"width:70px;\" id=\"" + defineExpr.funcIDList[defineExpr.funcIDList.length - 1] +"\" onkeyup=\"sync(" + defineExpr.id + ",$(this))\" class=\"argName\" disabled=\"disabled\" value=\"\"></th>");
-
-     addDraggableToArgument($(argHTML), defineExpr, $(contractdropdown).find('select').attr('id'));
+     var argHTML = $("<th style=\"text-align:left;\" class=\"expr argument\"><input style=\"width:70px;\" id=\"" + defineExpr.funcIDList[defineExpr.funcIDList.length - 1] +"\" onkeyup=\"sync(" + defineExpr.id + ",$(this))\" class=\"argName\" disabled=\"disabled\" value=\"\"></th>");
 
      $(this).closest('table').find('tr').eq(2).find('th').eq(1 + argIndex * 2).after($(argHTML));
-     $(argHTML).after("<th></th>");
+     $(argHTML).after("<th style=\"text-align:left;\"></th>");
+
+     addDraggableToArgument($(argHTML), defineExpr, $(contractdropdown).find('select').attr('id'));
 
      //resize purpose and expression
      var purposeTH = $(this).closest('table').find('.contractPurpose').closest('th');
@@ -1030,9 +1031,6 @@ var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
 	$(jQuerySelection).remove();
     });
 };
-
-
-
 
 function formValidation(e){
     var toContinue=true;
@@ -1400,7 +1398,13 @@ $("#functionButton").click(function() {
     $($popupHTML).css('top','50px');
     $($popupHTML).css('left','220px');
     $($popupHTML).draggable();
+
+    //adds droppable to expression
     addDroppableToDefineExpr($popupHTML.find('.functionExpr'));
+
+    //adds draggable to first argument
+    addDraggableToArgument($popupHTML.find('.argument'), codeObject, $popupHTML.find('select').eq(0).attr('id'));
+
     /*
       closes the corresponding 'define' window
     */
@@ -1424,14 +1428,14 @@ $("#functionButton").click(function() {
 makeContractDropdown creates a new selection and plus button for the contract part of define
 */
 function makeContractDropdown(funcIDListID, defineExpr) {
-    return "<th>" + generateTypeDrop(funcIDListID, defineExpr)  + "</th><th class=\"buttonHolder\"></th>";
+    return "<th style=\"text-align:left;\">" + generateTypeDrop(funcIDListID, defineExpr)  + "</th><th style=\"text-align:left;\" class=\"buttonHolder\"></th>";
 }
 /*
 makeDefinePopup creates a new ExprDefine
 */
 function makeDefinePopup(codeObject) {
     var i;
-    var popupHTML = "<div class=\"definePopup\"><table class=\"DefineFun Define\" id=\"" + codeObject.id+ "\"><tr><button class=\"closeFunctionButton\"></tr>"
+    var popupHTML = "<div class=\"definePopup\"><table border class=\"DefineFun Define\" id=\"" + codeObject.id+ "\"><tr><button class=\"closeFunctionButton\"></tr>"
 
     //CONTRACT name
     popupHTML += "<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+",$(this))\" ";
@@ -1447,9 +1451,9 @@ function makeDefinePopup(codeObject) {
 	if (codeObject.contract.argumentTypes[i+1] != undefined){
 	    $(typeDrop).val(codeObject.contract.argumentTypes[i+1])
 	}
-        popupHTML += " <th>"+typeDrop+"</th><th class=\"buttonHolder\"></th>";
+        popupHTML += " <th style=\"text-align:left;\">"+typeDrop+"</th><th style=\"text-align:left;\" class=\"buttonHolder\"></th>";
     }
-    popupHTML += "<th> <button class=\"addArgument\">+</button> </th>";
+    popupHTML += "<th style=\"text-align:left;\"> <button class=\"addArgument\">+</button> </th>";
 
     //CONTRACT output
     var outputDrop = generateTypeDrop(codeObject.contract.funcIDList[0],codeObject);
@@ -1457,7 +1461,7 @@ function makeDefinePopup(codeObject) {
     if (outputType != undefined){
 	$(outputDrop).val(outputType);
     }
-    popupHTML += " <th> -> </th><th>"+outputDrop+"</th></tr>";
+    popupHTML += " <th style=\"text-align:left;\"> -> </th><th style=\"text-align:left;\">"+outputDrop+"</th></tr>";
 
     //DEFINE BLOCK NAME
     popupHTML+="<tr><th>define</th>";
@@ -1782,8 +1786,8 @@ function createBlock(codeObject,constantEnvironment,functionEnvironment){
 function createNewConstants(codeObject){
 
     var newConstants=[];
-    for(var i=0;i<codeObject.argumentNames.length;i++){
-        newConstants.push({name:codeObject.argumentNames[i],type:codeObject.contract.argumentTypes[i]});
+    for(var i=1;i<codeObject.argumentNames.length;i++){
+        newConstants.push({name:codeObject.argumentNames[i],type:codeObject.contract.argumentTypes[i - 1]});
     }
     return newConstants;
 }
@@ -1938,7 +1942,7 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
 }
 
 function createConstantBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"expr ConstBlock" + encode(codeObject.outputType)+"\" " + "id=\""+codeObject.id+"\"><tr><th>"+encode(codeObject.constName)+"</tr>";
+    var block =  "<table class=\"expr ConstBlock " + encode(codeObject.outputType)+"\" id=\""+codeObject.id+"\"><tr><th>"+encode(codeObject.constName)+"</tr>";
     return block + "</table>";
 }
 
@@ -2019,7 +2023,7 @@ function changeType(curValue,selectID,defineExprID){
 	deleteTypeClass(modifiedblock);
 	if(curValue !== "Type"){
 	    modifiedblock.addClass(decode(curValue));
-	    $("#" + selectID).css('background-color','white');
+	    $("#" + selectID).css('background-color','');
 	    if (funcIDIndex !==0){ //arg is typeable
 		$(modifiedblock).find('input').attr('disabled',false);
 	    }
@@ -2043,27 +2047,57 @@ function changeType(curValue,selectID,defineExprID){
     }
 }
 
+//adds draggable within define expressions
+function addDraggableToDefineExpr($table) {
+    $table.draggable({
+	helper:'clone',
+	start:function(event, ui){
+	    draggedClone = $(this);
+	    programCarrying = searchForIndex($(this).attr("id"), userFunctions);
+	    carrying = getHTML($(this));
+	    ui.helper.addClass("wired");
+	    setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined,userFunctions);
+	},
+	stop:function(event, ui){
+	    if (programCarrying != null && carrying != null){
+		setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).closest('th').attr("id"), programCarrying, userFunctions);
+		programCarrying = null;
+		carrying = null;
+	    }
+	}
+    });
+}
+
 //adds droppable to define expressions
 function addDroppableToDefineExpr(defineExpr) {
     $(defineExpr).droppable({
 	tolerance:'pointer',
 	greedy:true,
+        hoverClass:"highlighted",
 	drop:function(event, ui) {
 	    var outputSelect = $(this).closest('.DefineFun').find('tr').eq(1).find('th').last().find('select');
 	    if (carrying != null && programCarrying != null && $(this).children().length === 0 && outputSelect.val() !== 'Type'){
 		$(this).html(carrying);
 		var defineCode = searchForIndex($(this).closest('.DefineFun').attr('id'), userFunctions);
 		defineCode.expr = programCarrying;
+
+		//make things within droppable
 		$(this).find('.droppable').each(function () {
 		    addDroppableWithinDefineExpr($(this));
 		});
+
+		//make things within draggable
+		$(this).find('table').each(function(){
+		    addDraggableToDefineExpr($(this));
+		});
+
 	    } else{
 		if(outputSelect.val() === 'Type'){
 		    outputSelect.css('background-color','red');
 		}
-		$(ui.draggable).remove();
+		$(ui.helper).remove();
 	    }
-	    
+	    typeCheck(userFunctions);
 	    carrying = null;
 	    programCarrying = null;
 	}
@@ -2081,16 +2115,24 @@ function addDroppableWithinDefineExpr(jQuerySelection){
     $(jQuerySelection).droppable({
 	tolerance:'pointer',
 	greedy:true,
+        hoverClass:"highlighted",
 	drop:function(event, ui){
-	    console.log(carrying, programCarrying,$(this).children().length);
 	    if (carrying != null && programCarrying != null && $(this).children().length === 0){
-		console.log('here');
 		$(this).html(carrying);
 		setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying,userFunctions);
 		$(this).css('border','none');
 		$(this).find('.droppable').each(function() {
 		    addDroppableWithinDefineExpr($(this));
 		});
+		$(this).find('table').each(function() {
+		    addDraggableToDefineExpr($(this));
+		});
+		if (ui.draggable.parentsUntil('.definePopup').parent().first().hasClass('definePopup') && !ui.draggable.hasClass('argument')){
+
+		    console.log('here');
+		    eliminateBorder($(ui.draggable).closest('th'));
+		}
+		typeCheck(userFunctions);
 		programCarrying = null;
 		carrying = null;
 	    }
@@ -2358,6 +2400,7 @@ $(function() {
 		    $(replacement).find('input').attr('readonly', false);
 		    setLiWidth($("#List li"));
 		    program.splice($("#List li").index(replacement), 0, programCarrying);
+		    $("#storage").html('Storage (' + storageProgram.length + ')');
 		    addToHistory(tempProgram, tempStorageProgram);
 		    programCarrying = null;
 		    carrying = null;
@@ -2384,11 +2427,16 @@ $(function() {
 	    tempProgram = cloneProgram(program);
 	},
 	stop: function(event, ui){
-	    if ($(ui.item).closest('div').attr('id') === 'storagePopup'){
-		storageProgram.splice($("#storagePopup li").index(ui.item), 0, programCarrying);
+	    if (carrying != null && programCarrying != null){
+		if ($(ui.item).closest('div').attr('id') === 'storagePopup'){
+		    storageProgram.splice($("#storagePopup li").index(ui.item), 0, programCarrying);
+		}
+		carrying = null;
+		programCarrying = null;
 	    }
-	    carrying = null;
-	    programCarrying = null;
+	    else{
+		ui.item.remove();
+	    }
 	},
 	receive:function(event, ui){
 	    addToHistory(tempProgram, cloneProgram(storageProgram));
@@ -2414,6 +2462,7 @@ $(function() {
 		}
 		$(ui.draggable).remove();
 		setLiWidth($("#storagePopup li"));
+		$("#storage").html("Storage (" + storageProgram.length + ")");
 		carrying = null;
 		programCarrying = null;
 	    }
@@ -2482,13 +2531,16 @@ var makeDrawersDraggable = function(){
   @param dropDownID - (string) ID of the dropdown connected to the argument
 */
 var addDraggableToArgument=function(jQuerySelection,functionCodeObject, dropDownID){
-    console.log(jQuerySelection);
+
     if (jQuerySelection != null){
 	$(jQuerySelection).draggable({
+            containment: $("#" + functionCodeObject.id),
+	    connectToSortable:'#options',
+	    appendTo:'body',
 	    start: function(event, ui) {
 		if(!errorVal){
 		    tempProgram = cloneProgram(program);
-                ui.helper.addClass("wired");
+                    ui.helper.addClass("wired");
                 }
                 else{
 		    event.stopPropagation();
@@ -2497,17 +2549,15 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, dropDown
 		    return false;
                 }
 	    },
-            containment:".DefineFun",
 	    helper: function(event, ui){
-		programCarrying= new ExprConst($(this).find('select').val());
+		programCarrying= new ExprConst($(this).find('input').val());
                 programCarrying.outputType=$("#" + dropDownID).val();
 		carrying = createBlock(programCarrying, constants.concat(createNewConstants(functionCodeObject)), functions);
 		return carrying;
-	    },
-	    connectToSortable:'#options'
+	    }
 	});
     } else {
-     //   throw new Error("addDraggableToArgument: jQuerySelection is null");
+	throw new Error("addDraggableToArgument: jQuerySelection is null");
     }
 };
 
@@ -2633,13 +2683,11 @@ var constantIsArgument = function(constant, $parentDefine) {
   addClickableLiteralBox creates a literal block when a blue or orange droppable is clicked
 */
 var addClickableLiteralBox = function(jQuerySelection, parent, child, prog){
-    console.log(jQuerySelection, parent, child, prog);
     if (jQuerySelection.children().length === 0 && jQuerySelection.closest('div').attr('id') !== 'storage'){
 	if(jQuerySelection.hasClass("Numbers")){
 	    addClickableLiteralBoxHelper(jQuerySelection, new ExprNumber(), parent, child, prog);
 	}
 	else if (jQuerySelection.hasClass("Strings")){
-	    console.log('here');
 	    addClickableLiteralBoxHelper(jQuerySelection, new ExprString(), parent, child, prog);
 	}
 
@@ -2652,7 +2700,17 @@ var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent,
     var html = createBlock(codeObject,constants,functions);
     $(jQuerySelection).css('border','none');
     jQuerySelection.html(html);
-//    addDroppableFeature(jQuerySelection);
+    var origin = jQuerySelection.closest('div');
+    console.log(origin);
+    if (origin.hasClass('code')){
+	addDroppableFeature(jQuerySelection);
+    }
+    else if (origin.hasClass('definePopup')){
+	console.log(jQuerySelection);
+	jQuerySelection.find('table').each(function(){
+	    addDraggableToDefineExpr($(this));
+	});
+    }
 };
 
 /*
@@ -2660,6 +2718,7 @@ var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent,
   It changes the jQuerySelection by adding a border and appending the word "Exp" inside the cell.
 */
 var eliminateBorder = function(jQuerySelection){
+    console.log(jQuerySelection);
     jQuerySelection.attr('style','border:3px;'+
                          "border-style:solid;"+
                          "border-radius:5px;"+
