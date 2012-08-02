@@ -2926,9 +2926,9 @@ function createInferTypes(typeMap){
             type = typeMap[i].lhs.elemList[0].type;
         }
         if(isNaN(type) && !$(document.getElementById(id)).hasClass("ContractType")){
-            if($(document.getElementById(id)).hasClass("Cond")){
-                searchForIndex(id,program).outputType=type;
-            }
+            //if($(document.getElementById(id)).hasClass("Cond")){
+            //    searchForIndex(id,program).outputType=type;
+            //}
             $(document.getElementById(id)).addClass(type)
         }
     }
@@ -3114,7 +3114,6 @@ function unify(constr){
                 if(objectEquality(next.lhs, next.rhs, ["source"])){
                         // do nothing, just to short circuit
                 }else if(next.lhs instanceof elemId || next.lhs instanceof variable){
-                  console.log(next);
                         substitute(next.rhs, next.lhs, constr);
                         substitute(next.rhs, next.lhs, subst);
                         subst.unshift(new constraint(next.lhs, next.rhs, next.source));
@@ -3207,6 +3206,13 @@ function buildTypeErrors(array, obj){
                         curr = item;
                 }
                 if(item instanceof ExprCond){
+                    curr = item;
+                    while(curr instanceof ExprCond){
+                      item = curr;
+                      curr = getParent(curr.id, [obj]);
+
+                    }
+                    console.log(item)
                     condErr = buildSpecialError(item.id, obj);
                     for(k=0; k<condErr.length; k++){
                         helpfulErrors.push(condErr[k]);
@@ -3290,9 +3296,15 @@ function buildTypeErrors(array, obj){
                         }
                         if(!boolError){
                                 //helpfulErrors.push(new errorMatch(idList, "Not all of the results of this conditional match the expected output. First check that all the conditional answers have the same type. Then check that each of these answers matches the expected output of the conditional."))
-                            condErr = buildSpecialError(curr.id, obj);
-                            for(k=0; k<condErr.length; k++){
-                                helpfulErrors.push(condErr[k]);
+                          while(curr instanceof ExprCond){
+                          item = curr;
+                          curr = getParent(curr.id, [obj]);
+
+                          }
+                          console.log(item)
+                          condErr = buildSpecialError(item.id, obj);
+                          for(k=0; k<condErr.length; k++){
+                              helpfulErrors.push(condErr[k]);
                             }
                         }
                 }
@@ -3300,7 +3312,7 @@ function buildTypeErrors(array, obj){
         return helpfulErrors;
 }
 
-function buildSpecialError(id, obj, type){
+function buildSpecialError(id, obj, type ){
     var toReturn = [];
     var i;
     if(obj instanceof ExprDefineFunc && obj.expr !== undefined){
@@ -3339,7 +3351,14 @@ function buildSpecialError(id, obj, type){
                             errorList.push(new errorMatch([obj.listOfBooleanAnswer[i].answer.id], "The cond block containing this answer was expected to return type \"" + type + "\" but this block has type \"" + obj.listOfBooleanAnswer[i].answer.outputType + "\""));
                         }*/
                     }else{
+                      if(obj.listOfBooleanAnswer[i].answer instanceof ExprCond){
+                        depthError =buildSpecialError(obj.listOfBooleanAnswer[i].answer.id, obj.listOfBooleanAnswer[i].answer, type);
+                        for(var k = 0; k<depthError.length; k++){
+                          errorList.push(depthError[k]);
+                        }
+                      }else{
                         idList.push(obj.listOfBooleanAnswer[i].answer.id);
+                      }
                     }
                 }
             }
