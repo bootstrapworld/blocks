@@ -1006,6 +1006,216 @@ function toggleDeleteButtons(funcIDList, defineExprID, latestArg) {
     }
 }
 
+var resizeStorage = function() {
+    $("#storagePopup").width($("#code").width()-$("#Drawers").width() - 300);
+    $("#storagePopup").height($("#code").height() - 100);
+};
+
+/*
+removeFromStorageOnClick takes in a jquery selection (jQuerySelection) and adds a function to it
+such that when it's double clicked, it gets removed from storagePopup div and gets added
+to the end of the sortable #List
+*/
+var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
+    $(jQuerySelection).dblclick(function() {
+	var index = $("#storagePopup li").index(jQuerySelection);
+	$("#List").append("<li>" + html + "</li>");
+	program.push(codeObject);
+	addDroppableFeature($("#List li:last").find(('.droppable')));
+	storageProgram.splice(index, 1);
+	$(jQuerySelection).remove();
+    });
+};
+
+$(document).ready(function(){
+    //When the window is resized, the height of the width of the code div changes
+    $(window).resize(onResize);
+
+
+    //draws drawers when the page is loaded
+    makeDrawers(functions,constants);
+    onResize();
+    // activated is initially set to "Numbers"
+    // activated = $("#options #Numbers");
+    // activated.css("visibility", "visible");
+    /*
+      adds a stylesheet to <head> such that blocks can be colored according to their type
+    */
+    renderTypeColors();
+    
+    /*
+      storage pops up when clicked
+    */
+    $("#storage").click(function() {
+	$("#storagePopup").css('visibility','visible');
+//	$("#graybox").css('visibility','visible').fadeIn('slow');;
+    });
+
+    $("#closestorage").click(function() {
+	$("#storagePopup").css('visibility','hidden');
+//	$("#graybox").css('visibility','hidden');
+    });
+
+    $(document).keyup(function(e) {
+    if (e.keyCode == 27) { $("#storagePopup").css('visibility','hidden'); }   // esc
+    });
+
+
+
+    /*
+      sets focus equal to the input that is focused. 
+    */
+    $("#List input").live('focus',function(e){
+        var toContinue=formValidation(e);
+        focused=$(this);
+        initvalue=focused.value;
+        tempProgram=cloneProgram(program);
+        return toContinue;
+    });
+
+    
+    $(document.body).live('mousedown', function(e){
+        return formValidation(e)
+    });
+
+    //Sets undo and redo buttons to disabled on startup
+    $("#undoButton").attr('disabled','disabled');
+    $("#redoButton").attr('disabled','disabled');
+
+    /*
+      Binds undo functionality with undo button
+    */
+    $("#undoButton").bind('click', function(){
+        if (historyarr.length !== 0){
+	    future.unshift({program: cloneProgram(program), storage: cloneProgram(storageProgram)});
+	    $("#redoButton").removeAttr('disabled');
+	    var x = historyarr.pop();
+	    program = x.program;
+	    storageProgram = x.storage;
+	    renderProgram();
+	    if (historyarr.length === 0){
+		$(this).attr('disabled','disabled');
+	    }
+        }
+    });  
+
+    /*
+      Binds redo functionality with redo button
+    */
+    $("#redoButton").bind('click', function(){
+        if (future.length !== 0){
+	    historyarr.push({program: cloneProgram(program), storage: cloneProgram(storageProgram)});
+	    var x = future.shift();
+	    program = x.program;
+	    storageProgram = x.storage;
+	    renderProgram();
+	    if (future.length === 0){
+		$("#redoButton").attr('disabled','disabled');
+	    }
+        }
+        $("#undoButton").removeAttr('disabled');
+    });
+
+    $("#saveButton").bind('click',function(){
+        if(typeof(Storage)!=="undefined"){
+            var valid=true;
+            var confirmed=true;
+            var saveName=prompt("Please enter a name to which to save your file.");
+            if(saveName==undefined){
+                return;
+            }
+            if(saveName===""){
+                valid=false;
+            }
+            else if(localStorage.getItem(saveName)!=undefined){
+                confirmed=confirm("There already exists a file with this name.  Would you like to overwrite?");
+            }
+            while(!valid || !confirmed){
+                if(!valid){
+                    saveName=prompt("You have failed to enter anything as your file name.  To cancel, please hit the cancel button.");
+                    valid=true;
+                    confirmed=true;
+                }
+                else if(!confirmed){
+                    saveName=prompt("Please enter a name to which to save your file.");
+                    valid=true;
+                    confirmed=true;
+                }
+                if(saveName===""){
+                    valid=false;
+                }
+                else if(saveName==undefined){
+                    return;
+                }
+                else if(localStorage.getItem(saveName)!=undefined){
+                    confirmed=confirm("There already exists a file with this name.  Would you like to overwrite?");
+                }
+            }
+            //save id, program... maybe history, future, trash
+            localStorage[saveName]=JSON.stringify(cloneProgram(program));
+        }
+        else{
+            alert("I am sorry but your browser does not support storage.");
+        }
+    }) ;
+
+    $("#loadButton").bind('click',function(){
+        var loadName=prompt("Please enter the name of the file you wish to load.  Your current program will be removed from screen.");
+        if(loadName==undefined){
+            return;
+        }
+        else if(localStorage.getItem(loadName)==undefined){
+            alert("There was no local file by that name.");
+            return;
+        }
+        else{
+            var programString=localStorage.getItem(loadName);
+            program=[];
+            objectArrayToProgram(JSON.parse(programString));
+            //do I change the history and trash? overwrite it?
+            renderProgram(createProgramHTML(program));
+            historyarr=[];
+            future=[];
+            $("#undoButton").attr('disabled','disabled');
+            $("#redoButton").attr('disabled','disabled');
+        }
+    });
+
+    $("#exportButton").bind('click',function(){
+        alert("Here is the racket representation of the current program:\n\n"+parseProgram(program));
+    });
+
+
+    $(".addCond").live('click',function(){
+        addToHistory(cloneProgram(program), cloneProgram(storageProgram));
+        searchForIndex($(this).closest('table').attr('id'),program).listOfBooleanAnswer.push(new ExprBoolAnswer());
+        renderProgram(createProgramHTML())
+    });
+
+    $(".removeCond").live('click',function(){
+        var listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),program).listOfBooleanAnswer
+        if(listOfTuples.length!=1){
+	    addToHistory(cloneProgram(program), cloneProgram(storageProgram));
+	    for(var i=0;i<listOfTuples.length;i++){
+                if(listOfTuples[i].id===$(this).closest('table').attr('id')){
+		    listOfTuples.splice(i,1)
+                }
+	    }  
+	    renderProgram(createProgramHTML());
+        }    
+    });
+});
+
+$(".addArgument").live('click',function(){
+    addToHistory(cloneProgram(program), cloneProgram(storageProgram));
+    var block=searchForIndex($(this).closest('table').attr('id'),program)
+    block.funcIDList.push(makeID())
+    block.contract.funcIDList.push(makeID())
+    block.argumentNames.push("");
+    renderProgram(createProgramHTML());
+});
+
+
 function formValidation(e){
     var toContinue=true;
     numberofvalidations++;
@@ -1014,7 +1224,8 @@ function formValidation(e){
         var inputtext=focused.val();
         var codeObject = searchForIndex(focused.closest($("table")).attr("id"),program);
         //NUMBERS
-        if(focused.closest($("table")).hasClass("Numbers")){
+        if(focused.closest($("table")).hasClass("NumBlock")){
+            console.log("Formvalidating numbers")
 	    if(isNaN(Number(inputtext))){
                 toContinue=false;
                 errorVal=true
@@ -1248,7 +1459,7 @@ function makeTypesArray(allFunctions,allConstants){
         types.Constants.push(i);
     }
 
-    types.Define=["define-constant","define-function","define-struct"];
+    types.Define=["define-constant","define-function"];
     types.Expressions=["cond"];
 
     return types;
@@ -1527,6 +1738,7 @@ var renderProgram = function(){
     // });
     setLiWidth($("#List li"));
     setLiWidth($("#storagePopup li"));
+    typeCheck(program);
 };
 
 /*
@@ -1780,6 +1992,73 @@ function createFunctionBlock(functionInfo, codeObject, constantEnvironment,funct
     return block + "</tr></table>";
 }
 /*
+
+
+//createDefineBlock outputs the block corresponding to defining a function
+function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
+    var i;
+    var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
+
+    //contract
+    block+="<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+")\" ";
+
+    //CONTRACT NAME
+    if(codeObject.contract.funcName!=undefined){
+        block+="value=\""+encode(codeObject.contract.funcName)+"\"";
+    }
+    block+=" />";
+
+    block+="</th><th> : </th>";
+
+    //CONTRACT ARGUMENTS
+    for(i=0;i<codeObject.argumentNames.length;i++){
+        block+=" <th class=\"ContractType\" id=\""+codeObject.contract.funcIDList[i+1]+"\">"+generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject)+"</th>";
+    }
+
+    //CONTRACT OUTPUT
+    block+="<th> <button class=\"addArgument\">+</button> </th><th> -> </th><th class=\"ContractType\" id=\""+codeObject.contract.funcIDList[0]+"\">"+generateTypeDrop(codeObject.contract.funcIDList[0],codeObject)+"</th></tr>";
+    
+    
+    block+="<tr><th>define</th>";
+    
+    //DEFINE BLOCK NAME
+    block+="<th class=\"expr\"> <input class=\"definitionName\" onkeyup=\"sync("+codeObject.id+")\" ";
+    if(codeObject.contract.funcName!=undefined){
+        block+="value=\""+encode(codeObject.contract.funcName)+"\"";
+    }
+    block+=" /></th>";
+
+    //DEFINE BLOCK ARGUMENTS
+    for(i=0;i<codeObject.argumentNames.length;i++){
+        block+="<th width=\"10px\" class=\"expr argument\"";
+        if(codeObject.contract.argumentTypes[i]!=undefined){
+	    block+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
+        }
+        block+="><input style=\"width:70px;\" id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+")\" class=\"argName\" ";
+        if(codeObject.argumentNames[i]!=undefined){
+	    block+="value=\""+encode(codeObject.argumentNames[i])+"\"";
+        }
+        block+=" />";
+    }
+    block+="<th></th><th></th>";
+
+
+    //DEFINE EXPRESSIONS
+    block+="<th ";
+    if(codeObject.contract.outputType!=undefined){
+        block+=" style=\"background:"+colors[codeObject.contract.outputType]+"\" ";
+    }
+    if(codeObject.expr != undefined){
+        block+="class=\"functionExpr noborder droppable expr\" name=\"Expr\" id="+codeObject.funcIDList[0]+">";
+        block+=createBlock(codeObject.expr,constantEnvironment.concat(createNewConstants(codeObject)),functionEnvironment);
+        block+="</th>";
+    }
+    else{
+        block+="name=\"Expr\" class=\"functionExpr droppable expr\" id="+codeObject.funcIDList[0]+">Expr</th>";
+    }
+    return block + "</tr></table>";
+}
+
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject,constantEnvironment,functionEnvironment){
 
@@ -1841,12 +2120,12 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
 }
 
 function createConstantBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"expr " + encode(codeObject.outputType)+"\" " + "id=\""+codeObject.id+"\"><tr><th>"+encode(codeObject.constName)+"</tr>";
+    var block =  "<table class=\"expr ConstBlock" + encode(codeObject.outputType)+"\" " + "id=\""+codeObject.id+"\"><tr><th>"+encode(codeObject.constName)+"</tr>";
     return block + "</table>";
 }
 
 function createBooleanBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"Booleans expr\" " + "id=\""+codeObject.id+"\"><tr><th>"+codeObject.value+"</tr>";
+    var block =  "<table class=\"Booleans BoolBlock expr\" " + "id=\""+codeObject.id+"\"><tr><th>"+codeObject.value+"</tr>";
     return block + "</table>";
 }
 
@@ -2203,8 +2482,13 @@ $(function() {
                         tempProgram = cloneProgram(program);
                         carrying = ui.item.html();
                         var index = ui.item.index();
+                        ui.helper.addClass("wired");
+                        ui.helper=$(carrying).clone().addClass("wired");
+                        ui.helper.addClass("ui-sortable-helper");
+                        console.log(ui.helper);
                         programCarrying = program[index];
                         program.splice(index, 1);
+                        return ui.helper
 		}
 		    else{
                         event.stopPropagation();
@@ -2219,6 +2503,13 @@ $(function() {
                 } 
 	    }
         },
+        // helper: function(event,ui){
+        //             if (ui.item === null){
+        //         throw new Error("sortable start: ui.item is undefined");
+        // } else {
+        //         $(carrying).addClass("wired")
+        //         return $(carrying);
+        // }},
         stop: function(event, ui) {
 	    if (carrying != undefined && programCarrying !=undefined){
                 var replacement = $('<li>').append(carrying);
@@ -2232,8 +2523,10 @@ $(function() {
                 droppedInDroppableFromList = false;
                 programCarrying = null;
                 carrying = null;
+
 	    } else {
 		$(ui.item).remove();
+                typeCheck(program);
 	    }
         },
         receive:function(event,ui){
@@ -2266,6 +2559,8 @@ $(function() {
 	start:function(event, ui) {
 	    tempStorageProgram = cloneProgram(storageProgram);
 	    carrying = ui.item.html();
+                ui.helper.addClass("wired");
+                console.log(ui.helper);
 	    programCarrying = storageProgram[$("#storagePopup li").index(ui.item)];
 	    storageProgram.splice($("#storagePopup li").index(ui.item), 1);
 	    tempProgram = cloneProgram(program);
@@ -2347,10 +2642,14 @@ var makeDrawersDraggable = function(){
                 return false;
 	    }
         },
+        stop: function(event,ui){
+                    
+        },
         helper: function(event, ui){
 	    programCarrying = makeCodeFromOptions($(this).text());
 	    carrying = createBlock(programCarrying,constants,functions);
-	    return carrying;
+        var carryingClass=$(createBlock(programCarrying,constants,functions)).addClass("wired")
+	    return carryingClass;
         },
         connectToSortable: "#List",
 	zIndex:999
@@ -2371,6 +2670,7 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, dropDown
 	    start: function(event, ui) {
 		if(!errorVal){
 		    tempProgram = cloneProgram(program);
+                ui.helper.addClass("wired");
                 }
                 else{
 		    event.stopPropagation();
@@ -2412,6 +2712,8 @@ var addDraggingFeature = function(jQuerySelection) {
 			    draggedClone = $(this);
 			    programCarrying = searchForIndex($(this).attr("id"), program);
 			    carrying = getHTML($(this));
+                ui.helper.addClass("wired");
+                console.log(ui.helper);
 			    setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined,program);
                         }
                         else{
@@ -2423,6 +2725,7 @@ var addDraggingFeature = function(jQuerySelection) {
 		    }
                 },
                 stop:function(event, ui){
+
 
 		    if (programCarrying != undefined && carrying != undefined){
                         program = tempProgram;
@@ -2458,6 +2761,7 @@ var addDroppableFeature = function(jQuerySelection) {
 	    // hoverClass:"highlight",
 	    tolerance:"pointer",
 	    greedy:true,
+        hoverClass:"highlighted",
 	    drop: function(event, ui){
                 if ($(this) === undefined){
 		    throw new Error ("addDroppableFeature drop: $(this) is undefined");
@@ -2732,26 +3036,79 @@ function typeInfer(obj){
 
 /*removeErrorMessages will, starting at a parent selection, recursively remove all messages and highliting from itself and its children*/
 function removeErrorMessages(jQuerySelection){
+    jQuerySelection.attr("title","");
+    jQuerySelection.removeClass("ERROR");
+}
+
+function typeCheck(ArrayofBlocks){
+    for(var i=0;i<ArrayofBlocks.length;i++){
+        var blockTypeInfer=typeInfer(ArrayofBlocks[i])
+        //NEED TO FIX THIS
+        $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeErrorMessages($(this))});
+            $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeInferTypes($(this))});
+            $(document.getElementById(ArrayofBlocks[i].id)).find("th").each(function(){removeInferTypes($(this))});
+        createInferTypes(blockTypeInfer.types);
+        createErrorMessages(blockTypeInfer.typeErrors);
+    }
+}
+
+
+function removeInferTypes(jQuerySelection){
+    for(var type in colors){
+        if(colors.hasOwnProperty(type)){
+            jQuerySelection.removeClass(type);
+            if(jQuerySelection.hasClass("Cond")){
+                searchForIndex(jQuerySelection.attr("id"),program).outputType=undefined;
+            }
+        }
+    }
 
 }
 
+function createInferTypes(typeMap){
+    var id;
+    var type;
+    for(var i =0; i< typeMap.length; i++){
+        if(typeMap[i].lhs instanceof elemId && typeMap[i].rhs instanceof elemType){
+            id = typeMap[i].lhs.id;
+            type = typeMap[i].rhs.type;
+        }else if(typeMap[i].rhs instanceof elemId &&typeMap[i].lhs instanceof elemType){
+            id = typeMap[i].rhs.id;
+            type = typeMap[i].lhs.type;
+        }else if(typeMap[i].lhs instanceof elemId && typeMap[i].rhs instanceof construct){
+            id = typeMap[i].lhs.id;
+            type = typeMap[i].rhs.elemList[0].type;
+        }else if(typeMap[i].rhs instanceof elemId && typeMap[i].lhs instanceof construct){
+            id = typeMap[i].rhs.id;
+            type = typeMap[i].lhs.elemList[0].type;
+        }
+        if(isNaN(type) && !$(document.getElementById(id)).hasClass("ContractType")){
+            if($(document.getElementById(id)).hasClass("Cond")){
+                searchForIndex(id,program).outputType=type;
+            }
+            $(document.getElementById(id)).addClass(type)
+        }
+    }
+}
+
+
 function createErrorMessages(typeErrors){
-        console.log(typeErrors);
         for(var i=0;i<typeErrors.length;i++){
                 for(var j=0;j<typeErrors[i].idArr.length;j++){
-                        console.log(typeErrors[i].idArr[j]);//the id to which the message is added
-                        console.log(typeErrors[i].message);//the message that needs to be added
-                        console.log("The current message is",$(document.getElementById(typeErrors[i].idArr[j])).attr('title'))
+                        //console.log(typeErrors[i].idArr[j]);//the id to which the message is added
+                        //console.log(typeErrors[i].message);//the message that needs to be added
                         if($(document.getElementById(typeErrors[i].idArr[j])).attr('title')=="" || $(document.getElementById(typeErrors[i].idArr[j])).attr('title') == undefined){
                                 $(document.getElementById(typeErrors[i].idArr[j])).attr('title',typeErrors[i].message);
                         }
                         else{
                                 $(document.getElementById(typeErrors[i].idArr[j])).attr('title', $(document.getElementById(typeErrors[i].idArr[j])).attr('title')+"\n"+typeErrors[i].message);                                
                         }
-                        $(document.getElementById(typeErrors[i].idArr[j])).css('background-color',"red");
-                        console.log("After changing the",$(document.getElementById(typeErrors[i].idArr[j])).attr('title'))
-                        console.log("Should have changed",typeErrors[i].idArr[j])
-
+                        $(document.getElementById(typeErrors[i].idArr[j])).addClass("ERROR");
+                        for(var type in colors){
+                            if(colors.hasOwnProperty(type)){
+                                $(document.getElementById(typeErrors[i].idArr[j])).removeClass(type);
+                            }
+                        }
                 }
         }
 }
@@ -2795,7 +3152,17 @@ function buildConstraints(obj, parentId){
         //if(obj.argumentNames.length + 1 !== obj.funcIDList.length){
     //          throw new Error("Each argument did not have an id or vice versa")
     //  }
+
         elemList = [];
+        //expr
+        //this needs to come first, fixes problem with error pointing to define rather than the exprapp
+        if(obj.expr !== undefined){
+            next = buildConstraints(obj.expr, obj.funcIDList[0]);
+            constraints = constraints.concat(next.constraints);
+            errors = errors.concat(next.errors);
+        }else{
+                errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
+        }
         //also check for invalid names
         if(obj.contract.funcName === undefined || obj.contract.funcName === ""){
                 errors = errors.concat([new error(obj.id, "No function name found")]);
@@ -2813,14 +3180,7 @@ function buildConstraints(obj, parentId){
                 }
         }
         constraints = constraints.concat([new constraint(new elemId(obj.id), new construct("func", elemList), obj.id)]);
-        //expr
-        if(obj.expr !== undefined){
-            next = buildConstraints(obj.expr, obj.funcIDList[0]);
-            constraints = constraints.concat(next.constraints);
-            errors = errors.concat(next.errors);
-        }else{
-                errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
-        }
+
         //contracts
         if(obj.funcIDList.length !== obj.contract.funcIDList.length){
                 throw new Error("This should never ever happen unless you break things. Meaning the contract's id list and the define's id list are of different length");
@@ -2855,7 +3215,7 @@ function buildConstraints(obj, parentId){
             constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
         }
         if(obj.outputType !== undefined){
-                constraints = constraints.concat([new constraint(lhs, new elemType(obj.outpuType), obj.id)]);
+                constraints = constraints.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
         }
         if(containsName(constants, obj.constName) === -1 && containsName(functions, obj.constName)===-1){
             errors = errors.concat([new error(obj.id, "The variable or constant " + obj.constName + " does not exist.")]);
@@ -3004,29 +3364,33 @@ function buildTypeErrors(array, obj){
         var k;
         for(var i = 0; i<array.length; i++){
                 curr = getParent(array[i].id, [obj], undefined);
+                console.log("parent found")
                 if(curr === undefined){
                         console.log("no parent found");
                         console.log(array[i]);
                         curr = searchForIndex(array[i].id, [obj]);
                 }
-                console.log("getParent");
-                console.log(getParent(array[i].id, [obj], undefined));
-                console.log("searchForIndex");
-                console.log(searchForIndex(array[i].id, [obj]));
                 if(curr instanceof ExprDefineFunc){
-                        for(k =0; k<curr.contract.funcIDList.length; k++){
-                                if(curr.contract.funcIDList[k] === array[i].id || curr.funcIDList[k] === array[i].id){
-                                        if(k === 0){
-                                                //error in output type of contract
-                                                helpfulErrors.push(new errorMatch([array[i].id, curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
-                                                                                        + curr.contract.argumentTypes[k]+"\" but found output type \""+ curr.expr.outputType + "\" in the expression"));
-                                        }else{
-                                                //error in one of the contract positions representing an argument name
-                                                helpfulErrors.push(new errorMatch(getVariables(curr.argumentNames[k-1], [obj]), "The variable \"" + curr.argumentNames[k-1] + "\" was assigned type \"" + curr.contract.argumentTypes[k] + "\" in the contract, but at least one instance of this variable had a different type."));
-                                        }
-                                        break;
-                                }
-                        }
+                    if(curr.id === array[i].id){console.log("Error: define block error")};
+                    for(k =0; k<curr.contract.funcIDList.length; k++){
+                            //if the id at index k matches the id in the contract, or the id in the define's funcIDList, or the expressions id
+                            if(curr.contract.funcIDList[k] === array[i].id || curr.funcIDList[k] === array[i].id || (curr.expr !== undefined && array[i].id === curr.expr.id)){
+                                if(k === 0){
+                                    //error in output type of contract
+                                    if(curr.contract.outputType === undefined){console.log("ERROR! CONTRACT OUPUT TYPE UNDEFINED")};
+                                    if(curr.expr.outputType !== undefined){
+                                        helpfulErrors.push(new errorMatch([curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
+                                                                             + curr.contract.outputType+"\" but found output type \""+ curr.expr.outputType + "\" in the expression"));
+                                    }else{
+                                        helpfulErrors.push(new errorMatch([curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
+                                                                             + curr.contract.outputType+"\" but a block with a different output type in the expression"));
+                                    }
+                                }else{
+                                    //error in one of the contract positions representing an argument name
+                                    helpfulErrors.push(new errorMatch(getVariables(curr.argumentNames[k-1], [obj]), "The variable \"" + curr.argumentNames[k-1] + "\" was assigned type \"" + curr.contract.argumentTypes[k-1] + "\" in the contract, but at least one instance of this variable had a different type."));
+                            }
+                        break;                                }
+                    }
                 }else if(curr instanceof ExprConst){
                         //error at variable instance
                         helpfulErrors.push(new errorMatch([getVariables(curr.constName, [obj])], "The variable \"" + curr.constName + "\" is not consistently the same type. Either it contradicts the contract or one or more of the highlighted uses is not being used as the same type as the others."))
@@ -3043,7 +3407,7 @@ function buildTypeErrors(array, obj){
                                         if(curr.args[k] !== undefined && (curr.funcIDList[k] === array[i].id || curr.args[k].id === array[i].id)){
                                                 if(curr.args[k].outputType !== undefined){
                                                         //bad arguments
-                                                        helpfulErrors.push(new errorMatch([curr.args[k].id], "This spot should have a block of type \"" + funcConstruct[curr.funcName].elemList[k+1].type + "\" but found something of type \"" +
+                                                        helpfulErrors.push(new errorMatch([curr.args[k].id], "This spot should have a block of type \"" + funcConstruct[curr.funcName].elemList[k+1].type + "\" but found a block of type \"" +
                                                                                                                                                                 curr.args[k].outputType+"\""));
                                                 }else{
                                                         //bad argument, but argument does not have output type
@@ -3069,7 +3433,7 @@ function buildTypeErrors(array, obj){
                                 if(curr.listOfBooleanAnswer[k].bool !== undefined && (curr.listOfBooleanAnswer[k].funcIDList[0] === array[i].id || curr.listOfBooleanAnswer[k].bool.id === array[i].id)){
                                         if(curr.listOfBooleanAnswer[k].bool.outputType !== undefined){
                                                 helpfulErrors.push(new errorMatch([curr.listOfBooleanAnswer[k].bool.id], "This spot should have a block of type \"Booleans\" but found something of type \"" +
-                                                                                                                                                                curr.listOfBooleanAnswer[k].bool.outputType));
+                                                                                                                                                                curr.listOfBooleanAnswer[k].bool.outputType + "\""));
                                         }else{
                                                 console.log("did not find argument output type in Cond bool");
                                                 helpfulErrors.push(new errorMatch([curr.listOfBooleanAnswer[k].bool.id], "This spot should have a block of type \"Booleans\" but found a block with a different type"));
@@ -3120,27 +3484,31 @@ function getParent(id, array, parent){
 }
 //returns the ids of the given variable in the objects in the objArr
 function getVariables(name, objArr){
-                var idArr
+                var idArr=[]
                 var curr;
                 var i;
         while(objArr.length>0){
                 curr = objArr.pop();
             if(curr === undefined){
                                 //do nothing
-                        }else if(curr instanceof ExprConst && curr.constName === name){
+            }else if(curr instanceof ExprConst && curr.constName === name){
                 idArr.push(curr.id);
-            }else if(isDefine(curr)){
+            }else if(curr instanceof ExprDefineFunc){
                 for(i=0; i<curr.argumentNames.length; i++){
                         if(curr.argumentNames[i] === name){
-                                idArr.push(curr.contract.funcIDList[i+1])
+                                idArr.push(curr.contract.funcIDList[i+1]);
+                                idArr.push(curr.funcIDList[i+1]);
                         }
                 }
                 objArr.push(curr.expr);
-             }else if(curr instanceof ExprApp){
+            }
+            else if(curr instanceof ExprConst){
+                objArr.push(curr.expr);
+            }else if(curr instanceof ExprApp){
                 for(i = 0; i< curr.args.length; i++){
                         objArr.push(curr.args[i]);
                 }
-            }else if(array[i] instanceof ExprCond){
+            }else if(objArr[i] instanceof ExprCond){
                 for(i=0; i<curr.listOfBooleanAnswer.length; i++){
                         objArr.push(curr.listOfBooleanAnswer[i].answer);
                         objArr.push(curr.listOfBooleanAnswer[i].bool);
