@@ -2592,6 +2592,7 @@ var addDroppableFeature = function(jQuerySelection) {
 		                $(this).css("border", "none");
                     $(this).removeClass("highlighted");
 		                ui.draggable.detach();
+                    typeCheck(program)
                 }
 	           }
         });
