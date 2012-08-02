@@ -2940,11 +2940,18 @@ function createErrorMessages(typeErrors){
                 for(var j=0;j<typeErrors[i].idArr.length;j++){
                         //console.log(typeErrors[i].idArr[j]);//the id to which the message is added
                         //console.log(typeErrors[i].message);//the message that needs to be added
-                        if($(document.getElementById(typeErrors[i].idArr[j])).attr('title')=="" || $(document.getElementById(typeErrors[i].idArr[j])).attr('title') == undefined){
+                        if(Modernizr.touch){
+                            //GET THE EQUIVILENT OF A HOVER EVENT
+                            $(document.getElementById(typeErrors[i].idArr[j])).click(function(event){
+
+                            });
+                        }else{
+                              if($(document.getElementById(typeErrors[i].idArr[j])).attr('title')=="" || $(document.getElementById(typeErrors[i].idArr[j])).attr('title') == undefined){
                                 $(document.getElementById(typeErrors[i].idArr[j])).attr('title',typeErrors[i].message);
-                        }
-                        else{
+                              }
+                              else{
                                 $(document.getElementById(typeErrors[i].idArr[j])).attr('title', typeErrors[i].message);                                
+                              }
                         }
                         $(document.getElementById(typeErrors[i].idArr[j])).addClass("ERROR");
                         for(var type in colors){
