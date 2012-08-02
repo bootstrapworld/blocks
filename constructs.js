@@ -2077,9 +2077,7 @@ function addDroppableWithinDefineExpr(jQuerySelection){
 	tolerance:'pointer',
 	greedy:true,
 	drop:function(event, ui){
-	    console.log(carrying, programCarrying,$(this).children().length);
 	    if (carrying != null && programCarrying != null && $(this).children().length === 0){
-		console.log('here');
 		$(this).html(carrying);
 		setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying,userFunctions);
 		$(this).css('border','none');
@@ -2298,7 +2296,6 @@ $(function() {
                         ui.helper.addClass("wired");
                         ui.helper=$(carrying).clone().addClass("wired");
                         ui.helper.addClass("ui-sortable-helper");
-                        console.log(ui.helper);
                         programCarrying = program[index];
                         program.splice(index, 1);
                         return ui.helper
@@ -2358,7 +2355,7 @@ $(function() {
 		    carrying = null;
          	}
                 else if (!ui.item.is('span.draggable')){
-		    eliminateBorder(ui.sender.parent().parent());
+		              eliminateBorder(ui.sender.parent().parent());
                 }
 	    }
         }
@@ -2373,7 +2370,6 @@ $(function() {
 	    tempStorageProgram = cloneProgram(storageProgram);
 	    carrying = ui.item.html();
                 ui.helper.addClass("wired");
-                console.log(ui.helper);
 	    programCarrying = storageProgram[$("#storagePopup li").index(ui.item)];
 	    storageProgram.splice($("#storagePopup li").index(ui.item), 1);
 	    tempProgram = cloneProgram(program);
@@ -2477,7 +2473,6 @@ var makeDrawersDraggable = function(){
   @param dropDownID - (string) ID of the dropdown connected to the argument
 */
 var addDraggableToArgument=function(jQuerySelection,functionCodeObject, dropDownID){
-    console.log(jQuerySelection);
     if (jQuerySelection != null){
 	$(jQuerySelection).draggable({
 	    start: function(event, ui) {
@@ -2517,35 +2512,32 @@ var addDraggingFeature = function(jQuerySelection) {
 		        appendTo:'body',
                 helper:'clone',
                 start:function(event, ui){
-		    if ($(this) === undefined){
+		                if ($(this) === undefined){
                         throw new Error ("addDraggingFeature start: $(this) is undefined");
-		    } else {
+		                } else {
                         if(!errorVal){
-			    tempProgram = cloneProgram(program);
-			    draggedClone = $(this);
-			    programCarrying = searchForIndex($(this).attr("id"), program);
-			    carrying = getHTML($(this));
-                ui.helper.addClass("wired");
-                console.log(ui.helper);
-			    setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined,program);
+			                     tempProgram = cloneProgram(program);
+			                     draggedClone = $(this);
+			                      programCarrying = searchForIndex($(this).attr("id"), program);
+			                     carrying = getHTML($(this));
+                            ui.helper.addClass("wired");
+			                     setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined,program);
                         }
                         else{
-			    event.stopPropagation();
-			    event.preventDefault();
-			    event.stopImmediatePropagation();
-			    return false;
+			                       event.stopPropagation();
+			                       event.preventDefault();
+			                       event.stopImmediatePropagation();
+			                       return false;
                         }
-		    }
+		                }
                 },
                 stop:function(event, ui){
-
-
-		    if (programCarrying != undefined && carrying != undefined){
+		              if (programCarrying != undefined && carrying != undefined){
                         program = tempProgram;
                         renderProgram(createProgramHTML());
-		    }
+		              }
                 }
-	    });
+	         });
         }
 	if (constantIsArgument(searchForIndex($(jQuerySelection).attr('id'),program), $(jQuerySelection).closest('.DefineFun'))){
 	    jQuerySelection.draggable('option','connectToSortable','');
@@ -2564,33 +2556,44 @@ var addDroppableFeature = function(jQuerySelection) {
         addDraggableToTable((jQuerySelection).find("table"));
 
 	//adds literal box upon click
-	console.log(jQuerySelection);
 	jQuerySelection.mousedown(function(e) {
 	    if (e.which === 1){
 		addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"), program);
 	    }
 	});
         jQuerySelection.droppable({
-	    // hoverClass:"highlight",
 	    tolerance:"pointer",
 	    greedy:true,
-        hoverClass:"highlighted",
+      over: function(event,ui){
+          if(programCarrying!=undefined && carrying!=undefined){
+            //console.log(programCarrying)
+            console.log(flattenAllFuncIDLists(programCarrying))
+                  if(flattenAllFuncIDLists(programCarrying).indexOf($(this).attr("id"))===-1){
+                    $(this).addClass("highlighted")
+                      console.log($(this).attr("id"))
+                  }
+          }
+      },
+      out: function(event,ui){
+            $(this).removeClass("highlighted");
+      },
 	    drop: function(event, ui){
                 if ($(this) === undefined){
-		    throw new Error ("addDroppableFeature drop: $(this) is undefined");
+		                throw new Error ("addDroppableFeature drop: $(this) is undefined");
                 } 
                 else if($(this).children().length === 0){
-		    if($(ui.draggable).closest('div').attr('id') === 'code'){
-			droppedInDroppableFromList = true;
-		    }
-		    $(this).html(carrying);
-		    setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying, program);
-		    addDroppableFeature($(this).find('.droppable'));
-		    addDraggableToTable($(this).find("table"));
-		    $(this).css("border", "none");
-		    ui.draggable.detach();
+		                if($(ui.draggable).closest('div').attr('id') === 'code'){
+			               droppedInDroppableFromList = true;
+		                }
+		                $(this).html(carrying);
+		                setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying, program);
+		                addDroppableFeature($(this).find('.droppable'));
+		                addDraggableToTable($(this).find("table"));
+		                $(this).css("border", "none");
+                    $(this).removeClass("highlighted");
+		                ui.draggable.detach();
                 }
-	    }
+	           }
         });
     }
 };
@@ -2602,6 +2605,32 @@ var addDraggableToTable = function (jQuerySelection){
         });
     }
 };
+
+function flattenAllFuncIDLists(programBlock){
+  var ret=[]
+  if(programBlock!=undefined && programBlock.funcIDList!=undefined){
+    ret=ret.concat(programBlock.funcIDList);
+    if(programBlock instanceof ExprApp && programBlock.args!=undefined){
+      for(var i=0;i<programBlock.args.length;i++){
+        ret=ret.concat(flattenAllFuncIDLists(programBlock.args[i]))
+      }
+    }
+    else if(programBlock instanceof ExprDefineFunc){
+      ret=ret.concat(flattenAllFuncIDLists(programBlock.expr),programBlock.contract.funcIDList)
+    }
+    else if(programBlock instanceof ExprCond){
+      for(var i=0;i<programBlock.listOfBooleanAnswer.length;i++){
+        ret=ret.concat(flattenAllFuncIDLists(programBlock.listOfBooleanAnswer[i]));
+      }
+    }
+    else if(programBlock instanceof ExprBoolAnswer){
+      return ret.concat(flattenAllFuncIDLists(programBlock.answer));
+    }
+
+  }
+  return ret;
+}
+
 
 /*
 constantIsArgument returns whether or not constant is an argument of $parentDefine
@@ -2663,6 +2692,7 @@ var eliminateBorder = function(jQuerySelection){
                          "border-color:grey");
     jQuerySelection.children().detach();
     jQuerySelection.append(jQuerySelection.attr('name'));
+    jQuerySelection.removeClass("highlighted");
 };
 
 /*
