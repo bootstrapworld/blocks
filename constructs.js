@@ -3168,32 +3168,17 @@ function substituteHelp(newItem, oldItem, replaceIn){
 //obj1 and obj2 are objects to compare, ignoreArr is an array of values to ignore when comparing
 function objectEquality(obj1, obj2, ignoreArr){
         var item1;
-        var item2;
         var found = false;
         if(obj1 === obj2){
                 return true;
         }
         for(item1 in obj1){
-                found = false;
-                if(obj1.hasOwnProperty(item1)){
-                        for(item2 in obj2){
-                                if(obj2.hasOwnProperty(item2)){
-                                        if(ignoreArr !== undefined && ignoreArr.indexOf(item1) !== -1){
-                                                found = true;
-                                                break;
-                                        }
-                                        if(item1 === item2){
-                                                if((obj1[item1] === obj2[item2]) || (obj1[item1] instanceof Object && obj2[item2] instanceof Object && objectEquality(obj1[item1], obj2[item2], ignoreArr))){
-                                                        found = true;
-                                                        break;
-                                                }
-                                        }
-                                }
-                        }
-                        if(!found){
-                                return false;
-                        }
+            if(obj1.hasOwnProperty(item1)){
+                if(!((obj2.hasOwnProperty(item1)&& (obj1[item1] === obj2[item1] || (obj1[item1] instanceof Object && obj2[item1] instanceof Object && objectEquality(obj1[item1], obj2[item1], ignoreArr))))
+                    || (ignoreArr !== undefined && ignoreArr.indexOf(item1) !== -1))){
+                    return false;
                 }
+            }
         }
         return true;
 }
@@ -3205,15 +3190,24 @@ function buildTypeErrors(array, obj){
         var helpfulErrors =[];
         var curr;
         var k;
+        var parent;
+        var item;
+        var condErr = [];
         for(var i = 0; i<array.length; i++){
-                curr = getParent(array[i].id, [obj], undefined);
-                console.log("parent found")
+                parent = getParent(array[i].id, [obj], undefined);
+                item = searchForIndex(array[i].id, [obj]);
+                curr = parent;
                 if(curr === undefined){
                         console.log("no parent found");
                         console.log(array[i]);
-                        curr = searchForIndex(array[i].id, [obj]);
+                        curr = item;
                 }
-                if(curr instanceof ExprDefineFunc){
+                if(item instanceof ExprCond){
+                    condErr = buildSpecialError(item.id, obj);
+                    for(k=0; k<condErr.length; k++){
+                        helpfulErrors.push(condErr[k]);
+                    }
+                }else if(curr instanceof ExprDefineFunc){
                     if(curr.id === array[i].id){console.log("Error: define block error")};
                     for(k =0; k<curr.contract.funcIDList.length; k++){
                             //if the id at index k matches the id in the contract, or the id in the define's funcIDList, or the expressions id
@@ -3266,7 +3260,7 @@ function buildTypeErrors(array, obj){
                         console.log(obj);
                         console.log(array[i].id)
                 }else if(curr instanceof ExprCond){
-                        var idList = [curr.id];
+                        var idList = [];
                         var boolError = false;
                         if(curr.id === array[i].id){
                                 //this might happen, say if you did (+ (cond [true "a"]) 3)
@@ -3291,13 +3285,77 @@ function buildTypeErrors(array, obj){
                                 }
                         }
                         if(!boolError){
-                                helpfulErrors.push(new errorMatch(idList, "Not all of the results of this conditional match the expected output. First check that all the conditional answers have the same type. Then check that each of these answers matches the expected output of the conditional."))
+                                //helpfulErrors.push(new errorMatch(idList, "Not all of the results of this conditional match the expected output. First check that all the conditional answers have the same type. Then check that each of these answers matches the expected output of the conditional."))
+                            condErr = buildSpecialError(curr.id, obj);
+                            for(k=0; k<condErr.length; k++){
+                                helpfulErrors.push(condErr[k]);
+                            }
                         }
                 }
         }
         return helpfulErrors;
 }
 
+function buildSpecialError(id, obj, type){
+    var toReturn = [];
+    var i;
+    if(obj instanceof ExprDefineFunc && obj.contract.outputType!==undefined && obj.expr !== undefined){
+        return buildSpecialError(id, obj.expr, obj.contract.outputType);
+    }else if(obj instanceof ExprDefineConst && obj.expr !== undefined){
+        return buildSpecialError(id, obj.expr, undefined);
+    }else if(obj instanceof ExprApp){
+        for(var i; i<obj.args.length; i++){
+            toReturn = buildSpecialError(id, obj.args[i], funcConstruct[obj.funcName].elemList[k+1].type);
+            if(toReturn.length !== 0){
+                return toReturn;
+            }
+        }
+        return [];
+    }else if(obj instanceof ExprCond){
+        var errorList = [];
+        var idList = [];
+        var depthError;
+        if(obj.id === id){
+            for(i=0; i<obj.listOfBooleanAnswer.length; i++){
+                if(obj.listOfBooleanAnswer[i].answer !== undefined){
+                    if(type !== undefined){
+                        if(obj.listOfBooleanAnswer[i].answer instanceof ExprCond/* && obj.listOfBooleanAnswer[i].answer.outputType !== type*/){
+                            var depthError = buildSpecialError(obj.listOfBooleanAnswer[i].answer.id, obj.listOfBooleanAnswer[i].answer, type);
+                            for(var k; k<depthError.length; k++){
+                                errorList.push(depthError[k]);
+                            }
+                        }else if(obj.listOfBooleanAnswer[i].answer.outputType !== undefined && obj.listOfBooleanAnswer[i].answer.outputType !== type){
+                            errorList.push(new errorMatch([obj.listOfBooleanAnswer[i].answer.id], "The cond block containing this answer was expected to return type \"" + type + "\" but this block has type \"" + obj.listOfBooleanAnswer[i].answer.outputType + "\""));
+                        }/*else if(obj.listOfBooleanAnswer[i].answer.outputType !== type){
+                            errorList.push(new errorMatch([obj.listOfBooleanAnswer[i].answer.id], "The cond block containing this answer was expected to return type \"" + type + "\" but this block has type \"" + obj.listOfBooleanAnswer[i].answer.outputType + "\""));
+                        }*/
+                    }else{
+                        idList.push(obj.listOfBooleanAnswer[i].answer.id);
+                    }
+                }
+            }
+            if(idList.length !== 0){
+                errorList.push(new errorMatch(idList, "The output type of this cond is not consistent, there are answers that return different types."));
+            }
+            return errorList;
+        }else{
+            for(i=0; i<obj.listOfBooleanAnswer.length; i++){
+                toReturn = buildSpecialError(id, obj.listOfBooleanAnswer[i].answer, type);
+                if(toReturn !== undefined && toReturn.length > 0){
+                    return toReturn;
+                }
+            }
+            return [];
+        }
+        
+    }else if(obj instanceof ExprConst){
+        return [];
+    }else if(isLiteral(obj)){
+        return [];
+    }else{
+        return [];
+    }
+}
 
 function getParent(id, array, parent){
             var toReturn = undefined;
