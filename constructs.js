@@ -3277,7 +3277,12 @@ function objectEquality(obj1, obj2, ignoreArr){
 //helpful errors is an array of tuples of an array of ids connected by the same error and a nice error message
 //add something for defined constant checks
 
-
+/*buildTypeErrors -
+* array - an array of ID's where errors were identified
+* obj - the object containing the errors
+*
+*
+*/
 function buildTypeErrors(array, obj){
         var helpfulErrors =[];
         var curr;
