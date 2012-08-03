@@ -796,7 +796,13 @@ function makeID(){
        storage pops up when clicked
      */
      $("#storage").click(function() {
-	 $("#storagePopup").css('visibility','visible');
+        if($("#storagePopup").css('visibility')==="visible"){
+          $("#storagePopup").css('visibility','hidden');
+        }
+        else{
+          $("#storagePopup").css('visibility','visible');
+        }
+	       
  //	$("#graybox").css('visibility','visible').fadeIn('slow');;
      });
 
