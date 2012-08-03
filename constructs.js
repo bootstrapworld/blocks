@@ -1274,8 +1274,6 @@ function makeTypesArray(allFunctions,allConstants){
     for(i=0;i<allConstants.length;i++){
         types.Constants.push(i);
     }
-
-    types.Define=["define-constant","define-function"];
     types.Expressions=["cond"];
 
     return types;
