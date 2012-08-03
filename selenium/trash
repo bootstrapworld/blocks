@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="http://seleniumhq.org/" />
+<title>trash</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">trash</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>file:///gpfs/main/home/ww15/r/blocks/gui.html</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>xpath=(//div[@id='Numbers'])[2]</td>
+	<td></td>
+</tr>
+<!--block to program-->
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;+&quot;)</td>
+	<td>css=#List</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;remainder&quot;)</td>
+	<td>css=#List</td>
+</tr>
+<!--drag from drawer to block within block-->
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;expt&quot;)</td>
+	<td>css=#List li:nth-child(2)&nbsp;&nbsp;th:nth-child(2)</td>
+</tr>
+<!--Sorting-->
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(1)</td>
+	<td>css=#List li:nth-child(2) th:nth-child(3) </td>
+</tr>
+<!--Drag block within block-->
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(2) table</td>
+	<td>css=#List li:nth-child(1) table th:nth-child(2) table th:nth-child(3)</td>
+</tr>
+<!--Remove block from within block-->
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(1) th:nth-child(2) table</td>
+	<td>css=#List</td>
+</tr>
+<!--Drag block from drawer into block that's been removed from another block-->
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;sqrt&quot;)</td>
+	<td>css=#List li:nth-child(2) table&nbsp;&nbsp;th:nth-child(2)</td>
+</tr>
+<!--Drag block within block to another block within block-->
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(2) table th:nth-child(2) table</td>
+	<td>css=#List li:nth-child(1) table th:nth-child(2)</td>
+</tr>
+<!--drag block to adjacent block-->
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(1) table th:nth-child(2) table</td>
+	<td>css=#List li:nth-child(1) table th:nth-child(3)</td>
+</tr>
+<!--crazy nesting blocks-->
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(2) table</td>
+	<td>css=#List li:nth-child(1) table th:nth-child(3) table th:nth-child(2)</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(1) table th:nth-child(3) table th:nth-child(2) table</td>
+	<td>css=#List</td>
+</tr>
+<!--drag top level block to trash-->
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(1) table th:nth-child(3) table</td>
+	<td>css=#trash</td>
+</tr>
+<!--after trashing, normal drag and drop should still work-->
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;expt&quot;)</td>
+	<td>css=#List</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;+&quot;)</td>
+	<td>css=#List li:nth-child(2) table th:nth-child(3)</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(2) table</td>
+	<td>css=#List li:nth-child(1) th:nth-child(2)</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(1) table th:nth-child(2) table</td>
+	<td>css=#List</td>
+</tr>
+<!--trash block within block-->
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(2) table th:nth-child(3) table </td>
+	<td>css=#trash</td>
+</tr>
+<!--drag and drop should still work normally-->
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(2) table </td>
+	<td>css=#List li:nth-child(1) table th:nth-child(3)</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;/&quot;)</td>
+	<td>css=#List li:nth-child(2) table th:nth-child(2)</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(2) table th:nth-child(2) table</td>
+	<td>css=#List</td>
+</tr>
+</tbody></table>
+</body>
+</html>
