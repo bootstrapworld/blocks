@@ -113,7 +113,7 @@ form{
 }
 .placeholder{
     width:100%;
-    height:15px;
+    height:1px;
 }
 /*****************************
  DRAWER
@@ -192,7 +192,7 @@ form{
 
 .placeholder{
     width:100%;
-    height:0px;
+    height:1px;
 }
 
 

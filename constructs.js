@@ -1907,7 +1907,10 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
 
     var block =  "<table class=\"Cond expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th style=\"float:left\">cond</th></tr>";
     for(var i=0;i<codeObject.listOfBooleanAnswer.length;i++){
-            block+="<tr class=\"BoolAnswer\"><th><table class=\"noDrag\" id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";      
+            block+="<tr class=\"BoolAnswer\"><th><table class=\"noDrag\" id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";
+        if(codeObject.listOfBooleanAnswer.length!==1){
+            block+="<th><button class=\"removeCond\">x</button></th>";
+        }      
         if(codeObject.listOfBooleanAnswer[i].bool!=undefined){
             block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[0] + "\" class=\"noborder droppable Booleans expr\" name=\"Boolean\">";
             block+=createBlock(codeObject.listOfBooleanAnswer[i].bool,constantEnvironment,functionEnvironment);
@@ -1922,9 +1925,6 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
         }
         else{
             block+="<th id=\"" + codeObject.listOfBooleanAnswer[i].funcIDList[1] + "\" class=\"droppable expr\"  name=\"Expression\">Expression";
-        }
-        if(codeObject.listOfBooleanAnswer.length!==1){
-            block+="<th><button class=\"removeCond\">x</button></th>";
         }
         block+="</table></th></tr>";
     }
