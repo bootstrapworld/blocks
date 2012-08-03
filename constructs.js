@@ -737,6 +737,7 @@ var focused=null;
 var initvalue=null;
 // ID that matches together a code object and an HTML element
 var ID =0;
+var adding=false;
 
 var numberofvalidations=0;
 var errorVal=false;
@@ -821,6 +822,16 @@ var timeout;
     $(document).keyup(function(e) {
     if (e.keyCode == 27) { $("#storagePopup").css('visibility','hidden'); }   // esc
     });
+
+    $(document).click(function(e){
+      $(document).find(".ErrorMessage").each(
+        function(){
+          if(Modernizr.touch && !adding){
+            console.log("Correctly removing");
+            $(this).remove();
+          }
+          adding=false
+        })});
 
      /*
        sets focus equal to the input that is focused. 
@@ -3063,6 +3074,11 @@ function typeInfer(obj){
 
 /*removeErrorMessages will, starting at a parent selection, recursively remove all messages and highliting from itself and its children*/
 function removeErrorMessages(jQuerySelection){
+    if(Modernizr.touch){
+      if(jQuerySelection.hasClass("ERROR")){
+        jQuerySelection.unbind("click");
+      }
+    }
     jQuerySelection.attr("title","");
     jQuerySelection.removeClass("ERROR");
 }
@@ -3121,23 +3137,32 @@ function createInferTypes(typeMap, ArrayofBlocks){
     }
 }
 
+function returnMessage(message){
+  return function(event){
+    console.log("LEFT "+JSON.stringify(event.pageX))
+    console.log("TOP "+JSON.stringify(event.pageY))
+            $(document.body).append("<span class=\"ErrorMessage\" style=\"left:"+event.pageX+"px;top:"+event.pageY+"px;\">"+message+"</span>");
+            adding=true;
+            event.stopPropagation;
+            event.stopImmediatePropagation;
+          }
+}
 
 function createErrorMessages(typeErrors){
         for(var i=0;i<typeErrors.length;i++){
                 for(var j=0;j<typeErrors[i].idArr.length;j++){
+                  console.log($(document.getElementById(typeErrors[i].idArr[j])))
                         //console.log(typeErrors[i].idArr[j]);//the id to which the message is added
                         //console.log(typeErrors[i].message);//the message that needs to be added
                         if(Modernizr.touch){
                             //GET THE EQUIVILENT OF A HOVER EVENT
-                            $(document.getElementById(typeErrors[i].idArr[j])).click(function(event){
-
-                            });
+                            $(document.getElementById(typeErrors[i].idArr[j])).click(returnMessage(typeErrors[i].message));
                         }else{
                               if($(document.getElementById(typeErrors[i].idArr[j])).attr('title')=="" || $(document.getElementById(typeErrors[i].idArr[j])).attr('title') == undefined){
                                 $(document.getElementById(typeErrors[i].idArr[j])).attr('title',typeErrors[i].message);
                               }
                               else{
-                                $(document.getElementById(typeErrors[i].idArr[j])).attr('title', typeErrors[i].message);                                
+                                $(document.getElementById(typeErrors[i].idArr[j])).attr('title', typeErrors[i].message);
                               }
                         }
                         $(document.getElementById(typeErrors[i].idArr[j])).addClass("ERROR");
