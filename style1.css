@@ -215,4 +215,6 @@ table{
 
 .ErrorMessage{
     background-color:#FCF0AD;
+    position:absolute;
+    z-index:999999;
 }
