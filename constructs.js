@@ -457,10 +457,10 @@ function makeID(){
  };
 
 
- function objectArrayToProgram(JSONArrayObject){
+ function objectArrayToProgram(JSONArrayObject,arrayToPush){
      ID=0;
      for(var i=0;i<JSONArrayObject.length;i++){
-	 program.push(objectToCodeObject(JSONArrayObject[i]));
+	      arrayToPush.push(objectToCodeObject(JSONArrayObject[i]));
      }
  }
 
@@ -767,6 +767,7 @@ function makeID(){
  */
  var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
      $(jQuerySelection).dblclick(function() {
+      addToHistory(cloneProgram(program),cloneProgram(storageProgram))
 	 var index = $("#storagePopup li").index(jQuerySelection);
 	 $("#List").append("<li>" + html + "</li>");
 	 program.push(codeObject);
@@ -845,9 +846,9 @@ function makeID(){
 	     var x = historyarr.pop();
 	     program = x.program;
 	     storageProgram = x.storage;
-	     renderProgram();
+	     renderProgram(createProgramHTML(program));
 	     if (historyarr.length === 0){
-		 $(this).attr('disabled','disabled');
+		      $(this).attr('disabled','disabled');
 	     }
 	 }
      });
@@ -857,16 +858,16 @@ function makeID(){
        Binds redo functionality with redo button
      */
      $("#redoButton").bind('click', function(){
-	 if (future.length !== 0){
+	   if (future.length !== 0){
 	     historyarr.push({program: cloneProgram(program), storage: cloneProgram(storageProgram)});
 	     var x = future.shift();
 	     program = x.program;
 	     storageProgram = x.storage;
 	     renderProgram();
 	     if (future.length === 0){
-		 $("#redoButton").attr('disabled','disabled');
+		      $("#redoButton").attr('disabled','disabled');
 	     }
-	 }
+	   }
 	 $("#undoButton").removeAttr('disabled');
      });
 
@@ -906,7 +907,7 @@ function makeID(){
 		 }
 	     }
 	     //save id, program... maybe history, future, trash
-	     localStorage[saveName]=JSON.stringify(cloneProgram(program));
+       localStorage[saveName]=JSON.stringify(cloneProgram(program))+"*"+JSON.stringify(cloneProgram(functionProgram))+"*"+JSON.stringify(cloneProgram(storageProgram));
 	 }
 	 else{
 	     alert("I am sorry but your browser does not support storage.");
@@ -923,9 +924,13 @@ function makeID(){
 	     return;
 	 }
 	 else{
-	     var programString=localStorage.getItem(loadName);
+	     var programString=localStorage.getItem(loadName).split("*");
 	     program=[];
-	     objectArrayToProgram(JSON.parse(programString));
+       functionProgram=[];
+       storageProgram=[]
+	     objectArrayToProgram(JSON.parse(programString[0]),program);
+       objectArrayToProgram(JSON.parse(programString[1]),functionProgram);
+       objectArrayToProgram(JSON.parse(programString[2]),storageProgram)
 	     //do I change the history and trash? overwrite it?
 	     renderProgram(createProgramHTML(program));
 	     historyarr=[];
@@ -936,7 +941,7 @@ function makeID(){
      });
 
      $("#exportButton").bind('click',function(){
-	 alert("Here is the racket representation of the current program:\n\n"+parseProgram(program));
+	     alert("Here is the racket representation of the current program:\n\n"+parseProgram(functionProgram)+"\n"+parseProgram(program));
      });
 
 
@@ -1552,6 +1557,7 @@ var createStorageHTML = function(){
 */
 var renderProgram = function(){
     $("#storagePopup").html(createStorageHTML());
+    $("#storage").html('Storage (' + storageProgram.length + ')');
     $("#List").html(createProgramHTML());
     addDroppableFeature($("#List .droppable"));
     $("#List li .DefineFun .argument").each(function(){      
@@ -2466,6 +2472,7 @@ $(function() {
 	drop:function(event, ui) {
 	    if (!$(ui.draggable).is('.draggable')){
 		var replacement = "<li>" + carrying + "</li>";
+    addToHistory(tempProgram,cloneProgram(storage));
 		$("#storagePopup").append(replacement);
 		removeFromStorageOnClick($("#storagePopup li:last"), carrying, programCarrying);
 		storageProgram.push(programCarrying);
