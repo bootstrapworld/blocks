@@ -33,6 +33,19 @@ GENERAL
     padding:0px;
 }
 
+.overflowing{
+
+}
+
+#Buttons{
+
+}
+
+.headerButton {
+     float: right;
+     margin: 15px;
+}
+
 #content{
     position:absolute;
     top:50px;
