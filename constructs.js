@@ -2465,7 +2465,12 @@ $(function() {
 	}
     });
 
-    $("#storagePopup").draggable();
+    $("#storagePopup").draggable({
+        start:function(event,ui){
+          tempProgram=cloneProgram(program);
+          tempStorageProgram=cloneProgram(storageProgram);
+        }
+      });
 
     $("#storage").droppable({
 	tolerance:'pointer',
