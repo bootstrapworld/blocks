@@ -124,6 +124,7 @@ function makeID(){
  */
  function setChildInProgram(parentId, childId, obj,prog){
      var parent = searchForIndex(parentId, prog);
+     console.log(parent);
      if(parent === undefined){
 	 throw new Error("setChildInProgram failure: parentId not found.");
      }
@@ -194,7 +195,7 @@ function makeID(){
  function getAddIndex(parent, childID){
      for(var i =0; i<parent.funcIDList.length; i++){
 	 if(parent.funcIDList[i] === childID){
-	     return i
+	     return i;
 	 }
      }
      return -1;
@@ -652,9 +653,9 @@ function makeID(){
  //constants is an array of user defined variables containing their name and type
  var constants=[];
  /*
- userFunctions is an array of user defined functions in the form of ExprDefineConst and xprDefineFunc
+ functionProgram   is an array of user defined functions in the form of ExprDefineConst and xprDefineFunc
  */
- var userFunctions = [];
+ var functionProgram   = [];
  var initConstants=constants.length;
 
  //restricted contains a list of key words in racket that we aren't allowing the user to redefine
@@ -958,7 +959,7 @@ function makeID(){
  */
  $(".addArgument").live('click',function(){
      addToHistory(cloneProgram(program), cloneProgram(storageProgram));
-     var defineExpr=searchForIndex($(this).closest('table').attr('id'),userFunctions)
+     var defineExpr=searchForIndex($(this).closest('table').attr('id'),functionProgram  )
      defineExpr.funcIDList.push(makeID())
      defineExpr.contract.funcIDList.push(makeID())
      defineExpr.argumentNames.push("");
@@ -969,12 +970,12 @@ function makeID(){
      
      //makes argument type-in
      var argIndex = defineExpr.funcIDList.length - 2;
-     var argHTML = $("<th width=\"10px\" class=\"expr argument\"><input style=\"width:70px;\" id=\"" + defineExpr.funcIDList[defineExpr.funcIDList.length - 1] +"\" onkeyup=\"sync(" + defineExpr.id + ",$(this))\" class=\"argName\" disabled=\"disabled\" value=\"\"></th>");
-
-     addDraggableToArgument($(argHTML), defineExpr, $(contractdropdown).find('select').attr('id'));
+     var argHTML = $("<th style=\"text-align:left;\" class=\"expr argument\"><input style=\"width:70px;\" id=\"" + defineExpr.funcIDList[defineExpr.funcIDList.length - 1] +"\" onkeyup=\"sync(" + defineExpr.id + ",$(this))\" class=\"argName\" disabled=\"disabled\" value=\"\"></th>");
 
      $(this).closest('table').find('tr').eq(2).find('th').eq(1 + argIndex * 2).after($(argHTML));
-     $(argHTML).after("<th></th>");
+     $(argHTML).after("<th style=\"text-align:left;\"></th>");
+
+     addDraggableToArgument($(argHTML), defineExpr, $(contractdropdown).find('select').attr('id'));
 
      //resize purpose and expression
      var purposeTH = $(this).closest('table').find('.contractPurpose').closest('th');
@@ -1030,9 +1031,6 @@ var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
 	$(jQuerySelection).remove();
     });
 };
-
-
-
 
 function formValidation(e){
     var toContinue=true;
@@ -1143,12 +1141,12 @@ functionNameRepeated checks to see if a function's name already exists
 want to remove
 
 @return bool. true if the ExprDefineFunc represented by defineName already exists 
-in userFunctions, false otherwise
+in functionProgram  , false otherwise
 */
 function functionNameRepeated(defineName){
     var timesFound = 0;
-    for (var i = 0; i < userFunctions.length; i++){
-	if (userFunctions[i].contract.funcName === defineName){
+    for (var i = 0; i < functionProgram  .length; i++){
+	if (functionProgram  [i].contract.funcName === defineName){
 	    timesFound = timesFound + 1;
 	}
 	if (timesFound > 1){
@@ -1159,16 +1157,16 @@ function functionNameRepeated(defineName){
 }
 
 /*
-removeFunctionFromArray removes codeObject from userFunctions
+removeFunctionFromArray removes codeObject from functionProgram  
 
 @param defineName - a string representing the name of a ExprDefineFunc that
 you want to remove
 */
 function removeFunctionFromArray(defineName) {
     var foundName = false;
-    for (var i = 0; i < userFunctions.length && !foundName; i++){
-	if (userFunctions[i].contract.funcName === defineName) {
-	    userFunctions.splice(i, 1);
+    for (var i = 0; i < functionProgram  .length && !foundName; i++){
+	if (functionProgram  [i].contract.funcName === defineName) {
+	    functionProgram  .splice(i, 1);
 	    foundName = true;
 	}
     }
@@ -1393,14 +1391,20 @@ functionButton brings up a popup of a 'define' window
 */
 $("#functionButton").click(function() {
     var codeObject = new ExprDefineFunc;
-    userFunctions.push(codeObject);
+    functionProgram  .push(codeObject);
     var $popupHTML = $(makeDefinePopup(codeObject));
     $('body').append($($popupHTML));
     $($popupHTML).css('position','absolute');
     $($popupHTML).css('top','50px');
     $($popupHTML).css('left','220px');
     $($popupHTML).draggable();
+
+    //adds droppable to expression
     addDroppableToDefineExpr($popupHTML.find('.functionExpr'));
+
+    //adds draggable to first argument
+    addDraggableToArgument($popupHTML.find('.argument'), codeObject, $popupHTML.find('select').eq(0).attr('id'));
+
     /*
       closes the corresponding 'define' window
     */
@@ -1424,7 +1428,7 @@ $("#functionButton").click(function() {
 makeContractDropdown creates a new selection and plus button for the contract part of define
 */
 function makeContractDropdown(funcIDListID, defineExpr) {
-    return "<th>" + generateTypeDrop(funcIDListID, defineExpr)  + "</th><th class=\"buttonHolder\"></th>";
+    return "<th style=\"text-align:left;\">" + generateTypeDrop(funcIDListID, defineExpr)  + "</th><th style=\"text-align:left;\" class=\"buttonHolder\"></th>";
 }
 /*
 makeDefinePopup creates a new ExprDefine
@@ -1447,9 +1451,9 @@ function makeDefinePopup(codeObject) {
 	if (codeObject.contract.argumentTypes[i+1] != undefined){
 	    $(typeDrop).val(codeObject.contract.argumentTypes[i+1])
 	}
-        popupHTML += " <th>"+typeDrop+"</th><th class=\"buttonHolder\"></th>";
+        popupHTML += " <th style=\"text-align:left;\">"+typeDrop+"</th><th style=\"text-align:left;\" class=\"buttonHolder\"></th>";
     }
-    popupHTML += "<th> <button class=\"addArgument\">+</button> </th>";
+    popupHTML += "<th style=\"text-align:left;\"> <button class=\"addArgument\">+</button> </th>";
 
     //CONTRACT output
     var outputDrop = generateTypeDrop(codeObject.contract.funcIDList[0],codeObject);
@@ -1457,7 +1461,7 @@ function makeDefinePopup(codeObject) {
     if (outputType != undefined){
 	$(outputDrop).val(outputType);
     }
-    popupHTML += " <th> -> </th><th>"+outputDrop+"</th></tr>";
+    popupHTML += " <th style=\"text-align:left;\"> -> </th><th style=\"text-align:left;\">"+outputDrop+"</th></tr>";
 
     //DEFINE BLOCK NAME
     popupHTML+="<tr><th>define</th>";
@@ -1625,7 +1629,7 @@ gets called on keyup of input
 function sync(objectID, $input){
     var block=searchForIndex(objectID+"",program);
     if (block == undefined){
-	block = searchForIndex(objectID+"", userFunctions);
+	block = searchForIndex(objectID+"", functionProgram  );
     } 
     var DOMBlock=$("#" + objectID);
     if(block instanceof ExprNumber || block instanceof ExprString){
@@ -1642,52 +1646,60 @@ function sync(objectID, $input){
 	if($input.hasClass('contractName')){
 	     $("#" + objectID).find('.definitionName').first().attr('value',(newInput));
 	    changeName(block, newInput);
+	    // add/remove from drawers
+	    if (contractCompleted(block.contract)){
+		console.log('add to drawer!');
+		addFunctionToDrawers(block);
+	    } else {
+		console.log('remove from drawer');
+	    }
 	} 
 	else if ($input.hasClass('definitionName')){
 	    $("#" + objectID).find('.contractName').first().attr('value',(newInput));
 	    changeName(block, newInput);
+	    // add/remove from drawers
+	    if (contractCompleted(block.contract)){
+		console.log('add to drawer!');
+		addFunctionToDrawers(block);
+	    }  else {
+		console.log('remove from drawer');
+	    }
 	}
 	else if ($input.hasClass('argName')) {
-	    changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList));
+	    console.log($input.val(), contains($input.val(), block.argumentNames));
+	    if ($input.val() !== "" && contains($input.val(), block.argumentNames)){
+		$input.css('background-color','red');
+	    } else {
+		$input.css('background-color','');
+		changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList));
+	    }
 	}
 	else if ($input.hasClass('contractPurpose')){
 	    block.contract.purpose = newInput;
 	}
+
     }
-
-/*
-        var prevName=block.contract.funcName;
-        if(!(prevName===DOMBlock.find('.contractName').attr('value') && prevName===DOMBlock.find('.definitionName').attr('value'))){
-	    if(DOMBlock.find('.contractName').attr('value')===prevName){
-                block.contract.funcName=decode(DOMBlock.find('.definitionName').attr('value'));
-                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.definitionName').attr('value'));
-                //no idea why the fuck this works or is needed
-                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.definitionName').attr('value'));
-	    }
-	    else if(DOMBlock.find('.definitionName').attr('value')===prevName){
-                block.contract.funcName=decode(DOMBlock.find('.contractName').attr('value'));
-                DOMBlock.find('.definitionName').attr('value',DOMBlock.find('.contractName').attr('value'));
-                DOMBlock.find('.contractName').attr('value',DOMBlock.find('.contractName').attr('value'));
-	    }
-        }*/
-      /*  var i=0;
-        DOMBlock.find('.argName').each(function(){
-
-	    block.argumentNames[i]=$(this).attr('value');
-	    $(this).attr('value',$(this).attr('value'));
-	    if($(this).attr('value') !== ""){
-		//         ddDraggableToArgument($(this).closest(".argument"),block,$(this).attr('value'));
-	    } else{               
-                $(this).closest(".argument").removeClass('ui-draggable');
-	    }
-	    i++;
-        });
-    }*/
-    //    else{
-    //   throw new Error("sync: block type not found", block);
-    //  }
 }
 
+/*
+addFunctionToDrawers adds the given function to the drawers and to the funcion array
+*/
+function addFunctionToDrawers(defineExpr){
+}
+
+/*
+contractCompleted determines whether or not the given contract is completed
+
+@param contractExpr - (ExprContract) the contract block you are checking
+@return boolean. True if the contractExpr's contract is completed, false otherwise
+*/
+function contractCompleted(contractExpr) {
+    if (contractExpr.funcName !== "" && contractExpr.outputType !== undefined && contractExpr.argumentTypes.length === contractExpr.funcIDList.length - 1){
+	return !contains(undefined, contractExpr.argumentTypes);
+    } else {
+	return false;
+    }
+}
 
 /*
   Gets the output type of a function
@@ -1782,8 +1794,8 @@ function createBlock(codeObject,constantEnvironment,functionEnvironment){
 function createNewConstants(codeObject){
 
     var newConstants=[];
-    for(var i=0;i<codeObject.argumentNames.length;i++){
-        newConstants.push({name:codeObject.argumentNames[i],type:codeObject.contract.argumentTypes[i]});
+    for(var i=1;i<codeObject.argumentNames.length;i++){
+        newConstants.push({name:codeObject.argumentNames[i],type:codeObject.contract.argumentTypes[i - 1]});
     }
     return newConstants;
 }
@@ -1933,7 +1945,7 @@ function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
 }
 
 function createConstantBlock(codeObject,constantEnvironment,functionEnvironment){
-    var block =  "<table class=\"expr ConstBlock" + encode(codeObject.outputType)+"\" " + "id=\""+codeObject.id+"\"><tr><th>"+encode(codeObject.constName)+"</tr>";
+    var block =  "<table class=\"expr ConstBlock " + encode(codeObject.outputType)+"\" id=\""+codeObject.id+"\"><tr><th>"+encode(codeObject.constName)+"</tr>";
     return block + "</table>";
 }
 
@@ -2002,7 +2014,7 @@ types within the contract
 */
 function changeType(curValue,selectID,defineExprID){
     selectID+="";
-    var defineExpr=searchForIndex(defineExprID+"",userFunctions); 
+    var defineExpr=searchForIndex(defineExprID+"",functionProgram  ); 
 
     var funcIDIndex = getElmIndexInArray(selectID, defineExpr.contract.funcIDList);
     var argBlockID = defineExpr.funcIDList[funcIDIndex];
@@ -2014,7 +2026,7 @@ function changeType(curValue,selectID,defineExprID){
 	deleteTypeClass(modifiedblock);
 	if(curValue !== "Type"){
 	    modifiedblock.addClass(decode(curValue));
-	    $("#" + selectID).css('background-color','white');
+	    $("#" + selectID).css('background-color','');
 	    if (funcIDIndex !==0){ //arg is typeable
 		$(modifiedblock).find('input').attr('disabled',false);
 	    }
@@ -2030,12 +2042,43 @@ function changeType(curValue,selectID,defineExprID){
     for(var i=0; i<defineExpr.contract.funcIDList.length; i++){
 	addToHistory(cloneProgram(program), cloneProgram(storageProgram));
         if(selectID===defineExpr.contract.funcIDList[i] && i!==0){
-	    defineExpr.contract.argumentTypes[i-1]= curValue;
+	    if (curValue === "Type"){
+		defineExpr.contract.argumentTypes[i-1] = undefined;
+	    } else { 
+		defineExpr.contract.argumentTypes[i-1]= curValue;
+	    }
         }
         else if(selectID===defineExpr.contract.funcIDList[i] && i===0){
-	    defineExpr.contract.outputType= curValue;
+	    if (curValue === "Type"){
+		defineExpr.contract.outputType= undefined;
+	    } else {
+		defineExpr.contract.outputType = curValue;
+	    }
         }
     }
+    contractCompleted(defineExpr.contract);
+    
+}
+
+//adds draggable within define expressions
+function addDraggableToDefineExpr($table) {
+    $table.draggable({
+	helper:'clone',
+	start:function(event, ui){
+	    draggedClone = $(this);
+	    programCarrying = searchForIndex($(this).attr("id"), functionProgram  );
+	    carrying = getHTML($(this));
+	    ui.helper.addClass("wired");
+	    setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined,functionProgram  );
+	},
+	stop:function(event, ui){
+	    if (programCarrying != null && carrying != null){
+		setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).closest('th').attr("id"), programCarrying, functionProgram  );
+		programCarrying = null;
+		carrying = null;
+	    }
+	}
+    });
 }
 
 //adds droppable to define expressions
@@ -2043,22 +2086,30 @@ function addDroppableToDefineExpr(defineExpr) {
     $(defineExpr).droppable({
 	tolerance:'pointer',
 	greedy:true,
+        hoverClass:"highlighted",
 	drop:function(event, ui) {
 	    var outputSelect = $(this).closest('.DefineFun').find('tr').eq(1).find('th').last().find('select');
 	    if (carrying != null && programCarrying != null && $(this).children().length === 0 && outputSelect.val() !== 'Type'){
 		$(this).html(carrying);
-		var defineCode = searchForIndex($(this).closest('.DefineFun').attr('id'), userFunctions);
+		var defineCode = searchForIndex($(this).closest('.DefineFun').attr('id'), functionProgram  );
 		defineCode.expr = programCarrying;
+
+		//make things within droppable
 		$(this).find('.droppable').each(function () {
 		    addDroppableWithinDefineExpr($(this));
 		});
+
+		//make things within draggable
+		$(this).find('table').each(function(){
+		    addDraggableToDefineExpr($(this));
+		});
+
 	    } else{
 		if(outputSelect.val() === 'Type'){
 		    outputSelect.css('background-color','red');
 		}
-		$(ui.draggable).remove();
+		$(ui.helper).remove();
 	    }
-	    
 	    carrying = null;
 	    programCarrying = null;
 	}
@@ -2069,21 +2120,30 @@ function addDroppableToDefineExpr(defineExpr) {
 function addDroppableWithinDefineExpr(jQuerySelection){
     $(jQuerySelection).mousedown(function(e) {
 	if (e.which === 1){
-	    addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"), userFunctions);
+	    addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"),$(this).attr("id"), functionProgram  );
 	}
     });
 
     $(jQuerySelection).droppable({
 	tolerance:'pointer',
 	greedy:true,
+        hoverClass:"highlighted",
 	drop:function(event, ui){
 	    if (carrying != null && programCarrying != null && $(this).children().length === 0){
 		$(this).html(carrying);
-		setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying,userFunctions);
+		setChildInProgram($(this).closest($("table")).attr("id"),$(this).attr("id"),programCarrying,functionProgram  );
 		$(this).css('border','none');
 		$(this).find('.droppable').each(function() {
 		    addDroppableWithinDefineExpr($(this));
 		});
+		$(this).find('table').each(function() {
+		    addDraggableToDefineExpr($(this));
+		});
+		if (ui.draggable.parentsUntil('.definePopup').parent().first().hasClass('definePopup') && !ui.draggable.hasClass('argument')){
+
+		    console.log('here');
+		    eliminateBorder($(ui.draggable).closest('th'));
+		}
 		programCarrying = null;
 		carrying = null;
 	    }
@@ -2131,7 +2191,7 @@ deleteArg deletes arguments from the contract part of the define block
 */
 function deleteArg(selectID,codeObjectID) {
     selectID+="";
-    var codeObject=searchForIndex(codeObjectID+"",userFunctions);
+    var codeObject=searchForIndex(codeObjectID+"",functionProgram);
 
     //updateGUI
     var selectIndex = getElmIndexInArray(selectID, codeObject.contract.funcIDList);
@@ -2350,6 +2410,7 @@ $(function() {
 		    $(replacement).find('input').attr('readonly', false);
 		    setLiWidth($("#List li"));
 		    program.splice($("#List li").index(replacement), 0, programCarrying);
+		    $("#storage").html('Storage (' + storageProgram.length + ')');
 		    addToHistory(tempProgram, tempStorageProgram);
 		    programCarrying = null;
 		    carrying = null;
@@ -2375,11 +2436,16 @@ $(function() {
 	    tempProgram = cloneProgram(program);
 	},
 	stop: function(event, ui){
-	    if ($(ui.item).closest('div').attr('id') === 'storagePopup'){
-		storageProgram.splice($("#storagePopup li").index(ui.item), 0, programCarrying);
+	    if (carrying != null && programCarrying != null){
+		if ($(ui.item).closest('div').attr('id') === 'storagePopup'){
+		    storageProgram.splice($("#storagePopup li").index(ui.item), 0, programCarrying);
+		}
+		carrying = null;
+		programCarrying = null;
 	    }
-	    carrying = null;
-	    programCarrying = null;
+	    else{
+		ui.item.remove();
+	    }
 	},
 	receive:function(event, ui){
 	    addToHistory(tempProgram, cloneProgram(storageProgram));
@@ -2405,6 +2471,7 @@ $(function() {
 		}
 		$(ui.draggable).remove();
 		setLiWidth($("#storagePopup li"));
+		$("#storage").html("Storage (" + storageProgram.length + ")");
 		carrying = null;
 		programCarrying = null;
 	    }
@@ -2475,10 +2542,13 @@ var makeDrawersDraggable = function(){
 var addDraggableToArgument=function(jQuerySelection,functionCodeObject, dropDownID){
     if (jQuerySelection != null){
 	$(jQuerySelection).draggable({
+            containment: $("#" + functionCodeObject.id),
+	    connectToSortable:'#options',
+	    appendTo:'body',
 	    start: function(event, ui) {
 		if(!errorVal){
 		    tempProgram = cloneProgram(program);
-                ui.helper.addClass("wired");
+                    ui.helper.addClass("wired");
                 }
                 else{
 		    event.stopPropagation();
@@ -2487,17 +2557,15 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, dropDown
 		    return false;
                 }
 	    },
-            containment:".DefineFun",
 	    helper: function(event, ui){
-		programCarrying= new ExprConst($(this).find('select').val());
+		programCarrying= new ExprConst($(this).find('input').val());
                 programCarrying.outputType=$("#" + dropDownID).val();
 		carrying = createBlock(programCarrying, constants.concat(createNewConstants(functionCodeObject)), functions);
 		return carrying;
-	    },
-	    connectToSortable:'#options'
+	    }
 	});
     } else {
-     //   throw new Error("addDraggableToArgument: jQuerySelection is null");
+	throw new Error("addDraggableToArgument: jQuerySelection is null");
     }
 };
 
@@ -2655,13 +2723,11 @@ var constantIsArgument = function(constant, $parentDefine) {
   addClickableLiteralBox creates a literal block when a blue or orange droppable is clicked
 */
 var addClickableLiteralBox = function(jQuerySelection, parent, child, prog){
-    console.log(jQuerySelection, parent, child, prog);
     if (jQuerySelection.children().length === 0 && jQuerySelection.closest('div').attr('id') !== 'storage'){
 	if(jQuerySelection.hasClass("Numbers")){
 	    addClickableLiteralBoxHelper(jQuerySelection, new ExprNumber(), parent, child, prog);
 	}
 	else if (jQuerySelection.hasClass("Strings")){
-	    console.log('here');
 	    addClickableLiteralBoxHelper(jQuerySelection, new ExprString(), parent, child, prog);
 	}
 
@@ -2674,7 +2740,17 @@ var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent,
     var html = createBlock(codeObject,constants,functions);
     $(jQuerySelection).css('border','none');
     jQuerySelection.html(html);
-//    addDroppableFeature(jQuerySelection);
+    var origin = jQuerySelection.closest('div');
+    console.log(origin);
+    if (origin.hasClass('code')){
+	addDroppableFeature(jQuerySelection);
+    }
+    else if (origin.hasClass('definePopup')){
+	console.log(jQuerySelection);
+	jQuerySelection.find('table').each(function(){
+	    addDraggableToDefineExpr($(this));
+	});
+    }
 };
 
 /*
@@ -2682,6 +2758,7 @@ var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent,
   It changes the jQuerySelection by adding a border and appending the word "Exp" inside the cell.
 */
 var eliminateBorder = function(jQuerySelection){
+    console.log(jQuerySelection);
     jQuerySelection.attr('style','border:3px;'+
                          "border-style:solid;"+
                          "border-radius:5px;"+
@@ -2886,29 +2963,29 @@ function typeCheck(ArrayofBlocks){
         var blockTypeInfer=typeInfer(ArrayofBlocks[i])
         //NEED TO FIX THIS
         removeErrorMessages($(document.getElementById(ArrayofBlocks[i].id)));
-        removeInferTypes($(document.getElementById(ArrayofBlocks[i].id)));
-        $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeErrorMessages($(this))});
-        $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeInferTypes($(this))});
-        $(document.getElementById(ArrayofBlocks[i].id)).find("th").each(function(){removeInferTypes($(this))});
-        createInferTypes(blockTypeInfer.types);
+        removeInferTypes($(document.getElementById(ArrayofBlocks[i].id)), ArrayofBlocks);
+        $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeErrorMessages($(this), ArrayofBlocks)});
+        $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function(){removeInferTypes($(this), ArrayofBlocks)});
+        $(document.getElementById(ArrayofBlocks[i].id)).find("th").each(function(){removeInferTypes($(this), ArrayofBlocks)});
+        createInferTypes(blockTypeInfer.types, ArrayofBlocks);
         createErrorMessages(blockTypeInfer.typeErrors);
     }
 }
 
 
-function removeInferTypes(jQuerySelection){
+function removeInferTypes(jQuerySelection, ArrayofBlocks){
     for(var type in colors){
         if(colors.hasOwnProperty(type)){
             jQuerySelection.removeClass(type);
             if(jQuerySelection.hasClass("Cond")){
-                searchForIndex(jQuerySelection.attr("id"),program).outputType=undefined;
+                searchForIndex(jQuerySelection.attr("id"),ArrayofBlocks).outputType=undefined;
             }
         }
     }
 
 }
 
-function createInferTypes(typeMap){
+function createInferTypes(typeMap, ArrayofBlocks){
     var id;
     var type;
     for(var i =0; i< typeMap.length; i++){
@@ -2926,9 +3003,10 @@ function createInferTypes(typeMap){
             type = typeMap[i].lhs.elemList[0].type;
         }
         if(isNaN(type) && !$(document.getElementById(id)).hasClass("ContractType")){
-            //if($(document.getElementById(id)).hasClass("Cond")){
-            //    searchForIndex(id,program).outputType=type;
-            //}
+
+            if($(document.getElementById(id)).hasClass("Cond")){
+                searchForIndex(id,ArrayofBlocks).outputType=type;
+            }
             $(document.getElementById(id)).addClass(type)
         }
     }
