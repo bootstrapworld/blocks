@@ -7,17 +7,21 @@
 <meta name="viewport" content="width=device-width" />
 <link rel="stylesheet" type="text/css" href="style1.css" />
 <body>
-
   <div id="header">
     <p style="float: left; font-weight: bold; font-size: 32px; margin-top: 3px;" class="draggable">DrBlocket</p>
-    <button class="header" style="margin-right: 0px">stop</button>
-    <button class="header" id="runButton">run</button>
-    <button class="header" id="exportButton">export</button>
-    <button class="header" id="loadButton">load</button>
-    <button class="header" id="saveButton">save</button>
-    <button class="header" id="redoButton">redo</button>
-    <button class="header" id="undoButton">undo</button>
-    <button class="header" id="functionButton">define func</button>
+    <div class="overflowing">
+    <div id="Buttons">
+      <button class="headerButton" style="margin-right: 0px">stop</button>
+      <button class="headerButton" id="runButton">run</button>
+      <button class="headerButton" id="exportButton">export</button>
+      <button class="headerButton" id="loadButton">load</button>
+      <button class="headerButton" id="saveButton">save</button>
+      <button class="headerButton" id="redoButton">redo</button>
+      <button class="headerButton" id="undoButton">undo</button>
+      <button class="headerButton" id="functionButton">define func</button>
+      <button class="headerButton" id="constantButton">define const</button>
+    </div>
+  </div>
   </div>
   <div id="content">	
      <div id="Drawer"></div>
