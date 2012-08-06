@@ -779,7 +779,7 @@ var timeout;
  var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
      $(jQuerySelection).dblclick(function() {
       addToHistory(cloneProgram(program),cloneProgram(storageProgram))
-	 var index = $("#storagePopup li").index(jQuerySelection);
+	 var index = $("#actualStorage li").index(jQuerySelection);
 	 $("#List").append("<li>" + html + "</li>");
 	 program.push(codeObject);
 	 addDroppableFeature($("#List li:last").find(('.droppable')));
@@ -832,7 +832,7 @@ var timeout;
      /*
        storage pops up when clicked
      */
-     $("#storage").click(function() {
+     $("#storage").live("click",function() {
         if($("#storagePopup").css('visibility')==="visible"){
           $("#storagePopup").css('visibility','hidden');
         }
@@ -1034,10 +1034,9 @@ var timeout;
           evaluator.executeProgram("",
                          programString,
                          function() {
-                            //$("#actualCode").html("Racket:</br>"+programString+"</br></br>Result:</br>"+$("#actualCode").html())
                          },
                          function(err) {
-                             $("#actualCode").text(evaluator.getMessageFromExn(err)+"");
+                             $("#actualCode").text("\nError:\n"+evaluator.getMessageFromExn(err)+"");
                          })
         }
      });
@@ -1125,7 +1124,7 @@ to the end of the sortable #List
 */
 var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
     $(jQuerySelection).dblclick(function() {
-	var index = $("#storagePopup li").index(jQuerySelection);
+	var index = $("#actualStorage li").index(jQuerySelection);
 	$("#List").append("<li>" + html + "</li>");
 	program.push(codeObject);
 	addDroppableFeature($("#List li:last").find(('.droppable')));
@@ -1647,9 +1646,7 @@ var createStorageHTML = function(){
   to the current storageProgram
 */
 var renderProgram = function(){
-    $("#storagePopup").html(createStorageHTML());
-    $("#storage").html('Storage (' + storageProgram.length + ')');
-    addUItoStorage();
+    $("#actualStorage").html(createStorageHTML());
     $("#List").html(createProgramHTML());
     addDroppableFeature($("#List .droppable"));
 
@@ -1660,7 +1657,9 @@ var renderProgram = function(){
     setLiWidth($("#storagePopup li"));
     typeCheck(program);
     makeDrawers(functions.concat(userFunctions), constants);
-
+    addDroppableToStorage();
+    $("#storage").text('Storage (' + storageProgram.length + ')');
+    addUItoStorage();
 };
 
 /*
@@ -2626,7 +2625,7 @@ $(function() {
 	    if(ui.item === null){
                 throw new Error ("sortable receive");
 	    }else{
-		if ( ui.sender.attr('id') === "storagePopup"){
+		if ( ui.sender.attr('id') === "actualStorage"){
 		    var replacement = $('<li>').append(carrying);
 		    addDroppableFeature(replacement.find(('.droppable')));
 		    ui.item.replaceWith(replacement);
@@ -2658,7 +2657,7 @@ function addUItoStorage() {
 
 function addSortableToStorage() {
 
-    $("#storagePopup").sortable({
+    $("#actualStorage").sortable({
 	//containment:'parent',
 	connectWith: '#List',
 	appendTo:'body',
@@ -2667,14 +2666,14 @@ function addSortableToStorage() {
 	    tempStorageProgram = cloneProgram(storageProgram);
 	    carrying = ui.item.html();
                 ui.helper.addClass("wired");
-	    programCarrying = storageProgram[$("#storagePopup li").index(ui.item)];
-	    storageProgram.splice($("#storagePopup li").index(ui.item), 1);
+	    programCarrying = storageProgram[$("#actualStorage li").index(ui.item)];
+	    storageProgram.splice($("#actualStorage li").index(ui.item), 1);
 	    tempProgram = cloneProgram(program);
 	},
 	stop: function(event, ui){
 	    if (carrying != null && programCarrying != null){
-		if ($(ui.item).closest('div').attr('id') === 'storagePopup'){
-		    storageProgram.splice($("#storagePopup li").index(ui.item), 0, programCarrying);
+		if ($(ui.item).closest('div').attr('id') === 'actualStorage'){
+		    storageProgram.splice($("#actualStorage li").index(ui.item), 0, programCarrying);
 		}
 		carrying = null;
 		programCarrying = null;
@@ -2709,15 +2708,15 @@ function addDroppableToStorage() {
 	    if (!$(ui.draggable).is('.draggable')){
 		var replacement = "<li>" + carrying + "</li>";
     addToHistory(tempProgram,cloneProgram(storage));
-		$("#storagePopup").append(replacement);
-		removeFromStorageOnClick($("#storagePopup li:last"), carrying, programCarrying);
+		$("#actualStorage").append(replacement);
+		removeFromStorageOnClick($("#actualStorage li:last"), carrying, programCarrying);
 		storageProgram.push(programCarrying);
 		if (draggedClone != undefined){
 		    eliminateBorder(draggedClone.closest($("th")));
 		    draggedClone = undefined;
 		}
 		$(ui.draggable).remove();
-		setLiWidth($("#storagePopup li"));
+		setLiWidth($("#actualStorage li"));
 		$("#storage").html("Storage (" + storageProgram.length + ")");
 		carrying = null;
 		programCarrying = null;
