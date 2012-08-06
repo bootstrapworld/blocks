@@ -3000,10 +3000,9 @@ var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent,
   It changes the jQuerySelection by adding a border and appending the word "Exp" inside the cell.
 */
 var eliminateBorder = function(jQuerySelection){
-    console.log(jQuerySelection);
     jQuerySelection.attr('style','border:3px;'+
                          "border-style:solid;"+
-                         "border-radius:5px;"+
+                         "border-radius:10px;"+
                          "height:30px;" +
                          "width:40px;"+
                          "border-color:grey");
@@ -3172,9 +3171,31 @@ function typeCheck(ArrayofBlocks){
         $(document.getElementById(ArrayofBlocks[i].id)).find("th").each(function(){removeInferTypes($(this), ArrayofBlocks)});
         createInferTypes(blockTypeInfer.types, ArrayofBlocks);
         createErrorMessages(blockTypeInfer.typeErrors);
+        if(ArrayofBlocks[i] instanceof ExprCond && topLevelCondWithErrors(ArrayofBlocks[i])){
+          removeTopLevelCondColor(ArrayofBlocks[i]);
+        }
     }
 }
-
+function removeTopLevelCondColor(obj){
+  removeInferTypes($(document.getElementById(obj.id)), program);
+  for(var i= 0; i<obj.listOfBooleanAnswer.length; i++){
+    removeInferTypes($(document.getElementById(obj.listOfBooleanAnswer[i].id)), program);
+    removeInferTypes($(document.getElementById(obj.listOfBooleanAnswer[i].funcIDList[1])), program);
+    if(obj.listOfBooleanAnswer[i].answer instanceof ExprCond){
+      removeTopLevelCondColor(obj.listOfBooleanAnswer[i].answer);
+    }
+  }
+}
+function topLevelCondWithErrors(obj){
+  for(var i= 0; i<obj.listOfBooleanAnswer.length; i++){
+    if(obj.listOfBooleanAnswer[i].answer !== undefined && $(document.getElementById(obj.listOfBooleanAnswer[i].answer.id)).hasClass("ERROR")){
+      return true;
+    }else if(obj.listOfBooleanAnswer[i].answer instanceof ExprCond && topLevelCondWithErrors(obj.listOfBooleanAnswer[i].answer)){
+      return true;
+    }
+  }
+  return false;
+}
 
 function removeInferTypes(jQuerySelection, ArrayofBlocks){
     for(var type in colors){
@@ -3358,7 +3379,8 @@ function buildConstraints(obj, parentId){
         if(obj.outputType !== undefined){
                 constraints = constraints.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
         }
-        if(containsName(constants, obj.constName) === -1 && containsName(functions.concat(userFunctions), obj.constName)===-1){
+        //deleted from the following if statement:  && containsName(functions, obj.constName)===-1
+        if(containsName(constants, obj.constName) === -1){
             errors = errors.concat([new error(obj.id, "The variable or constant " + obj.constName + " does not exist.")]);
         }
     }else if(isLiteral(obj)){
@@ -3508,7 +3530,6 @@ function buildTypeErrors(array, obj){
                         curr = item;
                 }
                 if(item instanceof ExprCond){
-                    curr = item;
                     while(curr instanceof ExprCond){
                       item = curr;
                       curr = getParent(curr.id, [obj]);
@@ -3603,7 +3624,6 @@ function buildTypeErrors(array, obj){
                           curr = getParent(curr.id, [obj]);
 
                           }
-                          //console.log(item)
                           condErr = buildCondError(item.id, obj);
                           for(k=0; k<condErr.length; k++){
                               helpfulErrors.push(condErr[k]);
@@ -3641,26 +3661,17 @@ function buildCondError(id, obj, type ){
         if(obj.id === id){
             for(i=0; i<obj.listOfBooleanAnswer.length; i++){
                 if(obj.listOfBooleanAnswer[i].answer !== undefined){
-                    if(type !== undefined){
-                        if(obj.listOfBooleanAnswer[i].answer instanceof ExprCond/* && obj.listOfBooleanAnswer[i].answer.outputType !== type*/){
-                            var depthError = buildCondError(obj.listOfBooleanAnswer[i].answer.id, obj.listOfBooleanAnswer[i].answer, type);
-                            for(var k =0; k<depthError.length; k++){
-                                errorList.push(depthError[k]);
-                            }
-                        }else if(obj.listOfBooleanAnswer[i].answer.outputType !== undefined && obj.listOfBooleanAnswer[i].answer.outputType !== type){
-                            errorList.push(new errorMatch([obj.listOfBooleanAnswer[i].answer.id], "The cond block containing this answer was expected to return type \"" + type + "\" but this block has type \"" + obj.listOfBooleanAnswer[i].answer.outputType + "\""));
-                        }/*else if(obj.listOfBooleanAnswer[i].answer.outputType !== type){
-                            errorList.push(new errorMatch([obj.listOfBooleanAnswer[i].answer.id], "The cond block containing this answer was expected to return type \"" + type + "\" but this block has type \"" + obj.listOfBooleanAnswer[i].answer.outputType + "\""));
-                        }*/
-                    }else{
-                      if(obj.listOfBooleanAnswer[i].answer instanceof ExprCond){
-                        depthError =buildCondError(obj.listOfBooleanAnswer[i].answer.id, obj.listOfBooleanAnswer[i].answer, type);
-                        for(var k = 0; k<depthError.length; k++){
-                          errorList.push(depthError[k]);
-                        }
-                      }else{
-                        idList.push(obj.listOfBooleanAnswer[i].answer.id);
+                  if(obj.listOfBooleanAnswer[i].answer instanceof ExprCond){
+                    var depthError = buildCondError(obj.listOfBooleanAnswer[i].answer.id, obj.listOfBooleanAnswer[i].answer, type);
+                      for(var k =0; k<depthError.length; k++){
+                        errorList.push(depthError[k]);
                       }
+                  }else if(type !== undefined){
+                        if(obj.listOfBooleanAnswer[i].answer.outputType !== undefined && obj.listOfBooleanAnswer[i].answer.outputType !== type){
+                            errorList.push(new errorMatch([obj.listOfBooleanAnswer[i].answer.id], "The cond block containing this answer was expected to return type \"" + type + "\" but this block has type \"" + obj.listOfBooleanAnswer[i].answer.outputType + "\""));
+                        }
+                    }else{
+                        idList.push(obj.listOfBooleanAnswer[i].answer.id);
                     }
                 }
             }
