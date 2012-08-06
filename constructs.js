@@ -853,7 +853,7 @@ var timeout;
     evaluator.requestBreak();
      });
 
-    $("#codePopup").draggable();
+    //$("#codePopup").draggable();
 
     $(document).keyup(function(e) {
     if (e.keyCode == 27) { $("#storagePopup").css('visibility','hidden');
