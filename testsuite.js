@@ -670,27 +670,35 @@ errorCheck(buildTypeErrors(unify(buildConstraints(f1).constraints).errors, f1), 
 
 
 
-// function legalName(name){
-//     for(var i = 0; i < restricted.length; i++){
-//         if(name === restricted[i])
-//             return false
-//     }
-
-//     if(name.indexOf(" ") !== -1 ||
-//         name.indexOf("\"") !== -1 ||
-//         name.indexOf("(") !== -1 ||
-//         name.indexOf(")") !== -1 ||
-//         name.indexOf("[") !== -1 ||
-//         name.indexOf("]") !== -1 ||
-//         name.indexOf("{") !== -1 ||
-//         name.indexOf("}") !== -1 ||
-//         name.indexOf(",") !== -1 ||
-//         name.indexOf("'") !== -1 ||
-//         name.indexOf("`") !== -1 ||
-//         name.indexOf(";") !== -1 ||
-//         name.indexOf("|") !== -1 ||
-//         name.indexOf("\\") !== -1 ||
-//         !(name.isNaN))
-// }
+function legalName(name){
+	//lambda, map, etc.
+    for(var i = 0; i < restricted.length; i++){
+        if(name === restricted[i])
+            return false
+    }
+    //already defined functions
+    if(funcConstructs[name] !== undefined){
+    	return false
+    }
+    //illegal characters
+    if(name.indexOf(" ") !== -1 ||
+        name.indexOf("\"") !== -1 ||
+        name.indexOf("(") !== -1 ||
+        name.indexOf(")") !== -1 ||
+        name.indexOf("[") !== -1 ||
+        name.indexOf("]") !== -1 ||
+        name.indexOf("{") !== -1 ||
+        name.indexOf("}") !== -1 ||
+        name.indexOf(",") !== -1 ||
+        name.indexOf("'") !== -1 ||
+        name.indexOf("`") !== -1 ||
+        name.indexOf(";") !== -1 ||
+        name.indexOf("|") !== -1 ||
+        name.indexOf("\\") !== -1 ||
+        !(name.isNaN)){
+    	return false
+    }
+    return true;
+}
 
 }());

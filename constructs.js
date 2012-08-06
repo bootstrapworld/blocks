@@ -314,7 +314,8 @@ function makeID(){
      this.funcName = funcName;
      this.selfType="ExprApp";
      this.id = makeID();
-     this.funcIDList = makeIDList(functions[containsName(functions, funcName)].input.length);
+     var allFunctions = functions.concat(userFunctions);
+     this.funcIDList = makeIDList(allFunctions[containsName(allFunctions, funcName)].input.length);
      this.args = [];
      this.outputType = getOutput(funcName);
      this.clone=function(){
@@ -656,6 +657,7 @@ function makeID(){
  */
  var functionProgram   = [];
  var initConstants=constants.length;
+var userFunctions = [];
 
  //restricted contains a list of key words in racket that we aren't allowing the user to redefine
  var restricted=["lambda","define","list","if","else","cond","foldr","foldl","map","let","local"];
@@ -735,6 +737,7 @@ var focused=null;
 var initvalue=null;
 // ID that matches together a code object and an HTML element
 var ID =0;
+var adding=false;
 
 var numberofvalidations=0;
 var errorVal=false;
@@ -795,6 +798,8 @@ var timeout;
      */
      renderTypeColors();
 
+     addUItoStorage();
+
      /*
        storage pops up when clicked
      */
@@ -817,6 +822,16 @@ var timeout;
     $(document).keyup(function(e) {
     if (e.keyCode == 27) { $("#storagePopup").css('visibility','hidden'); }   // esc
     });
+
+    $(document).click(function(e){
+      $(document).find(".ErrorMessage").each(
+        function(){
+          if(Modernizr.touch && !adding){
+            console.log("Correctly removing");
+            $(this).remove();
+          }
+          adding=false
+        })});
 
      /*
        sets focus equal to the input that is focused. 
@@ -1093,7 +1108,7 @@ function formValidation(e){
                 tempProgram=null;
 	    }
 	    var scrollValue = $("#options").scrollTop();
-	    makeDrawers(functions,constants);
+	    makeDrawers(functions.concat(userFunctions),constants);
 	    setActivatedVisible(scrollValue);
 	    focused.attr('value',inputtext);
 	    focused=null;
@@ -1365,11 +1380,12 @@ function makeDrawers(allFunctions,allConstants){
 	    }
 	    
 	    Drawers+="</div>";
-	}
+	   }
     }
 
-
-    Drawers+="</div>";
+    Drawers+="<h1 class=\"definition DefineFunction\" id=\"functionButton\">Define Function</h1>";
+    Drawers+="<h1 class=\"definition DefineConstant\" id=\"constantButton\">Define Constant</h1>";
+    Drawers+="</div>"
 
     //MAKE STORAGE
     Drawers+="<div id=\"storage\">Storage</div>";
@@ -1377,6 +1393,7 @@ function makeDrawers(allFunctions,allConstants){
     $("#Drawer").html(Drawers);
     drawerToggle();
     makeDrawersDraggable();
+    setActivatedVisible($("#options").scrollTop());
 }
 
 
@@ -1400,7 +1417,7 @@ function makeDrawers(allFunctions,allConstants){
 /*
 functionButton brings up a popup of a 'define' window 
 */
-$("#functionButton").click(function() {
+$("#functionButton").live("click",function() {
     var codeObject = new ExprDefineFunc;
     functionProgram  .push(codeObject);
     var $popupHTML = $(makeDefinePopup(codeObject));
@@ -1524,10 +1541,8 @@ function makeDefinePopup(codeObject) {
 */
 var createProgramHTML = function(){
     var pageHTML = "";
-    functions.splice(initFunctions,functions.length-initFunctions);
-    constants.splice(initConstants,constants.length-initConstants);
-    for (var i = 0; i < program.length; i++){
-        pageHTML += "<li>" + createBlock(program[i],constants,functions) + "</li>";
+     for (var i = 0; i < program.length; i++){
+         pageHTML += "<li>" + createBlock(program[i],constants,functions.concat(userFunctions)) + "</li>";
         if(program[i] instanceof ExprDefineConst){
 	    //constants.push({name:program[i].name;type:program[i].outputType})
         }
@@ -1548,7 +1563,7 @@ var createProgramHTML = function(){
 var createStorageHTML = function(){
     var storageHTML = "";
     for (var i = 0; i < storageProgram.length; i++){
-	storageHTML += "<li>" + createBlock(storageProgram[i], constants, functions) + "</li>";
+	storageHTML += "<li>" + createBlock(storageProgram[i], constants, functions.concat(userFunctions)) + "</li>";
     }
     return storageHTML;
 };
@@ -1560,19 +1575,18 @@ var createStorageHTML = function(){
 var renderProgram = function(){
     $("#storagePopup").html(createStorageHTML());
     $("#storage").html('Storage (' + storageProgram.length + ')');
+    addUItoStorage();
     $("#List").html(createProgramHTML());
     addDroppableFeature($("#List .droppable"));
-    $("#List li .DefineFun .argument").each(function(){      
-        if ($(this).attr('value') !== ""){
-	    addDraggableToArgument($(this),searchForIndex($(this).closest(".DefineFun").attr('id'), program), $(this).find('input').attr('value'));
-        }
-    });
+
     // $("#List table").children().each(function(){
     //         addDraggingFeature($(this).find("table"));
     // });
     setLiWidth($("#List li"));
     setLiWidth($("#storagePopup li"));
     typeCheck(program);
+    makeDrawers(functions.concat(userFunctions), constants);
+
 };
 
 /*
@@ -1714,24 +1728,52 @@ function toggleFunctionInDrawer(defineExpr) {
 addFunctionToDrawers adds the given function to the drawers and to the funcion array
 */
 function addFunctionToDrawers(defineExpr){
+    var func = getFunction(defineExpr.id)
+    var isNew = false;
+    if (func === undefined){
+	isNew = true;
+    }
 
     //create new function
-
-    //
-
+    func = createFunction(defineExpr, func)
+ 
     //update functions
+    if (isNew) {
+	userFunctions.push(func);
+    }
+
+    buildFuncConstructs();
 
     //update drawer GUI
+    renderProgram();
 }
 
 /*
-createFunction creates a new function for a given define block
+getFunction returns the function associated with the ID, else returns undefined
+*/
+
+function getFunction(functionID) {
+
+    for(var i = 0; i < userFunctions.length; i++) {
+	if (userFunctions[i].id === functionID) {
+	    return userFunctions[i];
+	}
+    }
+    return undefined;
+
+}
+
+/*
+createFunction creates a new function for a given define block or it edits a currently 
+existing function
 
 @param defineExpr - (ExprDefineFunc) the block you are trying to make a function for
 @return an object that can be pushed onto the fucntions array
 */
-function createFunction(defineExpr) {
-    var newFunc = {};
+function createFunction(defineExpr, newFunc) {
+    if (newFunc === undefined){
+	newFunc = {};
+    } 
     newFunc.name = defineExpr.contract.funcName;
     newFunc.output = defineExpr.contract.outputType;
     var newInput = [];
@@ -1803,9 +1845,10 @@ function contractCompleted(contractExpr) {
   Gets the output type of a function
 */
 function getOutput(funcname){
-    var index=containsName(functions,funcname);
+    var allFunctions = functions.concat(userFunctions);
+    var index=containsName(allFunctions,funcname);
     if(index!==-1){
-        return functions[index].output;
+        return allFunctions[index].output;
     }
 }
 
@@ -1835,8 +1878,9 @@ function makeCodeFromOptions(optionsText){
         return;
     }
     else{
-        for(i = 0; i < functions.length; i++){
-	    if (functions[i].name === optionsText){
+	var allFunctions = functions.concat(userFunctions);
+        for(i = 0; i < allFunctions.length; i++){
+	    if (allFunctions[i].name === optionsText){
                 return new ExprApp(optionsText);
 	    }
         }
@@ -2524,6 +2568,19 @@ $(function() {
         }
     });
 
+
+
+    $('.definePopup').draggable();
+});
+
+function addUItoStorage() {
+    addSortableToStorage();
+    addDraggableToStorage();
+    addDroppableToStorage();
+}
+
+function addSortableToStorage() {
+
     $("#storagePopup").sortable({
 	//containment:'parent',
 	connectWith: '#List',
@@ -2556,13 +2613,18 @@ $(function() {
 	    programCarrying = null;
 	}
     });
+}
 
+function addDraggableToStorage(){
     $("#storagePopup").draggable({
         start:function(event,ui){
           tempProgram=cloneProgram(program);
           tempStorageProgram=cloneProgram(storageProgram);
         }
       });
+}
+
+function addDroppableToStorage() {
 
     $("#storage").droppable({
 	tolerance:'pointer',
@@ -2585,8 +2647,7 @@ $(function() {
 	    }
 	}
     });
-    $('.definePopup').draggable();
-});
+}
 
 
 
@@ -2631,8 +2692,8 @@ var makeDrawersDraggable = function(){
         },
         helper: function(event, ui){
 	    programCarrying = makeCodeFromOptions($(this).text());
-	    carrying = createBlock(programCarrying,constants,functions);
-        var carryingClass=$(createBlock(programCarrying,constants,functions)).addClass("wired")
+	    carrying = createBlock(programCarrying,constants,functions.concat(userFunctions));
+            var carryingClass=$(createBlock(programCarrying,constants,functions.concat(userFunctions))).addClass("wired")
 	    return carryingClass;
         },
         connectToSortable: "#List",
@@ -2668,7 +2729,7 @@ var addDraggableToArgument=function(jQuerySelection,functionCodeObject, dropDown
 	    helper: function(event, ui){
 		programCarrying= new ExprConst($(this).find('input').val());
                 programCarrying.outputType=$("#" + dropDownID).val();
-		carrying = createBlock(programCarrying, constants.concat(createNewConstants(functionCodeObject)), functions);
+		carrying = createBlock(programCarrying, constants.concat(createNewConstants(functionCodeObject)), functions.concat(userFunctions));
 		return carrying;
 	    }
 	});
@@ -2841,7 +2902,7 @@ var addClickableLiteralBox = function(jQuerySelection, parent, child, prog){
 var addClickableLiteralBoxHelper = function(jQuerySelection, codeObject, parent, child, prog) {
     addToHistory(cloneProgram(program), cloneProgram(storageProgram));
     setChildInProgram(parent, child, codeObject, prog);
-    var html = createBlock(codeObject,constants,functions);
+    var html = createBlock(codeObject,constants,functions.concat(userFunctions));
     $(jQuerySelection).css('border','none');
     jQuerySelection.html(html);
     var origin = jQuerySelection.closest('div');
@@ -2976,13 +3037,14 @@ var funcConstruct = {};
 //build funcConstraint
 function buildFuncConstructs(){
     var elemList = [];
-    for(var i=0; i<functions.length; i++){
+    var allFunctions = functions.concat(userFunctions);
+    for(var i=0; i<allFunctions.length; i++){
         elemList = [];
-        elemList = elemList.concat([new elemType(functions[i].output)]);
-        for(var k = 0; k<functions[i].input.length; k++){
-            elemList = elemList.concat([new elemType(functions[i].input[k].type)]);
+        elemList = elemList.concat([new elemType(allFunctions[i].output)]);
+        for(var k = 0; k<allFunctions[i].input.length; k++){
+            elemList = elemList.concat([new elemType(allFunctions[i].input[k].type)]);
         }
-        funcConstruct[functions[i].name] = new construct("func", elemList);
+        funcConstruct[allFunctions[i].name] = new construct("func", elemList);
     }
 }
 //must be built every time buildConstraints is called!
@@ -2994,7 +3056,7 @@ buildFuncConstructs();
 //          if lambdas or lets, use concat procedure to create a new array and avoid mutation which would screw everything
 //parentId is the id from the parent's funcIDList that points to the current object
 
-//change push to concat
+//change push to con cat
 //if concat becomes too expensive, switch to push
 
 
@@ -3012,6 +3074,11 @@ function typeInfer(obj){
 
 /*removeErrorMessages will, starting at a parent selection, recursively remove all messages and highliting from itself and its children*/
 function removeErrorMessages(jQuerySelection){
+    if(Modernizr.touch){
+      if(jQuerySelection.hasClass("ERROR")){
+        jQuerySelection.unbind("click");
+      }
+    }
     jQuerySelection.attr("title","");
     jQuerySelection.removeClass("ERROR");
 }
@@ -3092,22 +3159,32 @@ function createInferTypes(typeMap, ArrayofBlocks){
     }
 }
 
+function returnMessage(message){
+  return function(event){
+    console.log("LEFT "+JSON.stringify(event.pageX))
+    console.log("TOP "+JSON.stringify(event.pageY))
+            $(document.body).append("<span class=\"ErrorMessage\" style=\"left:"+event.pageX+"px;top:"+event.pageY+"px;\">"+message+"</span>");
+            adding=true;
+            event.stopPropagation;
+            event.stopImmediatePropagation;
+          }
+}
+
 function createErrorMessages(typeErrors){
         for(var i=0;i<typeErrors.length;i++){
                 for(var j=0;j<typeErrors[i].idArr.length;j++){
+                  console.log($(document.getElementById(typeErrors[i].idArr[j])))
                         //console.log(typeErrors[i].idArr[j]);//the id to which the message is added
                         //console.log(typeErrors[i].message);//the message that needs to be added
                         if(Modernizr.touch){
                             //GET THE EQUIVILENT OF A HOVER EVENT
-                            $(document.getElementById(typeErrors[i].idArr[j])).click(function(event){
-
-                            });
+                            $(document.getElementById(typeErrors[i].idArr[j])).click(returnMessage(typeErrors[i].message));
                         }else{
                               if($(document.getElementById(typeErrors[i].idArr[j])).attr('title')=="" || $(document.getElementById(typeErrors[i].idArr[j])).attr('title') == undefined){
                                 $(document.getElementById(typeErrors[i].idArr[j])).attr('title',typeErrors[i].message);
                               }
                               else{
-                                $(document.getElementById(typeErrors[i].idArr[j])).attr('title', typeErrors[i].message);                                
+                                $(document.getElementById(typeErrors[i].idArr[j])).attr('title', typeErrors[i].message);
                               }
                         }
                         $(document.getElementById(typeErrors[i].idArr[j])).addClass("ERROR");

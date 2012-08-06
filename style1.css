@@ -215,4 +215,14 @@ table{
 
 .ErrorMessage{
     background-color:#FCF0AD;
+    position:absolute;
+    z-index:999999;
+}
+
+.definition{
+    width:100%;
+    text-align:center;
+    border-bottom: 1px solid #000;
+    border-top:1px solid #000;
+    background-color:white;
 }
