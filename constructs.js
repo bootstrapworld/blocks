@@ -1378,11 +1378,12 @@ function makeDrawers(allFunctions,allConstants){
 	    }
 	    
 	    Drawers+="</div>";
-	}
+	   }
     }
 
-
-    Drawers+="</div>";
+    Drawers+="<h1 class=\"definition DefineFunction\" id=\"functionButton\">Define Function</h1>";
+    Drawers+="<h1 class=\"definition DefineConstant\" id=\"constantButton\">Define Constant</h1>";
+    Drawers+="</div>"
 
     //MAKE STORAGE
     Drawers+="<div id=\"storage\">Storage</div>";
@@ -1413,7 +1414,7 @@ function makeDrawers(allFunctions,allConstants){
 /*
 functionButton brings up a popup of a 'define' window 
 */
-$("#functionButton").click(function() {
+$("#functionButton").live("click",function() {
     var codeObject = new ExprDefineFunc;
     functionProgram  .push(codeObject);
     var $popupHTML = $(makeDefinePopup(codeObject));
