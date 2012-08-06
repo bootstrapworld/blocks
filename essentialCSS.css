@@ -23,6 +23,8 @@ input,select,textarea{
 	min-width: 50px;
 }
 #code{
+    min-height: 100px;
+    min-width: 100px;
 	overflow:auto;
 }
 #List{
@@ -58,4 +60,114 @@ input,select,textarea{
 }
 .definition{
     min-width:100px;
+}
+
+
+
+.headerButton {
+
+}
+
+#content{
+
+ }
+
+
+
+
+ /*****************************
+  CODE / HEADER
+  *****************************/
+
+.header {
+
+}
+
+table{
+
+}
+
+th table{
+
+}
+
+th {
+
+}
+
+.expr{
+;
+}
+
+
+
+#List li{
+
+}
+
+form{
+
+}
+
+.droppable{
+
+}
+
+
+
+#options{
+
+}
+
+#options span {
+
+}
+
+#options .toggleHeader{
+
+}
+
+#options  div{
+
+}
+
+#options h1{
+
+}
+
+#storage{
+
+}
+
+#storagePopup {
+
+}
+
+#codePopup {
+
+}
+
+.noborder{
+
+}
+table .ERROR{
+
+}
+.expr .ERROR{
+
+}
+table{
+
+}
+
+.wired{
+
+}
+
+.highlighted{
+
+}
+
+.ErrorMessage{
+
 }
