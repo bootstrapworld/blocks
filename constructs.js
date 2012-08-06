@@ -783,6 +783,28 @@ var timeout;
  };
 
  $(document).ready(function(){
+  
+  //HOOKING UP TO WESCHEME EVALUATOR
+  var evaluator = new Evaluator({
+                    write: function(thing) {
+                              alert($(thing).text());
+                           }
+                             });
+  var xhr = new easyXDM.Rpc(
+           { remote: "http://wescheme-compiler.hashcollision.org/index.html",
+             // This lazy flag must be set to avoid a very ugly
+             // issue with Firefox 3.5.
+            lazy: true
+           },
+           { remote: { compileProgram: {} }});
+
+  evaluator.setCompileProgram(function(name, program, success, fail) {
+                               xhr.compileProgram(name, program, success, fail);
+                            });
+
+
+
+
      //When the window is resized, the height of the width of the code div changes
      $(window).resize(onResize);
 
@@ -958,7 +980,7 @@ var timeout;
      });
 
      $("#exportButton").bind('click',function(){
-	     alert("Here is the racket representation of the current program:\n\n"+parseProgram(functionProgram)+"\n"+parseProgram(program));
+	     alert("Here is the racket representation of the current program:\n\n"+parseProgram());
      });
 
 
@@ -966,6 +988,39 @@ var timeout;
 	 addToHistory(cloneProgram(program), cloneProgram(storageProgram));
 	 searchForIndex($(this).closest('table').attr('id'),program).listOfBooleanAnswer.push(new ExprBoolAnswer());
 	 renderProgram(createProgramHTML())
+     });
+
+     $("#runButton").click(function(){
+        var legal=true
+        var typeInfered
+        for(var i=0;i<program.length;i++){
+          typeInfered=typeInfer(program[i])
+          if(typeInfered.typeErrors.length>0 || typeInfered.blankErrors.length>0){
+            legal=false
+          }
+        }
+        for(i=0;i<functionProgram.length;i++){
+          typeInfered=typeInfer(storageProgram[i])
+          if(typeInfered.typeErrors.length>0 || typeInfered.blankErrors.length>0){
+            legal=false
+          }
+        }
+        if(!legal){
+          alert("There are type errors or blank spaces in your program.  Please fix them before continuing to run");
+          return;
+        }
+        else{
+          var programString = parseProgram();
+          console.log(programString, typeof(programString));
+          evaluator.executeProgram("",
+                         programString,
+                         function() {
+                            alert("evaluation successful")
+                         },
+                         function(err) {
+                             alert(err);
+                         })
+        }
      });
 
      $(".removeCond").live('click',function(){
@@ -2389,6 +2444,9 @@ function deleteArg(selectID,codeObjectID) {
 */
 function parseProgram(){
     var racketCode="";
+    for(i=0;i<functionProgram.length;i++){
+      racketCode+=interpreter(functionProgram[i])+"\n";
+    }
     for(var i=0;i<program.length;i++){
         racketCode+=interpreter(program[i])+"\n";
     }
