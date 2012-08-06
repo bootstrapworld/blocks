@@ -6,16 +6,6 @@ body{
     position:fixed;
     left:0px;
     margin: 0px;
-    -webkit-user-select: text;
-    -moz-user-select: none;
-    -o-user-select: none;
-    -khtml-user-select: none;
-    user-select: none;
-    list-style:none;
-}
-
-input,select,textarea{
-    -webkit-user-select: text;
 }
 
 
@@ -33,13 +23,7 @@ GENERAL
     padding:0px;
 }
 
-.overflowing{
 
-}
-
-#Buttons{
-
-}
 
 .headerButton {
      float: right;
@@ -65,7 +49,6 @@ GENERAL
      position:absolute;
      top:0px;
      left:200px;
-     overflow:auto;
  }
 
  /*****************************
@@ -97,9 +80,7 @@ th {
      padding: 2px;
 }
 
-#List{
-     list-style:none;
-}
+
 
 #List li{
      cursor:mover;
@@ -117,11 +98,7 @@ form{
      padding: 2px;
 }
 
-.placeholder{
-     width:100%;
-     height:1px;
-     padding:0px;
-}
+
 
 /*****************************
  DRAWER
@@ -132,8 +109,6 @@ form{
      float:top;
      background-color:darkslateblue;
      z-index:100;
-     overflow-x:hidden;
-     overflow-y:auto;
 }
 
 #options span {
@@ -174,40 +149,28 @@ form{
 }
 
 #storagePopup {
-    visibility:hidden;
     position:absolute;
     top:50px;
     left:250px;
     width:500px;
     height:500px;
-    list-style:none;
     background-color:gray;
     padding:10px;
-    overflow:auto;
 }
 
 #codePopup {
-    visibility:hidden;
     position:absolute;
     top:50px;
     left:250px;
     width:70%;
     height:500px;
-    list-style:none;
     background-color:white;
     padding:10px;
-    overflow:auto;
 }
 
 .noborder{
     border:none;
 }
-
-.placeholder{
-    width:100%;
-    height:1px;
-}
-
 table .ERROR{
     background-color:red !important;
 }
