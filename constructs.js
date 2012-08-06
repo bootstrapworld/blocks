@@ -798,6 +798,8 @@ var timeout;
      */
      renderTypeColors();
 
+     addUItoStorage();
+
      /*
        storage pops up when clicked
      */
@@ -1391,6 +1393,7 @@ function makeDrawers(allFunctions,allConstants){
     $("#Drawer").html(Drawers);
     drawerToggle();
     makeDrawersDraggable();
+    setActivatedVisible($("#options").scrollTop());
 }
 
 
@@ -1572,13 +1575,10 @@ var createStorageHTML = function(){
 var renderProgram = function(){
     $("#storagePopup").html(createStorageHTML());
     $("#storage").html('Storage (' + storageProgram.length + ')');
+    addUItoStorage();
     $("#List").html(createProgramHTML());
     addDroppableFeature($("#List .droppable"));
-    $("#List li .DefineFun .argument").each(function(){      
-        if ($(this).attr('value') !== ""){
-	    addDraggableToArgument($(this),searchForIndex($(this).closest(".DefineFun").attr('id'), program), $(this).find('input').attr('value'));
-        }
-    });
+
     // $("#List table").children().each(function(){
     //         addDraggingFeature($(this).find("table"));
     // });
@@ -1586,6 +1586,7 @@ var renderProgram = function(){
     setLiWidth($("#storagePopup li"));
     typeCheck(program);
     makeDrawers(functions.concat(userFunctions), constants);
+
 };
 
 /*
@@ -1753,7 +1754,7 @@ getFunction returns the function associated with the ID, else returns undefined
 
 function getFunction(functionID) {
 
-    for(var i = 28; i < userFunctions.length; i++) {
+    for(var i = 0; i < userFunctions.length; i++) {
 	if (userFunctions[i].id === functionID) {
 	    return userFunctions[i];
 	}
@@ -2567,6 +2568,19 @@ $(function() {
         }
     });
 
+
+
+    $('.definePopup').draggable();
+});
+
+function addUItoStorage() {
+    addSortableToStorage();
+    addDraggableToStorage();
+    addDroppableToStorage();
+}
+
+function addSortableToStorage() {
+
     $("#storagePopup").sortable({
 	//containment:'parent',
 	connectWith: '#List',
@@ -2599,13 +2613,18 @@ $(function() {
 	    programCarrying = null;
 	}
     });
+}
 
+function addDraggableToStorage(){
     $("#storagePopup").draggable({
         start:function(event,ui){
           tempProgram=cloneProgram(program);
           tempStorageProgram=cloneProgram(storageProgram);
         }
       });
+}
+
+function addDroppableToStorage() {
 
     $("#storage").droppable({
 	tolerance:'pointer',
@@ -2628,8 +2647,7 @@ $(function() {
 	    }
 	}
     });
-    $('.definePopup').draggable();
-});
+}
 
 
 
