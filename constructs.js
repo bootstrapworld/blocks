@@ -1012,6 +1012,7 @@ var timeout;
      exprTH.attr('colspan',parseInt(exprTH.attr('colspan')) + 3);
 
      toggleDeleteButtons(defineExpr.funcIDList, defineExpr.id, contractdropdown);
+     toggleFunctionInDrawer(defineExpr);
  });
 
 /*
@@ -1387,7 +1388,7 @@ function makeDrawers(allFunctions,allConstants){
     Drawers+="</div>";
 
     //MAKE STORAGE
-    Drawers+="<div id=\"storage\">Storage</div>";
+    Drawers+="/<div id=\"storage\">Storage</div>";
 
     $("#Drawer").html(Drawers);
     drawerToggle();
@@ -1438,7 +1439,7 @@ $("#functionButton").click(function() {
     $(".closeFunctionButton").bind('click', function() {
 	var confirmClose = true;
 	var defineName = codeObject.contract.funcName;
-	if(defineName === ""){
+/*	if(defineName === ""){
 	    removeFunctionFromArray(codeObject.contract.funcName);
 	}
 	else if(functionNameRepeated(defineName)){
@@ -1447,7 +1448,7 @@ $("#functionButton").click(function() {
 	}
 	if (confirmClose) {
 	    $(this).closest('.definePopup').css('visibility','hidden');
-	}
+	}*/
     });
 });
 
@@ -1542,13 +1543,13 @@ var createProgramHTML = function(){
     var pageHTML = "";
      for (var i = 0; i < program.length; i++){
          pageHTML += "<li>" + createBlock(program[i],constants,functions.concat(userFunctions)) + "</li>";
-        if(program[i] instanceof ExprDefineConst){
-	    //constants.push({name:program[i].name;type:program[i].outputType})
-        }
-        else if(program[i] instanceof ExprDefineFunc){
-	    //ADD
-        }
-    }
+         if(program[i] instanceof ExprDefineConst){
+	     //constants.push({name:program[i].name;type:program[i].outputType})
+         }
+         else if(program[i] instanceof ExprDefineFunc){
+	     //ADD
+         }
+     }
     //makeDrawers();
     //drawerButton(activated);
     return pageHTML;
@@ -1616,8 +1617,7 @@ changeName changes the name of a define block
 @param newName - (string) the name you want to give to defineExpr
 @return void. changes a ExprDefineFunc
 */
-function changeName(defineExpr, newName){
-    
+function changeName(defineExpr, newName, prevName){
     defineExpr.contract.funcName = newName;
 }
 
@@ -1672,59 +1672,147 @@ function sync(objectID, $input){
 
 	//updateGUI
 	var newInput = $input.attr('value') + "";
-	if($input.hasClass('contractName')){
-	    $("#" + objectID).find('.definitionName').first().attr('value',(newInput));
-
+	var defInput = $("#" + objectID).find('.definitionName').first();
+	var contractInput = $("#" + objectID).find('.contractName').first();
+	if ($input.hasClass('contractName') || $input.hasClass('definitionName')){
+	    
+	    if($input.hasClass('contractName')){
+		defInput.attr('value',(newInput));
+	    } 
+	    else if ($input.hasClass('definitionName')){
+		contractInput.attr('value',(newInput));
+	    }
+	    
 	    timeout = setTimeout(function() {
-		changeName(block, newInput);
-		
-		// add/remove from drawers
-		toggleFunctionInDrawer(block);
-	    }, 500);
-	} 
-	else if ($input.hasClass('definitionName')){
-	    $("#" + objectID).find('.contractName').first().attr('value',(newInput));
+		if (newInput === "" || !legalFunctionName(newInput)){
+		    defInput.css('background-color','red');
+		    contractInput.css('background-color','red');
+		    $(document).click(function(){
+			var prevName = $input.attr('prevName');
+			defInput.attr('value', prevName);
+			contractInput.attr('value',prevName);
+			defInput.css('background-color','');
+			contractInput.css('background-color', '');
+		    });
+		} else {
+		    changeName(block, newInput);
+		    defInput.css('background-color','');
+		    contractInput.css('background-color', '');
 
-
-	    timeout = setTimeout(function() {
-		changeName(block, newInput);
-
-		// add/remove from drawers
-		toggleFunctionInDrawer(block);
+		    // add/remove from drawers
+		    toggleFunctionInDrawer(block, $input.attr('prevName'));
+		    if (contractCompleted(block.contract)){
+			defInput.attr('prevName', newInput);
+			contractInput.attr('prevName', newInput);
+		    }
+		}
 	    }, 500);
 	}
+   
 	else if ($input.hasClass('argName')) {
 	    if (/*$input.val() !== "" && */contains($input.val(), block.argumentNames)){
 		$input.css('background-color','red');
 	    } else {
 		$input.css('background-color','');
-		
 	    }
 	    changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList) - 1);
+	    toggleFunctionInDrawer(block, defInput.attr('prevName'));
 	}
 	else if ($input.hasClass('contractPurpose')){
 	    block.contract.purpose = newInput;
 	}
-
+	
     }
 }
 
+
+/*
+changeAppOutput changes the output type of an ExprApp
+
+@param appExpr - ExprApp whose output you want to change
+@param newOutputType - the new output type 
+@return void - alters ExprApp
+*/
+function changeAppOutput(appExpr, newOutputType){
+    appExpr.outputType = newOutputType;
+}
 
 /*
 toggleFunctionInDrawer removes and adds functions to drawers
 @param defineExpr - (ExprDefineFunc) the block which you might add/remove to/from the drawer
+@param prevName - (string) the name the defineExpr used to have
 */
-function toggleFunctionInDrawer(defineExpr) {
-    if (contractCompleted(defineExpr.contract) && legalFunctionName(defineExpr.contract.funcName)){
-	console.log('here');
+function toggleFunctionInDrawer(defineExpr, prevName) {
+    if (contractCompleted(defineExpr.contract)){
+	console.log(prevName, defineExpr, program);
+	changeProgramFunctions(prevName, defineExpr, program);
+	changeProgramFunctions(prevName, defineExpr, storageProgram);
 	addFunctionToDrawers(defineExpr);
-    } else {
-	removeFunctionFromDrawers(defineExpr);
     }
 }
 
 /*
+changeProgramFunctions changes the outputType, args, and funcName attributes of ExprApps in the prog
+
+@param prevName - (string) the funcName of all ExprApps you want to change
+@param defineExpr - (ExprDefineFunc) the define block being changed
+@param prog - the program you will parse through
+*/
+function changeProgramFunctions(prevName, defineExpr, prog){
+    var i;
+    for (i = 0; i < prog.length; i++){
+	if (prog[i] instanceof ExprApp){
+	    changeExprApp(prog[i], prevName, defineExpr);
+	}
+    }
+}
+
+/*
+changeExprApp changes the outputType and funcName attributes of appExpr
+
+@param appExpr - (ExprApp) you want to change
+@param prevName - (string) the funcName of all ExprApps you want to change
+@param defineExpr - (ExprDefineFunc) the define block being changed
+*/
+function changeExprApp(appExpr, prevName, defineExpr){
+    console.log('here');
+    console.log(appExpr.funcName);
+    console.log(prevName);
+    if (appExpr.funcName === defineExpr.contract.funcName || appExpr.funcName === prevName){
+	appExpr.name = defineExpr.contract.funcName;
+	appExpr.outputType = defineExpr.contract.outputType;
+	var newFuncIDList = [];
+	for (var j = 0; j < defineExpr.contract.argumentTypes.length; j++){
+	    newFuncIDList.push(makeID());
+	}
+	console.log(newFuncIDList);
+	appExpr.funcIDList = newFuncIDList;
+    } 
+    else {
+	for (var i = 0; i < appExpr.args.length; i++){
+	    if (appExpr.args[i] != undefined){
+		changeExprApp(appExpr.arg[i], prevName, newName, newOutputType);
+	    }
+	}
+    }
+}
+
+/*
+  removeFunctionFromDrawers removes the given function from the drawers and from the userFunctions array
+*/
+function removeFunctionFromDrawers(defineExpr) {
+    var func = getFunction(defineExpr.id)
+    if(func != undefined){
+	userFunctions.splice(userFunctions.indexOf(func), 1);
+    }
+    buildFuncConstructs();
+    renderProgram();
+}
+
+/*
 addFunctionToDrawers adds the given function to the drawers and to the funcion array
+
+@defineExpr - an ExprDefineFunc that you are thinking of adding
 */
 function addFunctionToDrawers(defineExpr){
     var func = getFunction(defineExpr.id)
@@ -1802,25 +1890,28 @@ function legalFunctionName(name){
             return false;
     }
     //already defined functions
-    if(funcConstruct[name] !== undefined){
-    	return false;
+    var allFunctions = functions.concat(userFunctions);
+    for(var i = 0; i < allFunctions.length; i++){
+	if (name === allFunctions.name){
+	    return false;
+	}
     }
     //illegal characters
     if(name.indexOf(" ") !== -1 ||
-        name.indexOf("\"") !== -1 ||
-        name.indexOf("(") !== -1 ||
-        name.indexOf(")") !== -1 ||
-        name.indexOf("[") !== -1 ||
-        name.indexOf("]") !== -1 ||
-        name.indexOf("{") !== -1 ||
-        name.indexOf("}") !== -1 ||
-        name.indexOf(",") !== -1 ||
-        name.indexOf("'") !== -1 ||
-        name.indexOf("`") !== -1 ||
-        name.indexOf(";") !== -1 ||
-        name.indexOf("|") !== -1 ||
-        name.indexOf("\\") !== -1 ||
-        (name.isNaN)){
+       name.indexOf("\"") !== -1 ||
+       name.indexOf("(") !== -1 ||
+       name.indexOf(")") !== -1 ||
+       name.indexOf("[") !== -1 ||
+       name.indexOf("]") !== -1 ||
+       name.indexOf("{") !== -1 ||
+       name.indexOf("}") !== -1 ||
+       name.indexOf(",") !== -1 ||
+       name.indexOf("'") !== -1 ||
+       name.indexOf("`") !== -1 ||
+       name.indexOf(";") !== -1 ||
+       name.indexOf("|") !== -1 ||
+       name.indexOf("\\") !== -1 ||
+       (!isNaN(name))){
     	return false;
     }
     return true;
@@ -1916,6 +2007,7 @@ function createBlock(codeObject,constantEnvironment,functionEnvironment){
 	    }
 	    throw new Error("createBlock: internal error with constants", codeObject);
         } else if (codeObject instanceof ExprApp){
+	    console.log(codeObject, userFunctions);
 	    for(i = 0; i < functionEnvironment.length; i++){
                 if (encode(functionEnvironment[i].name) === encode(codeObject.funcName)){
 		    return createFunctionBlock(functionEnvironment[i], codeObject,constantEnvironment,functionEnvironment);
@@ -1964,72 +2056,6 @@ function createFunctionBlock(functionInfo, codeObject, constantEnvironment,funct
 }
 /*
 
-
-//createDefineBlock outputs the block corresponding to defining a function
-function createDefineBlock(codeObject,constantEnvironment,functionEnvironment){
-    var i;
-    var block ="<table class=\"DefineFun Define\" style=\"background: " + colors.Define +";\"" + " id=\""+codeObject.id+"\">";
-
-    //contract
-    block+="<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+")\" ";
-
-    //CONTRACT NAME
-    if(codeObject.contract.funcName!=undefined){
-        block+="value=\""+encode(codeObject.contract.funcName)+"\"";
-    }
-    block+=" />";
-
-    block+="</th><th> : </th>";
-
-    //CONTRACT ARGUMENTS
-    for(i=0;i<codeObject.argumentNames.length;i++){
-        block+=" <th class=\"ContractType\" id=\""+codeObject.contract.funcIDList[i+1]+"\">"+generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject)+"</th>";
-    }
-
-    //CONTRACT OUTPUT
-    block+="<th> <button class=\"addArgument\">+</button> </th><th> -> </th><th class=\"ContractType\" id=\""+codeObject.contract.funcIDList[0]+"\">"+generateTypeDrop(codeObject.contract.funcIDList[0],codeObject)+"</th></tr>";
-    
-    
-    block+="<tr><th>define</th>";
-    
-    //DEFINE BLOCK NAME
-    block+="<th class=\"expr\"> <input class=\"definitionName\" onkeyup=\"sync("+codeObject.id+")\" ";
-    if(codeObject.contract.funcName!=undefined){
-        block+="value=\""+encode(codeObject.contract.funcName)+"\"";
-    }
-    block+=" /></th>";
-
-    //DEFINE BLOCK ARGUMENTS
-    for(i=0;i<codeObject.argumentNames.length;i++){
-        block+="<th width=\"10px\" class=\"expr argument\"";
-        if(codeObject.contract.argumentTypes[i]!=undefined){
-	    block+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
-        }
-        block+="><input style=\"width:70px;\" id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+")\" class=\"argName\" ";
-        if(codeObject.argumentNames[i]!=undefined){
-	    block+="value=\""+encode(codeObject.argumentNames[i])+"\"";
-        }
-        block+=" />";
-    }
-    block+="<th></th><th></th>";
-
-
-    //DEFINE EXPRESSIONS
-    block+="<th ";
-    if(codeObject.contract.outputType!=undefined){
-        block+=" style=\"background:"+colors[codeObject.contract.outputType]+"\" ";
-    }
-    if(codeObject.expr != undefined){
-        block+="class=\"functionExpr noborder droppable expr\" name=\"Expr\" id="+codeObject.funcIDList[0]+">";
-        block+=createBlock(codeObject.expr,constantEnvironment.concat(createNewConstants(codeObject)),functionEnvironment);
-        block+="</th>";
-    }
-    else{
-        block+="name=\"Expr\" class=\"functionExpr droppable expr\" id="+codeObject.funcIDList[0]+">Expr</th>";
-    }
-    return block + "</tr></table>";
-}
-
 //createDefineVarBlock outputs the block corresponding to creating a variable
 function createDefineVarBlock(codeObject,constantEnvironment,functionEnvironment){
 
@@ -2047,12 +2073,6 @@ function createDefineVarBlock(codeObject,constantEnvironment,functionEnvironment
     return block + "</th></tr></table>";
 }
 
-//createDefineStructBlock outputs the block corresponding to creating a structure
-function createDefineStructBlock(codeObject){
-    var block ="<table class=\"DefineStruct Define\" " + "id=\""+codeObject.id+"\"><tr><th>define-struct</th>";
-    block+="<th class=\"expr\"><input type=\"Name\" id=\"Name\" name=\"Name\"/><th class=\"expr\">properties";
-    return block + "</tr></table>";
-}
 */
 //createCondBlock outputs the block corresponding to creating a conditional
 //add stuff to make empty work and have new rows append to ExprCond
@@ -2155,6 +2175,7 @@ types within the contract
 */
 function changeType(curValue,selectID,defineExprID){
     selectID+="";
+    $("#" + selectID + " option[value='Type']").attr('disabled','disabled');
     var defineExpr=searchForIndex(defineExprID+"",functionProgram  ); 
 
     var funcIDIndex = getElmIndexInArray(selectID, defineExpr.contract.funcIDList);
@@ -2198,7 +2219,7 @@ function changeType(curValue,selectID,defineExprID){
 	    }
         }
     }
-    toggleFunctionInDrawer(defineExpr);
+    toggleFunctionInDrawer(defineExpr, $("#" +defineExprID).find('.definitionName').attr('prevName'));
 }
 
 //adds draggable within define expressions
@@ -2372,6 +2393,7 @@ function deleteArg(selectID,codeObjectID) {
     }
 
     toggleDeleteButtons(codeObject.funcIDList, codeObject.id, undefined);
+    toggleFunctionInDrawer(codeObject);
 }
 
 
@@ -2687,7 +2709,7 @@ var makeDrawersDraggable = function(){
 	    }
         },
         stop: function(event,ui){
-          typeCheck(program)
+            typeCheck(program);
         },
         helper: function(event, ui){
 	    programCarrying = makeCodeFromOptions($(this).text());
