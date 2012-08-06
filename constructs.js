@@ -829,19 +829,19 @@ var timeout;
 
      addUItoStorage();
 
-     /*
-       storage pops up when clicked
-     */
-     $("#storage").live("click",function() {
-        if($("#storagePopup").css('visibility')==="visible"){
-          $("#storagePopup").css('visibility','hidden');
-        }
-        else{
-          $("#storagePopup").css('visibility','visible');
-        }
+     // /*
+     //   storage pops up when clicked
+     // */
+     // $("#storage").on('click',function() {
+     //    if($("#storagePopup").css('visibility')==="visible"){
+     //      $("#storagePopup").css('visibility','hidden');
+     //    }
+     //    else{
+     //      $("#storagePopup").css('visibility','visible');
+     //    }
 	       
  //	$("#graybox").css('visibility','visible').fadeIn('slow');;
-     });
+     //});
 
      $("#closestorage").click(function() {
 	 $("#storagePopup").css('visibility','hidden');
@@ -874,7 +874,7 @@ var timeout;
      /*
        sets focus equal to the input that is focused. 
      */
-     $("#List input").live('focus',function(e){
+     $(document).on('focus',"#List input",function(e){
 	 var toContinue=formValidation(e);
 	 focused=$(this);
 	 initvalue=focused.value;
@@ -883,7 +883,7 @@ var timeout;
      });
 
 
-     $(document.body).live('mousedown', function(e){
+     $(document).on('mousedown', function(e){
 	 return formValidation(e)
      });
 
@@ -1000,7 +1000,7 @@ var timeout;
      });
 
 
-     $(".addCond").live('click',function(){
+     $(document).on('click',".addCond",function(){
 	 addToHistory(cloneProgram(program), cloneProgram(storageProgram));
 	 searchForIndex($(this).closest('table').attr('id'),program).listOfBooleanAnswer.push(new ExprBoolAnswer());
 	 renderProgram(createProgramHTML())
@@ -1041,7 +1041,7 @@ var timeout;
         }
      });
 
-     $(".removeCond").live('click',function(){
+     $(document).on('click',".removeCond",function(){
 	 var listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),program).listOfBooleanAnswer
 	 if(listOfTuples.length!=1){
 	     addToHistory(cloneProgram(program), cloneProgram(storageProgram));
@@ -1058,7 +1058,7 @@ var timeout;
  /*
  allows user to add argument to contract in define block
  */
- $(".addArgument").live('click',function(){
+ $(document).on('click',".addArgument",function(){
      addToHistory(cloneProgram(program), cloneProgram(storageProgram));
      var defineExpr=searchForIndex($(this).closest('table').attr('id'),functionProgram  )
      defineExpr.funcIDList.push(makeID())
@@ -1464,6 +1464,52 @@ function makeDrawers(allFunctions,allConstants){
     Drawers+="<div id=\"storage\">Storage</div>";
 
     $("#Drawer").html(Drawers);
+    $("#storage").click(function(){
+        if($("#storagePopup").css('visibility')==="visible"){
+          $("#storagePopup").css('visibility','hidden');
+        }
+        else{
+          $("#storagePopup").css('visibility','visible');
+        }
+      });
+
+    /*
+functionButton brings up a popup of a 'define' window 
+*/
+    $("#functionButton").click(function() {
+    var codeObject = new ExprDefineFunc;
+    functionProgram  .push(codeObject);
+    var $popupHTML = $(makeDefinePopup(codeObject));
+    $('body').append($($popupHTML));
+    $($popupHTML).css('position','absolute');
+    $($popupHTML).css('top','50px');
+    $($popupHTML).css('left','220px');
+    $($popupHTML).draggable();
+
+    //adds droppable to expression
+    addDroppableToDefineExpr($popupHTML.find('.functionExpr'));
+
+    //adds draggable to first argument
+    addDraggableToArgument($popupHTML.find('.argument'), codeObject, $popupHTML.find('select').eq(0).attr('id'));
+
+    /*
+      closes the corresponding 'define' window
+    */
+    $(".closeFunctionButton").bind('click', function() {
+  var confirmClose = true;
+  var defineName = codeObject.contract.funcName;
+  if(defineName === ""){
+      removeFunctionFromArray(codeObject.contract.funcName);
+  }
+  else if(functionNameRepeated(defineName)){
+      confirmClose = false;
+      alert('rename your function')
+  }
+  if (confirmClose) {
+      $(this).closest('.definePopup').css('visibility','hidden');
+  }
+    });
+  });
     drawerToggle();
     makeDrawersDraggable();
     setActivatedVisible($("#options").scrollTop());
@@ -1487,43 +1533,43 @@ function makeDrawers(allFunctions,allConstants){
 // }
 
 
-/*
-functionButton brings up a popup of a 'define' window 
-*/
-$("#functionButton").live("click",function() {
-    var codeObject = new ExprDefineFunc;
-    functionProgram  .push(codeObject);
-    var $popupHTML = $(makeDefinePopup(codeObject));
-    $('body').append($($popupHTML));
-    $($popupHTML).css('position','absolute');
-    $($popupHTML).css('top','50px');
-    $($popupHTML).css('left','220px');
-    $($popupHTML).draggable();
 
-    //adds droppable to expression
-    addDroppableToDefineExpr($popupHTML.find('.functionExpr'));
+// functionButton brings up a popup of a 'define' window 
 
-    //adds draggable to first argument
-    addDraggableToArgument($popupHTML.find('.argument'), codeObject, $popupHTML.find('select').eq(0).attr('id'));
+// $(document).on("click","#functionButton",function() {
+//     var codeObject = new ExprDefineFunc;
+//     functionProgram  .push(codeObject);
+//     var $popupHTML = $(makeDefinePopup(codeObject));
+//     $('body').append($($popupHTML));
+//     $($popupHTML).css('position','absolute');
+//     $($popupHTML).css('top','50px');
+//     $($popupHTML).css('left','220px');
+//     $($popupHTML).draggable();
 
-    /*
-      closes the corresponding 'define' window
-    */
-    $(".closeFunctionButton").bind('click', function() {
-	var confirmClose = true;
-	var defineName = codeObject.contract.funcName;
-	if(defineName === ""){
-	    removeFunctionFromArray(codeObject.contract.funcName);
-	}
-	else if(functionNameRepeated(defineName)){
-	    confirmClose = false;
-	    alert('rename your function')
-	}
-	if (confirmClose) {
-	    $(this).closest('.definePopup').css('visibility','hidden');
-	}
-    });
-});
+//     //adds droppable to expression
+//     addDroppableToDefineExpr($popupHTML.find('.functionExpr'));
+
+//     //adds draggable to first argument
+//     addDraggableToArgument($popupHTML.find('.argument'), codeObject, $popupHTML.find('select').eq(0).attr('id'));
+
+//     /*
+//       closes the corresponding 'define' window
+//     */
+//     $(".closeFunctionButton").bind('click', function() {
+// 	var confirmClose = true;
+// 	var defineName = codeObject.contract.funcName;
+// 	if(defineName === ""){
+// 	    removeFunctionFromArray(codeObject.contract.funcName);
+// 	}
+// 	else if(functionNameRepeated(defineName)){
+// 	    confirmClose = false;
+// 	    alert('rename your function')
+// 	}
+// 	if (confirmClose) {
+// 	    $(this).closest('.definePopup').css('visibility','hidden');
+// 	}
+//     });
+// });
 
 /*
 makeContractDropdown creates a new selection and plus button for the contract part of define
@@ -1657,7 +1703,6 @@ var renderProgram = function(){
     setLiWidth($("#storagePopup li"));
     typeCheck(program);
     makeDrawers(functions.concat(userFunctions), constants);
-    addDroppableToStorage();
     $("#storage").text('Storage (' + storageProgram.length + ')');
     addUItoStorage();
 };
