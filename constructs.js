@@ -3173,7 +3173,7 @@ function returnMessage(message){
 function createErrorMessages(typeErrors){
         for(var i=0;i<typeErrors.length;i++){
                 for(var j=0;j<typeErrors[i].idArr.length;j++){
-                  console.log($(document.getElementById(typeErrors[i].idArr[j])))
+                  //console.log($(document.getElementById(typeErrors[i].idArr[j])))
                         //console.log(typeErrors[i].idArr[j]);//the id to which the message is added
                         //console.log(typeErrors[i].message);//the message that needs to be added
                         if(Modernizr.touch){
