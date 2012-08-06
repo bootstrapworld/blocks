@@ -186,6 +186,19 @@ form{
     overflow:auto;
 }
 
+#codePopup {
+    visibility:hidden;
+    position:absolute;
+    top:50px;
+    left:250px;
+    width:500px;
+    height:500px;
+    list-style:none;
+    background-color:white;
+    padding:10px;
+    overflow:auto;
+}
+
 .noborder{
     border:none;
 }

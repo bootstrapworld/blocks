@@ -1,4 +1,4 @@
-//(function(){
+(function(){
 
 "use strict";
 // this function is strict...
@@ -758,11 +758,17 @@ var timeout;
      $("#List").width($("#code").width() - 55);
      $("#options").height(contentHeight - $("#storage").height());
  //    resizeStorage();
+ //     resizeCode()
  }
 
  var resizeStorage = function() {
      $("#storagePopup").width($("#code").width()-$("#Drawers").width() - 300);
      $("#storagePopup").height($("#code").height() - 100);
+ };
+
+ var resizeCode = function() {
+     $("#codePopup").width($("#code").width()-$("#Drawers").width() - 300);
+     $("#codePopup").height($("#code").height() - 100);
  };
 
  /*
@@ -787,7 +793,8 @@ var timeout;
   //HOOKING UP TO WESCHEME EVALUATOR
   var evaluator = new Evaluator({
                     write: function(thing) {
-                              alert($(thing).text());
+                          console.log(thing);
+                              $("#actualCode").append(thing);
                            }
                              });
   var xhr = new easyXDM.Rpc(
@@ -841,8 +848,17 @@ var timeout;
  //	$("#graybox").css('visibility','hidden');
      });
 
+  $("#closecode").click(function() {
+   $("#codePopup").css('visibility','hidden');
+    evaluator.requestBreak();
+     });
+
+    $("#codePopup").draggable();
+
     $(document).keyup(function(e) {
-    if (e.keyCode == 27) { $("#storagePopup").css('visibility','hidden'); }   // esc
+    if (e.keyCode == 27) { $("#storagePopup").css('visibility','hidden');
+                           $("#codePopup").css('visibility','hidden');
+                           evaluator.requestBreak(); }   // esc
     });
 
     $(document).click(function(e){
@@ -991,8 +1007,8 @@ var timeout;
      });
 
      $("#runButton").click(function(){
-        var legal=true
-        var typeInfered
+        var legal=true;
+        var typeInfered;
         for(var i=0;i<program.length;i++){
           typeInfered=typeInfer(program[i])
           if(typeInfered.typeErrors.length>0 || typeInfered.blankErrors.length>0){
@@ -1011,14 +1027,17 @@ var timeout;
         }
         else{
           var programString = parseProgram();
-          console.log(programString, typeof(programString));
+          //console.log(programString, typeof(programString));
+          $("#actualCode").empty().css("white-space", "pre")
+              .text("Racket:\n" + programString +"\n\nResult:\n");
+              $("#codePopup").css('visibility','visible');
           evaluator.executeProgram("",
                          programString,
                          function() {
-                            alert("evaluation successful")
+                            //$("#actualCode").html("Racket:</br>"+programString+"</br></br>Result:</br>"+$("#actualCode").html())
                          },
                          function(err) {
-                             alert(err);
+                             $("#actualCode").text(evaluator.getMessageFromExn(err)+"");
                          })
         }
      });
@@ -3128,7 +3147,7 @@ function typeInfer(obj){
         var step3 = buildTypeErrors(step2.errors, obj);
         return {types: step2.subst,
                 typeErrors: step3,
-                blankErrors: step2.errors};
+                blankErrors: step1.errors};
 }
 
 /*removeErrorMessages will, starting at a parent selection, recursively remove all messages and highliting from itself and its children*/
@@ -3210,7 +3229,7 @@ function returnMessage(message){
 function createErrorMessages(typeErrors){
         for(var i=0;i<typeErrors.length;i++){
                 for(var j=0;j<typeErrors[i].idArr.length;j++){
-                  console.log($(document.getElementById(typeErrors[i].idArr[j])))
+                  //console.log($(document.getElementById(typeErrors[i].idArr[j])))
                         //console.log(typeErrors[i].idArr[j]);//the id to which the message is added
                         //console.log(typeErrors[i].message);//the message that needs to be added
                         if(Modernizr.touch){
@@ -3574,7 +3593,7 @@ function buildTypeErrors(array, obj){
                                 if(curr.listOfBooleanAnswer[k].answer !== undefined){
                                         idList.push(curr.listOfBooleanAnswer[k].answer.id)
                                 }else{
-                                        console.log("I'm not adding the empty positions in a cond block to this error because of reasons (like it isn't a type error)")
+                                        //console.log("I'm not adding the empty positions in a cond block to this error because of reasons (like it isn't a type error)")
                                 }
                         }
                         if(!boolError){
@@ -3584,7 +3603,7 @@ function buildTypeErrors(array, obj){
                           curr = getParent(curr.id, [obj]);
 
                           }
-                          console.log(item)
+                          //console.log(item)
                           condErr = buildCondError(item.id, obj);
                           for(k=0; k<condErr.length; k++){
                               helpfulErrors.push(condErr[k]);
@@ -3737,3 +3756,23 @@ function getVariables(name, objArr){
         }
         return idArr;
 }
+
+
+window.sync = sync;
+window.changeType=changeType;
+window.deleteArg = deleteArg;
+//window.removeFunctionFromDrawers=removeFunctionFromDrawers;
+
+//FOR TESTING PURPOSES
+window.typeInfer = typeInfer;
+window.typeCheck=typeCheck;
+window.parseProgram=parseProgram;
+window.program=program;
+window.storageProgram=storageProgram;
+window.functionProgram=functionProgram;
+window.historyarr=historyarr;
+window.future=future;
+window.buildConstraints=buildConstraints;
+
+
+}());
