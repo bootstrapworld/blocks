@@ -1,4 +1,4 @@
-//(function(){
+(function(){
 
 "use strict";
 // this function is strict...
@@ -758,11 +758,17 @@ var timeout;
      $("#List").width($("#code").width() - 55);
      $("#options").height(contentHeight - $("#storage").height());
  //    resizeStorage();
+ //     resizeCode()
  }
 
  var resizeStorage = function() {
      $("#storagePopup").width($("#code").width()-$("#Drawers").width() - 300);
      $("#storagePopup").height($("#code").height() - 100);
+ };
+
+ var resizeCode = function() {
+     $("#codePopup").width($("#code").width()-$("#Drawers").width() - 300);
+     $("#codePopup").height($("#code").height() - 100);
  };
 
  /*
@@ -783,6 +789,29 @@ var timeout;
  };
 
  $(document).ready(function(){
+  
+  //HOOKING UP TO WESCHEME EVALUATOR
+  var evaluator = new Evaluator({
+                    write: function(thing) {
+                          console.log(thing);
+                              $("#actualCode").append(thing);
+                           }
+                             });
+  var xhr = new easyXDM.Rpc(
+           { remote: "http://wescheme-compiler.hashcollision.org/index.html",
+             // This lazy flag must be set to avoid a very ugly
+             // issue with Firefox 3.5.
+            lazy: true
+           },
+           { remote: { compileProgram: {} }});
+
+  evaluator.setCompileProgram(function(name, program, success, fail) {
+                               xhr.compileProgram(name, program, success, fail);
+                            });
+
+
+
+
      //When the window is resized, the height of the width of the code div changes
      $(window).resize(onResize);
 
@@ -819,8 +848,17 @@ var timeout;
  //	$("#graybox").css('visibility','hidden');
      });
 
+  $("#closecode").click(function() {
+   $("#codePopup").css('visibility','hidden');
+    evaluator.requestBreak();
+     });
+
+    //$("#codePopup").draggable();
+
     $(document).keyup(function(e) {
-    if (e.keyCode == 27) { $("#storagePopup").css('visibility','hidden'); }   // esc
+    if (e.keyCode == 27) { $("#storagePopup").css('visibility','hidden');
+                           $("#codePopup").css('visibility','hidden');
+                           evaluator.requestBreak(); }   // esc
     });
 
     $(document).click(function(e){
@@ -958,7 +996,7 @@ var timeout;
      });
 
      $("#exportButton").bind('click',function(){
-	     alert("Here is the racket representation of the current program:\n\n"+parseProgram(functionProgram)+"\n"+parseProgram(program));
+	     alert("Here is the racket representation of the current program:\n\n"+parseProgram());
      });
 
 
@@ -966,6 +1004,42 @@ var timeout;
 	 addToHistory(cloneProgram(program), cloneProgram(storageProgram));
 	 searchForIndex($(this).closest('table').attr('id'),program).listOfBooleanAnswer.push(new ExprBoolAnswer());
 	 renderProgram(createProgramHTML())
+     });
+
+     $("#runButton").click(function(){
+        var legal=true;
+        var typeInfered;
+        for(var i=0;i<program.length;i++){
+          typeInfered=typeInfer(program[i])
+          if(typeInfered.typeErrors.length>0 || typeInfered.blankErrors.length>0){
+            legal=false
+          }
+        }
+        for(i=0;i<functionProgram.length;i++){
+          typeInfered=typeInfer(storageProgram[i])
+          if(typeInfered.typeErrors.length>0 || typeInfered.blankErrors.length>0){
+            legal=false
+          }
+        }
+        if(!legal){
+          alert("There are type errors or blank spaces in your program.  Please fix them before continuing to run");
+          return;
+        }
+        else{
+          var programString = parseProgram();
+          //console.log(programString, typeof(programString));
+          $("#actualCode").empty().css("white-space", "pre")
+              .text("Racket:\n" + programString +"\n\nResult:\n");
+              $("#codePopup").css('visibility','visible');
+          evaluator.executeProgram("",
+                         programString,
+                         function() {
+                            //$("#actualCode").html("Racket:</br>"+programString+"</br></br>Result:</br>"+$("#actualCode").html())
+                         },
+                         function(err) {
+                             $("#actualCode").text(evaluator.getMessageFromExn(err)+"");
+                         })
+        }
      });
 
      $(".removeCond").live('click',function(){
@@ -2389,6 +2463,9 @@ function deleteArg(selectID,codeObjectID) {
 */
 function parseProgram(){
     var racketCode="";
+    for(i=0;i<functionProgram.length;i++){
+      racketCode+=interpreter(functionProgram[i])+"\n";
+    }
     for(var i=0;i<program.length;i++){
         racketCode+=interpreter(program[i])+"\n";
     }
@@ -3069,7 +3146,7 @@ function typeInfer(obj){
         var step3 = buildTypeErrors(step2.errors, obj);
         return {types: step2.subst,
                 typeErrors: step3,
-                blankErrors: step2.errors};
+                blankErrors: step1.errors};
 }
 
 /*removeErrorMessages will, starting at a parent selection, recursively remove all messages and highliting from itself and its children*/
@@ -3537,7 +3614,7 @@ function buildTypeErrors(array, obj){
                                 if(curr.listOfBooleanAnswer[k].answer !== undefined){
                                         idList.push(curr.listOfBooleanAnswer[k].answer.id)
                                 }else{
-                                        console.log("I'm not adding the empty positions in a cond block to this error because of reasons (like it isn't a type error)")
+                                        //console.log("I'm not adding the empty positions in a cond block to this error because of reasons (like it isn't a type error)")
                                 }
                         }
                         if(!boolError){
@@ -3690,3 +3767,23 @@ function getVariables(name, objArr){
         }
         return idArr;
 }
+
+
+window.sync = sync;
+window.changeType=changeType;
+window.deleteArg = deleteArg;
+//window.removeFunctionFromDrawers=removeFunctionFromDrawers;
+
+//FOR TESTING PURPOSES
+window.typeInfer = typeInfer;
+window.typeCheck=typeCheck;
+window.parseProgram=parseProgram;
+window.program=program;
+window.storageProgram=storageProgram;
+window.functionProgram=functionProgram;
+window.historyarr=historyarr;
+window.future=future;
+window.buildConstraints=buildConstraints;
+
+
+}());
