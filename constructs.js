@@ -65,9 +65,6 @@
       cloneProgram takes in an array of code objects (arr) and outputs a clone of arr
     */
     var cloneProgram = function(arr){
-	console.log(program);
-	console.log(storageProgram);
-	console.log(arr);
 	var tempArr = [];
 	for (var i = 0; i < arr.length; i++){
 	    tempArr[i] = arr[i].clone();
@@ -779,7 +776,7 @@
       such that when it's double clicked, it gets removed from storagePopup div and gets added
       to the end of the sortable #List
     */
-    var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
+   /* var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
 	$(jQuerySelection).dblclick(function() {
 	    addToHistory(cloneProgram(program),cloneProgram(storageProgram))
 	    var index = $("#actualStorage li").index(jQuerySelection);
@@ -789,7 +786,7 @@
 	    storageProgram.splice(index, 1);
 	    $(jQuerySelection).remove();
 	});
-    };
+    };*/
 
     $(document).ready(function(){
 	
@@ -822,9 +819,7 @@
 	//draws drawers when the page is loaded
 	makeDrawers(functions,constants);
 	onResize();
-	// activated is initially set to "Numbers"
-	// activated = $("#options #Numbers");
-	// activated.css("visibility", "visible");
+
 	/*
 	  adds a stylesheet to <head> such that blocks can be colored according to their type
 	*/
@@ -857,6 +852,8 @@
 	});
 
 	//$("#codePopup").draggable();
+
+
 
 	$(document).keyup(function(e) {
 	    if (e.keyCode == 27) { $("#storagePopup").css('visibility','hidden');
@@ -1116,26 +1113,6 @@
 	}
     }
 
-    var resizeStorage = function() {
-	$("#storagePopup").width($("#code").width()-$("#Drawers").width() - 300);
-	$("#storagePopup").height($("#code").height() - 100);
-    };
-
-    /*
-      removeFromStorageOnClick takes in a jquery selection (jQuerySelection) and adds a function to it
-      such that when it's double clicked, it gets removed from storagePopup div and gets added
-      to the end of the sortable #List
-    */
-    var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
-	$(jQuerySelection).dblclick(function() {
-	    var index = $("#actualStorage li").index(jQuerySelection);
-	    $("#List").append("<li>" + html + "</li>");
-	    program.push(codeObject);
-	    addDroppableFeature($("#List li:last").find(('.droppable')));
-	    storageProgram.splice(index, 1);
-	    $(jQuerySelection).remove();
-	});
-    };
 
     function formValidation(e){
 	var toContinue=true;
@@ -1250,8 +1227,9 @@
     */
     function functionNameRepeated(defineName){
 	var timesFound = 0;
-	for (var i = 0; i < functionProgram  .length; i++){
-	    if (functionProgram  [i].contract.funcName === defineName){
+	var allFunctions = functions.concat(userFunctions)
+	for (var i = 0; i < allFunctions.length; i++){
+	    if (allFunctions[i].name === defineName){
 		timesFound = timesFound + 1;
 	    }
 	    if (timesFound > 1){
@@ -1268,10 +1246,11 @@
       you want to remove
     */
     function removeFunctionFromArray(defineName) {
+	console.log(functionProgram, defineName);
 	var foundName = false;
-	for (var i = 0; i < functionProgram  .length && !foundName; i++){
-	    if (functionProgram  [i].contract.funcName === defineName) {
-		functionProgram  .splice(i, 1);
+	for (var i = 0; i < functionProgram.length && !foundName; i++){
+	    if (functionProgram[i].contract.funcName === defineName) {
+		functionProgram.splice(i, 1);
 		foundName = true;
 	    }
 	}
@@ -1451,7 +1430,11 @@
 			    Drawers+=" <span class=\"Numbers draggable\">Number</span>";
 			}
 			else{
-			    Drawers+=" <span class=\"draggable "+encode(allFunctions[typeDrawers[Type][i]].output)+"\">"+encode(allFunctions[typeDrawers[Type][i]].name)+"</span>";
+			    if(allFunctions[typeDrawers[Type][i]].id != undefined){//if user defined
+				Drawers += "<span class=\"draggable "+encode(allFunctions[typeDrawers[Type][i]].output)+"\" name=\"" + allFunctions[typeDrawers[Type][i]].id + "\">"+encode(allFunctions[typeDrawers[Type][i]].name)+"</span>";
+			    } else {
+				Drawers+=" <span class=\"draggable "+encode(allFunctions[typeDrawers[Type][i]].output)+"\">"+encode(allFunctions[typeDrawers[Type][i]].name)+"</span>";
+			    }
 			}
 		    }
 		}
@@ -1468,6 +1451,13 @@
 	Drawers+="/<div id=\"storage\">Storage</div>";
 
 	$("#Drawer").html(Drawers);
+	$("#options span").dblclick(function(){
+	    console.log('here1');
+	    if ($(this).attr('name') != undefined){
+		console.log('here2');
+		$("#" + $(this).attr('name')).closest('.definePopup').css('visibility','visible');
+	    }
+	});
 	$("#storage").click(function(){
             if($("#storagePopup").css('visibility')==="visible"){
 		$("#storagePopup").css('visibility','hidden');
@@ -1512,6 +1502,43 @@
 		if (confirmClose) {
 		    $(this).closest('.definePopup').css('visibility','hidden');
 		}
+	    });
+	    $(".deleteFunctionButton").bind('click', function() {
+		var name = $popupHTML.find('.definitionName').attr('prevName');
+		console.log(name);
+		//remove from storage
+		changeProgramFunctions(name, codeObject, storageProgram, true);
+
+		//remove from program
+		changeProgramFunctions(name, codeObject, program, true);
+
+		//remove from functions
+		changeProgramFunctions(name, codeObject, functionProgram, true);
+		console.log();
+		//remove from userFunctions
+		var i;
+		for (i = 0; i < userFunctions.length; i++){
+		    if (userFunctions[i].name === name){
+			console.log('deleted');
+			userFunctions.splice(i, 1);
+			break;
+		    }
+		}
+
+		//remove from functiosProgram
+		for (i = 0; i < functionProgram.length; i++){
+		    if (codeObject.id === functionProgram[i].id){
+			functionProgram.splice(i, 1);
+			break;
+		    }
+		}
+
+		//remove popup
+		$popupHTML.detach();
+		buildFuncConstructs();
+		console.log(program);
+		renderProgram();
+		renderFunctions();
 	    });
 	});
 	drawerToggle();
@@ -1588,7 +1615,7 @@
     */
     function makeDefinePopup(codeObject) {
 	var i;
-	var popupHTML = "<div class=\"definePopup\"><table class=\"DefineFun Define\" id=\"" + codeObject.id+ "\"><tr><button class=\"closeFunctionButton\"></tr>"
+	var popupHTML = "<div class=\"definePopup\"><table style=\"background-color:#fff;\" class=\"DefineFun Define\" id=\"" + codeObject.id+ "\"><tr style=\"text-align:right;\"><button class=\"closeFunctionButton\">x</button><button class=\"deleteFunctionButton\">delete</button></tr>"
 
 	//CONTRACT name
 	popupHTML += "<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+",$(this))\" ";
@@ -1828,8 +1855,10 @@ function renderFunctions() {
 			     var prevName = $input.attr('prevName');
 			     defInput.attr('value', prevName);
 			     contractInput.attr('value',prevName);
-			     defInput.css('background-color','');
-			     contractInput.css('background-color', '');
+			     if (defInput.attr('value') !== "" && !functionNameRepeated(defInput.attr('value'))){
+				 defInput.css('background-color','');
+				 contractInput.css('background-color', '');
+			     }
 			 });
 		     } else {
 			 changeName(block, newInput);
@@ -1840,7 +1869,7 @@ function renderFunctions() {
 			 toggleFunctionInDrawer(block, $input.attr('prevName'));
 			 if (contractCompleted(block.contract)){
 			     defInput.attr('prevName', newInput);
-			    contractInput.attr('prevName', newInput);
+			     contractInput.attr('prevName', newInput);
 			}
 		    }
 		}, 500);
@@ -1882,9 +1911,9 @@ function renderFunctions() {
     */
 function toggleFunctionInDrawer(defineExpr, prevName, deleteIndex) {
 	if (contractCompleted(defineExpr.contract)){
-	    changeProgramFunctions(prevName, defineExpr, program, deleteIndex);
-	    changeProgramFunctions(prevName, defineExpr, storageProgram, deleteIndex);
-	    changeProgramFunctions(prevName, defineExpr, functionProgram, deleteIndex);
+	    changeProgramFunctions(prevName, defineExpr, program, false, deleteIndex);
+	    changeProgramFunctions(prevName, defineExpr, storageProgram, false, deleteIndex);
+	    changeProgramFunctions(prevName, defineExpr, functionProgram, false, deleteIndex);
 	    addFunctionToDrawers(defineExpr);
 	}
     }
@@ -1895,23 +1924,36 @@ function toggleFunctionInDrawer(defineExpr, prevName, deleteIndex) {
       @param prevName - (string) the funcName of all ExprApps you want to change
       @param defineExpr - (ExprDefineFunc) the define block being changed
       @param prog - the program you will parse through
+      @param removeDefine - (bool) true if you are looking to remove the define expression, false if you are look
+      to simply edit it
+      @param deleteIndex - (int) the integer at which you want to remove a expression within an ExprApp's arguments. 
+      undefined if you don't want to remove an argument
     */
-function changeProgramFunctions(prevName, defineExpr, prog, deleteIndex){
-	var i;
-	if (prog === functionProgram){
-	    for (i = 0; i < prog.length; i++){
-		if (prog[i].expr instanceof ExprApp){
-		    changeExprApp(prog[i].expr, prevName, defineExpr, deleteIndex);
-		}
+function changeProgramFunctions(prevName, defineExpr, prog, removeDefine, deleteIndex){
+    var i;
+    if (prog === functionProgram){
+	for (i = 0; i < prog.length; i++){
+	    //changes Expr of define block
+	    if (removeDefine === true && prog[i].expr != undefined && prog[i].expr.funcName === defineExpr.contract.funcName){
+		prog[i].expr = undefined;
 	    }
-	} else {
-	    for (i = 0; i < prog.length; i++){
-		if (prog[i] instanceof ExprApp){
-		    changeExprApp(prog[i], prevName, defineExpr, deleteIndex);
+	    else if (prog[i].expr instanceof ExprApp){
+		changeExprApp(prog[i].expr, prevName, defineExpr,removeDefine, deleteIndex);
+	    }
+	}
+    } else {
+	for (i = 0; i < prog.length; i++){
+	    if (prog[i] instanceof ExprApp){
+		if (removeDefine === true && prog[i].funcName === defineExpr.contract.funcName){
+		    prog.splice(i, 1);
+		    i = i -1;
+		} else {
+		    changeExprApp(prog[i], prevName, defineExpr, removeDefine, deleteIndex);
 		}
 	    }
 	}
     }
+}
 
     /*
       changeExprApp changes the outputType and funcName attributes of appExpr
@@ -1920,7 +1962,20 @@ function changeProgramFunctions(prevName, defineExpr, prog, deleteIndex){
       @param prevName - (string) the funcName of all ExprApps you want to change
       @param defineExpr - (ExprDefineFunc) the define block being changed
     */
-function changeExprApp(appExpr, prevName, defineExpr, deleteIndex){
+function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex){
+    if (removeDefine === true){
+	for (var k = 0; k < appExpr.args.length; k++){
+	    if(appExpr.args[k] instanceof ExprApp){
+		if (appExpr.args[k] != undefined){
+		    if (appExpr.args[k].funcName === defineExpr.contract.funcName){//args is expr you want to delete
+			appExpr.args[k] = undefined;
+		    } else{//search deeper
+			changeExprApp(appExpr.args[k], prevName, defineExpr, true, deleteIndex);
+		    }
+		}
+	    }
+	}
+    } else {
 	if (appExpr.funcName === defineExpr.contract.funcName || appExpr.funcName === prevName){
 	    appExpr.funcName = defineExpr.contract.funcName;
 	    appExpr.outputType = defineExpr.contract.outputType;
@@ -1941,6 +1996,7 @@ function changeExprApp(appExpr, prevName, defineExpr, deleteIndex){
 	    }
 	}
     }
+}
 
     /*
       removeFunctionFromDrawers removes the given function from the drawers and from the userFunctions array
@@ -2037,7 +2093,7 @@ function changeExprApp(appExpr, prevName, defineExpr, deleteIndex){
 	//already defined functions
 	var allFunctions = functions.concat(userFunctions);
 	for(var i = 0; i < allFunctions.length; i++){
-	    if (name === allFunctions.name){
+	    if (name === allFunctions[i].name){
 		return false;
 	    }
 	}
@@ -2366,8 +2422,17 @@ function changeExprApp(appExpr, prevName, defineExpr, deleteIndex){
 		}
             }
 	}
+	var defineName = $("#" + defineExpr.id).find('.definitionName');
+	var contractName = $("#" + defineExpr.id).find('.contractName');}	var newName = defineName.attr('value');
 	toggleFunctionInDrawer(defineExpr, $("#" +defineExprID).find('.definitionName').attr('prevName'));
+	if (contractCompleted(defineExpr.contract)){
+	    defineName.attr('prevName', newName);
+	    contractName.attr('prevName',newName);
+	    defineName.css('background-color','');
+	    contractName.css('background-color','');
+	}
     }
+
 
     //adds draggable within define expressions
     function addDraggableToDefineExpr($table) {
@@ -2723,21 +2788,24 @@ function changeExprApp(appExpr, prevName, defineExpr, deleteIndex){
 		if(ui.item === null){
                     throw new Error ("sortable receive");
 		}else{
-		    if ( ui.sender.attr('id') === "actualStorage"){
-			var replacement = $('<li>').append(carrying);
-			addDroppableFeature(replacement.find(('.droppable')));
-			ui.item.replaceWith(replacement);
-			$(replacement).find('input').attr('readonly', false);
-			setLiWidth($("#List li"));
-			program.splice($("#List li").index(replacement), 0, programCarrying);
-			$("#storage").html('Storage (' + storageProgram.length + ')');
-			addToHistory(tempProgram, tempStorageProgram);
-			programCarrying = null;
-			carrying = null;
-         	    }
-                    else if (!ui.item.is('span.draggable')){
-			eliminateBorder(ui.sender.parent().parent());
-                    }
+		    if (programCarrying != null && carrying != null){
+			if ( ui.sender.attr('id') === "actualStorage"){
+			    console.log('received');
+			    var replacement = $('<li>').append(carrying);
+			    addDroppableFeature(replacement.find(('.droppable')));
+			    ui.item.replaceWith(replacement);
+			    $(replacement).find('input').attr('readonly', false);
+			    setLiWidth($("#List li"));
+			    program.splice($("#List li").index(replacement), 0, programCarrying);
+			    $("#storage").html('Storage (' + storageProgram.length + ')');
+			    addToHistory(tempProgram, tempStorageProgram);
+			    programCarrying = null;
+			    carrying = null;
+         		}
+			else if (!ui.item.is('span.draggable')){
+			    eliminateBorder(ui.sender.parent().parent());
+			}
+		    }
 		}
             }
 	});
@@ -2807,7 +2875,7 @@ function changeExprApp(appExpr, prevName, defineExpr, deleteIndex){
 		    var replacement = "<li>" + carrying + "</li>";
 		    addToHistory(tempProgram,cloneProgram(storage));
 		    $("#actualStorage").append(replacement);
-		    removeFromStorageOnClick($("#actualStorage li:last"), carrying, programCarrying);
+//		    removeFromStorageOnClick($("#actualStorage li:last"), carrying, programCarrying);
 		    storageProgram.push(programCarrying);
 		    if (draggedClone != undefined){
 			eliminateBorder(draggedClone.closest($("th")));
