@@ -788,28 +788,10 @@
 	});
     };
 
+    var evaluator;
+    var xhr;
+
     $(document).ready(function(){
-	
-	//HOOKING UP TO WESCHEME EVALUATOR
-	var evaluator = new Evaluator({
-            write: function(thing) {
-                console.log(thing);
-                $("#actualCode").append(thing);
-            }
-        });
-	var xhr = new easyXDM.Rpc(
-            { remote: "http://wescheme-compiler.hashcollision.org/index.html",
-              // This lazy flag must be set to avoid a very ugly
-              // issue with Firefox 3.5.
-              lazy: true
-            },
-            { remote: { compileProgram: {} }});
-
-	evaluator.setCompileProgram(function(name, program, success, fail) {
-            xhr.compileProgram(name, program, success, fail);
-        });
-
-
 
 
 	//When the window is resized, the height of the width of the code div changes
@@ -1026,19 +1008,29 @@
 		return;
             }
             else{
-		var programString = parseProgram();
+              var storageString="";
+              for(var i=0;i<storageProgram.length;i++){
+                storageString+=interpreter(storageProgram[i])
+              }
+              removeOutputs();
+              evaluateBlock(0,storageString);
+              }
+    $("#stopButton").click(function(){
+
+    });
+		
+    //var programString = parseProgram();
 		//console.log(programString, typeof(programString));
-		$("#actualCode").empty().css("white-space", "pre")
-		    .text("Racket:\n" + programString +"\n\nResult:\n");
-		$("#codePopup").css('visibility','visible');
-		evaluator.executeProgram("",
-					 programString,
-					 function() {
-					 },
-					 function(err) {
-					     $("#actualCode").text("\nError:\n"+evaluator.getMessageFromExn(err)+"");
-					 })
-            }
+		// $("#actualCode").empty().css("white-space", "pre")
+		//     .text("Racket:\n" + programString +"\n\nResult:\n");
+		// $("#codePopup").css('visibility','visible');
+		// evaluator.executeProgram("",
+		// 			 programString,
+		// 			 function() {
+		// 			 },
+		// 			 function(err) {
+		// 			     $("#actualCode").text("\nError:\n"+evaluator.getMessageFromExn(err)+"");
+		// 			 })
 	});
 
 	$(document).on('click',".removeCond",function(){
@@ -1087,6 +1079,50 @@
 	toggleDeleteButtons(defineExpr.funcIDList, defineExpr.id, contractdropdown);
 	toggleFunctionInDrawer(defineExpr);
     });
+
+    function evaluateBlock(i,storageString){
+                var blockString=storageString+interpreter(program[i]);
+                var id=program[i].id
+                console.log(blockString,id)
+                makeEvaluator(id,blockString);
+                i++;
+                console.log("added");
+                if(i<program.length){
+                  evaluateBlock(i,storageString);
+                }
+    }
+
+    function makeEvaluator(id,blockString){
+             var evaluator = new Evaluator({
+                  write: function(thing) {
+                    console.log("adding to",id);
+                    $($(document.getElementById(id)).children("tbody").children("tr")[0]).append($(thing).addClass("output"))
+                      //$("#actualCode").append(thing);
+                  }
+              });
+            var xhr = new easyXDM.Rpc(
+                      { remote: "http://wescheme-compiler.hashcollision.org/index.html",
+                        // This lazy flag must be set to avoid a very ugly
+                        // issue with Firefox 3.5.
+                        lazy: true
+                      },
+                      { remote: { compileProgram: {} }});
+            evaluator.setCompileProgram(function(name, program, success, fail) {
+                      xhr.compileProgram(name, program, success, fail);
+                  });
+          evaluator.executeProgram("",blockString,
+                    function(){},
+                    function(err){
+                      console.log(evaluator.getMessageFromExn(err))
+                      $($(document.getElementById(id)).children("tbody").children("tr")[0]).append("<div class=\"output\" title=\""+encode(evaluator.getMessageFromExn(err))+"\">Error</div")
+                      //$("#actualCode").text("\nError:\n"+evaluator.getMessageFromExn(err)+"");
+                    });
+          return evaluator;
+    }
+
+    function removeOutputs(){
+      $(".output").remove();
+    }
 
     /*
       toggleDeleteButtons changes the contract of a define block such that delete buttons are visible and invisible
@@ -2129,7 +2165,7 @@
 	       }
 	       throw new Error("createBlock: internal error with constants", codeObject);
 	   } else if (codeObject instanceof ExprApp){
-	       console.log(codeObject, userFunctions);
+	       //console.log(codeObject, userFunctions);
 	       for(i = 0; i < functionEnvironment.length; i++){
 		   if (encode(functionEnvironment[i].name) === encode(codeObject.funcName)){
 		       return createFunctionBlock(functionEnvironment[i], codeObject,constantEnvironment,functionEnvironment);
@@ -2637,6 +2673,7 @@
 	    appendTo:'body',
 	    helper:'clone',
             start: function(event, ui){
+              removeOutputs();
 		if (ui.item === null){
                     throw new Error("sortable start: ui.item is undefined");
 		} else {
@@ -2733,6 +2770,7 @@
 	    appendTo:'body',
 	    helper:'clone',
 	    start:function(event, ui) {
+        removeOutputs();
 		tempStorageProgram = cloneProgram(storageProgram);
 		carrying = ui.item.html();
 		ui.helper.addClass("wired");
@@ -2823,6 +2861,7 @@
 	//Exprs things draggable from the drawer to the code
 	$('.draggable').draggable({
             start: function(event, ui) {
+              removeOutputs();
 		if(!errorVal){
                     tempProgram = cloneProgram(program);
 		}
@@ -2895,6 +2934,7 @@
 		    appendTo:'body',
                     helper:'clone',
                     start:function(event, ui){
+                      removeOutputs();
 			if ($(this) === undefined){
                             throw new Error ("addDraggingFeature start: $(this) is undefined");
 			} else {
@@ -3052,7 +3092,7 @@
 	$(jQuerySelection).css('border','none');
 	jQuerySelection.html(html);
 	var origin = jQuerySelection.closest('div');
-	console.log(origin);
+	//console.log(origin);
 	if (origin.hasClass('code')){
 	    addDroppableFeature(jQuerySelection);
 	}
