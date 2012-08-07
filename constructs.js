@@ -458,7 +458,6 @@
 
 
     function objectArrayToProgram(JSONArrayObject,arrayToPush){
-	ID=0;
 	for(var i=0;i<JSONArrayObject.length;i++){
 	    arrayToPush.push(objectToCodeObject(JSONArrayObject[i]));
 	}
@@ -788,28 +787,10 @@
 	});
     };*/
 
+    var evaluator;
+    var xhr;
+
     $(document).ready(function(){
-	
-	//HOOKING UP TO WESCHEME EVALUATOR
-	var evaluator = new Evaluator({
-            write: function(thing) {
-                console.log(thing);
-                $("#actualCode").append(thing);
-            }
-        });
-	var xhr = new easyXDM.Rpc(
-            { remote: "http://wescheme-compiler.hashcollision.org/index.html",
-              // This lazy flag must be set to avoid a very ugly
-              // issue with Firefox 3.5.
-              lazy: true
-            },
-            { remote: { compileProgram: {} }});
-
-	evaluator.setCompileProgram(function(name, program, success, fail) {
-            xhr.compileProgram(name, program, success, fail);
-        });
-
-
 
 
 	//When the window is resized, the height of the width of the code div changes
@@ -890,6 +871,7 @@
 	//Sets undo and redo buttons to disabled on startup
 	$("#undoButton").attr('disabled','disabled');
 	$("#redoButton").attr('disabled','disabled');
+  $("#stopButton").attr("disabled","disabled");
 
 	/*
 	  Binds undo functionality with undo button
@@ -962,7 +944,7 @@
 		    }
 		}
 		//save id, program... maybe history, future, trash
-		localStorage[saveName]=JSON.stringify(cloneProgram(program))+"*"+JSON.stringify(cloneProgram(functionProgram))+"*"+JSON.stringify(cloneProgram(storageProgram));
+		localStorage[saveName]=JSON.stringify(cloneProgram(program))+"___"+JSON.stringify(cloneProgram(functionProgram))+"___"+JSON.stringify(cloneProgram(storageProgram));
 	    }
 	    else{
 		alert("I am sorry but your browser does not support storage.");
@@ -979,15 +961,15 @@
 		return;
 	    }
 	    else{
-		var programString=localStorage.getItem(loadName).split("*");
+		var programString=localStorage.getItem(loadName).split("___");
 		program=[];
 		functionProgram=[];
 		storageProgram=[]
 		objectArrayToProgram(JSON.parse(programString[0]),program);
 		objectArrayToProgram(JSON.parse(programString[1]),functionProgram);
-		objectArrayToProgram(JSON.parse(programString[2]),storageProgram)
+		objectArrayToProgram(JSON.parse(programString[2]),storageProgram);
 		//do I change the history and trash? overwrite it?
-		renderProgram(createProgramHTML(program));
+		renderProgram();
 		historyarr=[];
 		future=[];
 		$("#undoButton").attr('disabled','disabled');
@@ -1026,19 +1008,27 @@
 		return;
             }
             else{
-		var programString = parseProgram();
+              var storageString="";
+              for(var i=0;i<storageProgram.length;i++){
+                storageString+=interpreter(storageProgram[i])
+              }
+              removeOutputs();
+              evaluateBlock(0,storageString);
+              }
+
+		
+    //var programString = parseProgram();
 		//console.log(programString, typeof(programString));
-		$("#actualCode").empty().css("white-space", "pre")
-		    .text("Racket:\n" + programString +"\n\nResult:\n");
-		$("#codePopup").css('visibility','visible');
-		evaluator.executeProgram("",
-					 programString,
-					 function() {
-					 },
-					 function(err) {
-					     $("#actualCode").text("\nError:\n"+evaluator.getMessageFromExn(err)+"");
-					 })
-            }
+		// $("#actualCode").empty().css("white-space", "pre")
+		//     .text("Racket:\n" + programString +"\n\nResult:\n");
+		// $("#codePopup").css('visibility','visible');
+		// evaluator.executeProgram("",
+		// 			 programString,
+		// 			 function() {
+		// 			 },
+		// 			 function(err) {
+		// 			     $("#actualCode").text("\nError:\n"+evaluator.getMessageFromExn(err)+"");
+		// 			 })
 	});
 
 	$(document).on('click',".removeCond",function(){
@@ -1087,6 +1077,58 @@
 	toggleDeleteButtons(defineExpr.funcIDList, defineExpr.id, contractdropdown);
 	toggleFunctionInDrawer(defineExpr);
     });
+
+    function evaluateBlock(i,storageString){
+                var blockString=storageString+"(sleep 2)"+interpreter(program[i]);
+                var id=program[i].id
+                console.log(blockString,id)
+                var myEval=makeEvaluator(id,blockString);
+                $("#stopButton").removeAttr('disabled');
+                $("#stopButton").click(function(){
+                  myEval.requestBreak();
+                });
+                i++;
+                console.log("added");
+                if(i<program.length){
+                  evaluateBlock(i,storageString);
+                }
+                else{
+                  $("#stopButton").attr("disabled","disabled");
+                }
+    }
+
+    function makeEvaluator(id,blockString){
+             var evaluator = new Evaluator({
+                  write: function(thing) {
+                    console.log("adding to",id);
+                    $($(document.getElementById(id)).children("tbody").children("tr")[0]).append($(thing).addClass("outputMessage"))
+                      //$("#actualCode").append(thing);
+                  }
+              });
+            var xhr = new easyXDM.Rpc(
+                      { remote: "http://wescheme-compiler.hashcollision.org/index.html",
+                        // This lazy flag must be set to avoid a very ugly
+                        // issue with Firefox 3.5.
+                        lazy: true
+                      },
+                      { remote: { compileProgram: {} }});
+            evaluator.setCompileProgram(function(name, program, success, fail) {
+                      xhr.compileProgram(name, program, success, fail);
+                  });
+          evaluator.executeProgram("",blockString,
+                    function(){},
+                    function(err){
+                      console.log(evaluator.getMessageFromExn(err))
+                      $($(document.getElementById(id)).children("tbody").children("tr")[0]).append("<div class=\"outputMessage\" title=\""+encode(evaluator.getMessageFromExn(err))+"\">Error</div")
+                      //$("#actualCode").text("\nError:\n"+evaluator.getMessageFromExn(err)+"");
+                    });
+          return evaluator;
+    }
+
+    function removeOutputs(){
+      $(".outputMessage").remove();
+      $(".output").remove();
+    }
 
     /*
       toggleDeleteButtons changes the contract of a define block such that delete buttons are visible and invisible
@@ -2730,6 +2772,7 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
 	    appendTo:'body',
 	    helper:'clone',
             start: function(event, ui){
+              removeOutputs();
 		if (ui.item === null){
                     throw new Error("sortable start: ui.item is undefined");
 		} else {
@@ -2829,6 +2872,7 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
 	    appendTo:'body',
 	    helper:'clone',
 	    start:function(event, ui) {
+        removeOutputs();
 		tempStorageProgram = cloneProgram(storageProgram);
 		carrying = ui.item.html();
 		ui.helper.addClass("wired");
@@ -2872,6 +2916,7 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
 	    tolerance:'pointer',
 	    drop:function(event, ui) {
 		if (!$(ui.draggable).is('.draggable')){
+      typeCheck(program);
 		    var replacement = "<li>" + carrying + "</li>";
 		    addToHistory(tempProgram,cloneProgram(storage));
 		    $("#actualStorage").append(replacement);
@@ -2919,6 +2964,7 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
 	//Exprs things draggable from the drawer to the code
 	$('.draggable').draggable({
             start: function(event, ui) {
+              removeOutputs();
 		if(!errorVal){
                     tempProgram = cloneProgram(program);
 		}
@@ -2991,6 +3037,7 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
 		    appendTo:'body',
                     helper:'clone',
                     start:function(event, ui){
+                      removeOutputs();
 			if ($(this) === undefined){
                             throw new Error ("addDraggingFeature start: $(this) is undefined");
 			} else {
@@ -3148,7 +3195,7 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
 	$(jQuerySelection).css('border','none');
 	jQuerySelection.html(html);
 	var origin = jQuerySelection.closest('div');
-	console.log(origin);
+	//console.log(origin);
 	if (origin.hasClass('code')){
 	    addDroppableFeature(jQuerySelection);
 	}
@@ -3307,7 +3354,7 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
     //blankErrors = error(id, message)
     function typeInfer(obj){
 	var step1 = buildConstraints(obj);
-	var step2 = unify(step1.constraints);
+	var step2 = unify(step1.constraints, step1.literals);
 	var step3 = buildTypeErrors(step2.errors, obj);
 	return {types: step2.subst,
 		typeErrors: step3,
@@ -3447,6 +3494,7 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
 	var constraints =[];
 	var i;
 	var elemList =[];
+  var literals = [];
 	if(obj instanceof ExprDefineConst){
             constraints = constraints.concat([new constraint(new elemId(obj.id), new elemId(obj.funcIDList[0]), obj.id)]);
             if(obj.expr === undefined){
@@ -3455,6 +3503,7 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
 		next = buildConstraints(obj.expr, obj.funcIDList[0]);
 		errors = errors.concat(next.errors);
 		constraints = constraints.concat(next.constraints);
+    literals = literals.concat(next.literals);
             }
 	}else if(obj instanceof ExprContract){
             elemList =[];
@@ -3506,54 +3555,63 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
             next = buildConstraints(obj.contract, obj.id);
             errors = errors.concat(next.errors);
             constraints = constraints.concat(next.constraints);
+            literals = literals.concat(next.literals);
             //expr
             //this needs to come first, fixes problem with error pointing to define rather than the exprapp
             if(obj.expr !== undefined){
 		next = buildConstraints(obj.expr, obj.funcIDList[0]);
 		constraints = constraints.concat(next.constraints);
 		errors = errors.concat(next.errors);
+    literals = literals.concat(next.literals);
             }else{
 		errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
             }
 	}else if(obj instanceof ExprApp){
-            lhs = new elemId(obj.id);
-            elemList = [];
-            if(parentId === undefined){
-		elemList = elemList.concat([new elemType(obj.outputType)]);
-            }else{
-		elemList = elemList.concat([new elemId(parentId)]);
-            }
-            for(i=0; i<obj.funcIDList.length; i++){
-		elemList = elemList.concat([new elemId(obj.funcIDList[i])]);
-		if(obj.args[i] === undefined){
+        lhs = new elemId(obj.id);
+        elemList = [];
+        if(parentId === undefined){
+	           elemList = elemList.concat([new elemType(obj.outputType)]);
+        }else{
+		          elemList = elemList.concat([new elemId(parentId)]);
+        }
+        for(i=0; i<obj.funcIDList.length; i++){
+		          elemList = elemList.concat([new elemId(obj.funcIDList[i])]);
+              if(obj.args[i] === undefined){
                     errors = errors.concat([new error(obj.funcIDList[i], "Empty space")]);
-		}else{
+              }else{
                     next = buildConstraints(obj.args[i], obj.funcIDList[i]);
                     errors = errors.concat(next.errors);
                     constraints = constraints.concat(next.constraints);
-		}
-            }
-            rhs = new construct("func", elemList);
-            constraints = constraints.concat([new constraint(lhs, rhs, obj.id), (new constraint(lhs, funcConstruct[obj.funcName], obj.id))]);
+                    literals = literals.concat(next.literals);
+              }
+        }
+        rhs = new construct("func", elemList);
+        constraints = constraints.concat([new constraint(lhs, rhs, obj.id), (new constraint(lhs, funcConstruct[obj.funcName], obj.id))]);
+        /*for(i=0; i<obj.funcIDList.length; i++){
+                        if(obj.args[i] === undefined){
+                    errors = errors.concat([new error(obj.funcIDList[i], "Empty space")]);
+              }else{
+                    next = buildConstraints(obj.args[i], obj.funcIDList[i]);
+                    errors = errors.concat(next.errors);
+                    constraints = constraints.concat(next.constraints);
+              }
+        }*/
 	}else if(obj instanceof ExprConst){
             lhs = new elemId(obj.id);
-            constraints = constraints.concat([new constraint(lhs, new variable(obj.constName), obj.id)]);
             if(parentId !== undefined){
 		constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
             }
             if(obj.outputType !== undefined){
 		constraints = constraints.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
-            }
-            //deleted from the following if statement:  && containsName(functions, obj.constName)===-1
-            if(containsName(constants, obj.constName) === -1){
-		errors = errors.concat([new error(obj.id, "The variable or constant " + obj.constName + " does not exist.")]);
+            }else{
+               constraints = constraints.concat([new constraint(lhs, new variable(obj.constName), obj.id)]);
             }
 	}else if(isLiteral(obj)){
             lhs = new elemId(obj.id);
             if(parentId !== undefined){
 		constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
             }
-            constraints = constraints.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
+            literals = literals.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
             if(obj.value === undefined){
 		errors = errors.concat([new error(obj.id, "Empty space")]);
             }
@@ -3570,6 +3628,7 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
                     next = buildConstraints(obj.listOfBooleanAnswer[i].answer, obj.listOfBooleanAnswer[i].funcIDList[1]);
                     constraints = constraints.concat(next.constraints);
                     errors = errors.concat(next.errors);
+                    literals = literals.concat(next.literals);
 		}else{
                     errors = errors.concat([new error(obj.listOfBooleanAnswer[i].funcIDList[1], "Empty space")]);
 		}
@@ -3579,6 +3638,7 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
                     next = buildConstraints(obj.listOfBooleanAnswer[i].bool, obj.listOfBooleanAnswer[i].funcIDList[0]);
                     constraints = constraints.concat(next.constraints);
                     errors = errors.concat(next.errors);
+                    literals = literals.concat(next.literals);
 		}else{
                     errors = errors.concat([new error(obj.listOfBooleanAnswer[i].funcIDList[0], "Empty space")]);
 		}
@@ -3586,10 +3646,11 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
             }
 	}
 	return {errors: errors, 
-		constraints: constraints};
+		constraints: constraints,
+    literals: literals};
     }
     //unifies constraints
-    function unify(constr){
+    function unify(constr, literals){
 	var subst = [];
 	var next;
 	var errors = [];
@@ -3598,24 +3659,42 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
             if(objectEquality(next.lhs, next.rhs, ["source"])){
 		// do nothing, just to short circuit
             }else if(next.lhs instanceof elemId || next.lhs instanceof variable){
-		substitute(next.rhs, next.lhs, constr);
-		substitute(next.rhs, next.lhs, subst);
-		subst.unshift(new constraint(next.lhs, next.rhs, next.source));
+            		substitute(next.rhs, next.lhs, constr);
+            		substitute(next.rhs, next.lhs, subst);
+                substitute(next.rhs, next.lhs, literals);
+            		subst.unshift(new constraint(next.lhs, next.rhs, next.source));
             }else if(next.rhs instanceof elemId || next.rhs instanceof variable){
-		substitute(next.lhs, next.rhs, constr);
-		substitute(next.lhs, next.rhs, subst);
-		subst.unshift(new constraint(next.rhs, next.lhs, next.source));
+            		substitute(next.lhs, next.rhs, constr);
+            		substitute(next.lhs, next.rhs, subst);
+                substitute(next.rhs, next.lhs, literals);
+            		subst.unshift(new constraint(next.rhs, next.lhs, next.source));
             }else if(next.rhs instanceof construct &&
                      next.lhs instanceof construct &&
                      (next.rhs.constructor === next.lhs.constructor) &&
                      (next.rhs.elemList.length === next.lhs.elemList.length)){
-		for(var i = 0; i<next.rhs.elemList.length; i++){
-                    constr.unshift(new constraint(next.rhs.elemList[i], next.lhs.elemList[i], next.source));
-		}
+                  		for(var i = 0; i<next.rhs.elemList.length; i++){
+                                      constr.unshift(new constraint(next.rhs.elemList[i], next.lhs.elemList[i], next.source));
+                  		}
             }else{
-		errors.unshift(new error(next.source, "Type mismatch"));
+		          errors.unshift(new error(next.source, "Type mismatch"));
             }
-	}
+    }
+    while(literals.length > 0){
+      next = literals.pop();
+            if(objectEquality(next.lhs, next.rhs, ["source"])){
+    // do nothing, just to short circuit
+            }else if(next.lhs instanceof elemId || next.lhs instanceof variable){
+                substitute(next.rhs, next.lhs, subst);
+                substitute(next.rhs, next.lhs, literals);
+                subst.unshift(new constraint(next.lhs, next.rhs, next.source));
+            }else if(next.rhs instanceof elemId || next.rhs instanceof variable){
+                substitute(next.lhs, next.rhs, subst);
+                substitute(next.rhs, next.lhs, literals);
+                subst.unshift(new constraint(next.rhs, next.lhs, next.source));
+            }else{
+    errors.unshift(new error(next.source, "Type mismatch"));
+            }
+    }
 	//adding generic types
 	for(var i = 0; i < subst.length; i++){
             if(subst[i].lhs instanceof variable && (subst[i].rhs instanceof elemId)){
@@ -3943,11 +4022,11 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
     window.typeInfer = typeInfer;
     window.typeCheck=typeCheck;
     window.parseProgram=parseProgram;
-    window.program=program;
-    window.storageProgram=storageProgram;
-    window.functionProgram=functionProgram;
-    window.historyarr=historyarr;
-    window.future=future;
+    window.program=function(){return program};
+    window.storageProgram=function(){return storageProgram};
+    window.functionProgram=function(){return functionProgram};
+    window.historyarr=function(){return historyarr};
+    window.future=function(){return future};
     window.buildConstraints=buildConstraints;
 
 */
