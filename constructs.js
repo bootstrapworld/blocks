@@ -872,6 +872,7 @@
 	//Sets undo and redo buttons to disabled on startup
 	$("#undoButton").attr('disabled','disabled');
 	$("#redoButton").attr('disabled','disabled');
+  $("#stopButton").attr("disabled","disabled");
 
 	/*
 	  Binds undo functionality with undo button
@@ -944,7 +945,7 @@
 		    }
 		}
 		//save id, program... maybe history, future, trash
-		localStorage[saveName]=JSON.stringify(cloneProgram(program))+"*"+JSON.stringify(cloneProgram(functionProgram))+"*"+JSON.stringify(cloneProgram(storageProgram));
+		localStorage[saveName]=JSON.stringify(cloneProgram(program))+"___"+JSON.stringify(cloneProgram(functionProgram))+"___"+JSON.stringify(cloneProgram(storageProgram));
 	    }
 	    else{
 		alert("I am sorry but your browser does not support storage.");
@@ -961,7 +962,7 @@
 		return;
 	    }
 	    else{
-		var programString=localStorage.getItem(loadName).split("*");
+		var programString=localStorage.getItem(loadName).split("___");
 		program=[];
 		functionProgram=[];
 		storageProgram=[]
@@ -969,7 +970,7 @@
 		objectArrayToProgram(JSON.parse(programString[1]),functionProgram);
 		objectArrayToProgram(JSON.parse(programString[2]),storageProgram)
 		//do I change the history and trash? overwrite it?
-		renderProgram(createProgramHTML(program));
+		renderProgram();
 		historyarr=[];
 		future=[];
 		$("#undoButton").attr('disabled','disabled');
@@ -1015,9 +1016,7 @@
               removeOutputs();
               evaluateBlock(0,storageString);
               }
-    $("#stopButton").click(function(){
 
-    });
 		
     //var programString = parseProgram();
 		//console.log(programString, typeof(programString));
@@ -1081,14 +1080,21 @@
     });
 
     function evaluateBlock(i,storageString){
-                var blockString=storageString+interpreter(program[i]);
+                var blockString=storageString+"(sleep 5)"+interpreter(program[i]);
                 var id=program[i].id
                 console.log(blockString,id)
-                makeEvaluator(id,blockString);
+                var myEval=makeEvaluator(id,blockString);
+                $("#stopButton").removeAttr('disabled');
+                $("#stopButton").click(function(){
+                  myEval.requestBreak();
+                });
                 i++;
                 console.log("added");
                 if(i<program.length){
                   evaluateBlock(i,storageString);
+                }
+                else{
+                  $("#stopButton").attr("disabled","disabled");
                 }
     }
 
@@ -3919,11 +3925,11 @@
     window.typeInfer = typeInfer;
     window.typeCheck=typeCheck;
     window.parseProgram=parseProgram;
-    window.program=program;
-    window.storageProgram=storageProgram;
-    window.functionProgram=functionProgram;
-    window.historyarr=historyarr;
-    window.future=future;
+    window.program=function(){return program};
+    window.storageProgram=function(){return storageProgram};
+    window.functionProgram=function(){return functionProgram};
+    window.historyarr=function(){return historyarr};
+    window.future=function(){return future};
     window.buildConstraints=buildConstraints;
 
 
