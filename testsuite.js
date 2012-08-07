@@ -247,7 +247,6 @@ var typeTest = {};
 typeTest.Booleans = ["true", "false"];
 typeTest.Numbers = ["Number"];
 typeTest.Strings = ["Text"];
-typeTest.Define=["define-constant","define-function","define-struct"];
 typeTest.Expressions=["cond"];
 typeTest.Constants=[];
 //TEST CASES!!!
@@ -351,6 +350,7 @@ makeCodeFromOptions("liessss");
 		console.log(err.message);
 	}
 }
+numTest++;
 //makeTypesArray
 console.log("Testing makeTypesArray");
 errorCheck(makeTypesArray([],[]), typeTest);
@@ -579,12 +579,15 @@ errorCheck(buildConstraints(c1).constraints, [new constraint(new elemId(c1.id), 
                                               new constraint(new elemId(c1.listOfBooleanAnswer[0].answer.id), new elemId(c1.listOfBooleanAnswer[0].funcIDList[1]), c1.listOfBooleanAnswer[0].answer.id),
                                               new constraint(new elemId(c1.listOfBooleanAnswer[1].answer.id), new elemId(c1.listOfBooleanAnswer[1].funcIDList[1]), c1.listOfBooleanAnswer[1].answer.id),
                                               new constraint(new elemId(c1.listOfBooleanAnswer[0].answer.id), new elemType("Booleans"), c1.listOfBooleanAnswer[0].answer.id),
-                                              new constraint(new elemId(c1.listOfBooleanAnswer[1].answer.id), new elemType("Numbers"), c1.listOfBooleanAnswer[1].answer.id)
+                                              new constraint(new elemId(c1.listOfBooleanAnswer[1].answer.id), new elemType("Numbers"), c1.listOfBooleanAnswer[1].answer.id),
+                                              new constraint(new elemId(c1.id), new elemId(c1.listOfBooleanAnswer[0].id), c1.listOfBooleanAnswer[0].id),
+                                              new constraint(new elemId(c1.id), new elemId(c1.listOfBooleanAnswer[1].id), c1.listOfBooleanAnswer[1].id)
                                               ]);
 errorCheck(buildConstraints(c1).errors, []);
 var c2 = new ExprCond();
 errorCheck(buildConstraints(c2).constraints, [new constraint(new elemId(c2.id), new elemId(c2.listOfBooleanAnswer[0].funcIDList[1]), c2.listOfBooleanAnswer[0].funcIDList[1]),
-											  new constraint(new elemId(c2.listOfBooleanAnswer[0].funcIDList[0]), new elemType("Booleans"), c2.listOfBooleanAnswer[0].funcIDList[0])]);
+											  new constraint(new elemId(c2.listOfBooleanAnswer[0].funcIDList[0]), new elemType("Booleans"), c2.listOfBooleanAnswer[0].funcIDList[0]),
+											  new constraint(new elemId(c2.id), new elemId(c2.listOfBooleanAnswer[0].id), c2.listOfBooleanAnswer[0].id)]);
 errorCheck(buildConstraints(c2).errors, [new error(c2.listOfBooleanAnswer[0].funcIDList[0], "Empty space"),
 										 new error(c2.listOfBooleanAnswer[0].funcIDList[1], "Empty space")]);
 
@@ -605,7 +608,9 @@ errorCheck(buildConstraints(c2).constraints, [new constraint(new elemId(c2.id), 
                                               new constraint(new elemId(c2.listOfBooleanAnswer[1].answer.id), new elemId(c2.listOfBooleanAnswer[1].funcIDList[1]), c2.listOfBooleanAnswer[1].answer.id),
                                               new constraint(new elemId(c2.listOfBooleanAnswer[0].answer.id), new elemType("Numbers"), c2.listOfBooleanAnswer[0].answer.id),
                                               new constraint(new elemId(c2.listOfBooleanAnswer[1].bool.id), new variable("y"), c2.listOfBooleanAnswer[1].bool.id),
-                                              new constraint(new elemId(c2.listOfBooleanAnswer[1].answer.id), new variable("w"), c2.listOfBooleanAnswer[1].answer.id)]);
+                                              new constraint(new elemId(c2.listOfBooleanAnswer[1].answer.id), new variable("w"), c2.listOfBooleanAnswer[1].answer.id),
+                                              new constraint(new elemId(c2.id), new elemId(c2.listOfBooleanAnswer[0].id), c2.listOfBooleanAnswer[0].id),
+                                              new constraint(new elemId(c2.id), new elemId(c2.listOfBooleanAnswer[1].id), c2.listOfBooleanAnswer[1].id)]);
 console.log("Testing unify (Again, ignore order of arrays)");
 errorCheck(unify(buildConstraints(n1).constraints).subst, [new constraint(new elemId(n1.id), new elemType("Numbers"), n1.id)]);
 errorCheck(unify(buildConstraints(n1).constraints).errors, []);
@@ -616,6 +621,7 @@ errorCheck(unify(buildConstraints(f1).constraints).subst, [
 														new constraint(new elemId(s1.id), new elemType("Strings"), s1.id),
 														new constraint(new elemId(n1.id), new elemType("Numbers"), n1.id),
 														]);
+console.log(f1);
 errorCheck(unify(buildConstraints(f1).constraints).errors, [new error(s1.id, "Type mismatch")]);
 errorCheck(unify(buildConstraints(d2).constraints).subst, [
 															new constraint(new elemId(f3.args[1].id), new elemType("Numbers"), f3.args[1].id),
