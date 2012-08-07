@@ -458,7 +458,6 @@
 
 
     function objectArrayToProgram(JSONArrayObject,arrayToPush){
-	ID=0;
 	for(var i=0;i<JSONArrayObject.length;i++){
 	    arrayToPush.push(objectToCodeObject(JSONArrayObject[i]));
 	}
@@ -968,7 +967,7 @@
 		storageProgram=[]
 		objectArrayToProgram(JSON.parse(programString[0]),program);
 		objectArrayToProgram(JSON.parse(programString[1]),functionProgram);
-		objectArrayToProgram(JSON.parse(programString[2]),storageProgram)
+		objectArrayToProgram(JSON.parse(programString[2]),storageProgram);
 		//do I change the history and trash? overwrite it?
 		renderProgram();
 		historyarr=[];
@@ -1080,7 +1079,7 @@
     });
 
     function evaluateBlock(i,storageString){
-                var blockString=storageString+"(sleep 5)"+interpreter(program[i]);
+                var blockString=storageString+"(sleep 2)"+interpreter(program[i]);
                 var id=program[i].id
                 console.log(blockString,id)
                 var myEval=makeEvaluator(id,blockString);
@@ -1102,7 +1101,7 @@
              var evaluator = new Evaluator({
                   write: function(thing) {
                     console.log("adding to",id);
-                    $($(document.getElementById(id)).children("tbody").children("tr")[0]).append($(thing).addClass("output"))
+                    $($(document.getElementById(id)).children("tbody").children("tr")[0]).append($(thing).addClass("outputMessage"))
                       //$("#actualCode").append(thing);
                   }
               });
@@ -1120,7 +1119,7 @@
                     function(){},
                     function(err){
                       console.log(evaluator.getMessageFromExn(err))
-                      $($(document.getElementById(id)).children("tbody").children("tr")[0]).append("<div class=\"output\" title=\""+encode(evaluator.getMessageFromExn(err))+"\">Error</div")
+                      $($(document.getElementById(id)).children("tbody").children("tr")[0]).append("<div class=\"outputMessage\" title=\""+encode(evaluator.getMessageFromExn(err))+"\">Error</div")
                       //$("#actualCode").text("\nError:\n"+evaluator.getMessageFromExn(err)+"");
                     });
           return evaluator;

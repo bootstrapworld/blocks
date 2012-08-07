@@ -202,3 +202,11 @@ table{
     border-top:1px solid #000;
     background-color:white;
 }
+
+.outputMessage{
+    background-color:white;
+}
+
+.output{
+    background-color:white;
+}
