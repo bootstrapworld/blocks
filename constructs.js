@@ -2129,7 +2129,6 @@
 	       }
 	       throw new Error("createBlock: internal error with constants", codeObject);
 	   } else if (codeObject instanceof ExprApp){
-	       console.log(codeObject, userFunctions);
 	       for(i = 0; i < functionEnvironment.length; i++){
 		   if (encode(functionEnvironment[i].name) === encode(codeObject.funcName)){
 		       return createFunctionBlock(functionEnvironment[i], codeObject,constantEnvironment,functionEnvironment);
@@ -2776,6 +2775,7 @@
 	    tolerance:'pointer',
 	    drop:function(event, ui) {
 		if (!$(ui.draggable).is('.draggable')){
+      typeCheck(program);
 		    var replacement = "<li>" + carrying + "</li>";
 		    addToHistory(tempProgram,cloneProgram(storage));
 		    $("#actualStorage").append(replacement);
@@ -3211,7 +3211,7 @@
     //blankErrors = error(id, message)
     function typeInfer(obj){
 	var step1 = buildConstraints(obj);
-	var step2 = unify(step1.constraints);
+	var step2 = unify(step1.constraints, step1.literals);
 	var step3 = buildTypeErrors(step2.errors, obj);
 	return {types: step2.subst,
 		typeErrors: step3,
@@ -3351,6 +3351,7 @@
 	var constraints =[];
 	var i;
 	var elemList =[];
+  var literals = [];
 	if(obj instanceof ExprDefineConst){
             constraints = constraints.concat([new constraint(new elemId(obj.id), new elemId(obj.funcIDList[0]), obj.id)]);
             if(obj.expr === undefined){
@@ -3359,6 +3360,7 @@
 		next = buildConstraints(obj.expr, obj.funcIDList[0]);
 		errors = errors.concat(next.errors);
 		constraints = constraints.concat(next.constraints);
+    literals = literals.concat(next.literals);
             }
 	}else if(obj instanceof ExprContract){
             elemList =[];
@@ -3410,54 +3412,63 @@
             next = buildConstraints(obj.contract, obj.id);
             errors = errors.concat(next.errors);
             constraints = constraints.concat(next.constraints);
+            literals = literals.concat(next.literals);
             //expr
             //this needs to come first, fixes problem with error pointing to define rather than the exprapp
             if(obj.expr !== undefined){
 		next = buildConstraints(obj.expr, obj.funcIDList[0]);
 		constraints = constraints.concat(next.constraints);
 		errors = errors.concat(next.errors);
+    literals = literals.concat(next.literals);
             }else{
 		errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
             }
 	}else if(obj instanceof ExprApp){
-            lhs = new elemId(obj.id);
-            elemList = [];
-            if(parentId === undefined){
-		elemList = elemList.concat([new elemType(obj.outputType)]);
-            }else{
-		elemList = elemList.concat([new elemId(parentId)]);
-            }
-            for(i=0; i<obj.funcIDList.length; i++){
-		elemList = elemList.concat([new elemId(obj.funcIDList[i])]);
-		if(obj.args[i] === undefined){
+        lhs = new elemId(obj.id);
+        elemList = [];
+        if(parentId === undefined){
+	           elemList = elemList.concat([new elemType(obj.outputType)]);
+        }else{
+		          elemList = elemList.concat([new elemId(parentId)]);
+        }
+        for(i=0; i<obj.funcIDList.length; i++){
+		          elemList = elemList.concat([new elemId(obj.funcIDList[i])]);
+              if(obj.args[i] === undefined){
                     errors = errors.concat([new error(obj.funcIDList[i], "Empty space")]);
-		}else{
+              }else{
                     next = buildConstraints(obj.args[i], obj.funcIDList[i]);
                     errors = errors.concat(next.errors);
                     constraints = constraints.concat(next.constraints);
-		}
-            }
-            rhs = new construct("func", elemList);
-            constraints = constraints.concat([new constraint(lhs, rhs, obj.id), (new constraint(lhs, funcConstruct[obj.funcName], obj.id))]);
+                    literals = literals.concat(next.literals);
+              }
+        }
+        rhs = new construct("func", elemList);
+        constraints = constraints.concat([new constraint(lhs, rhs, obj.id), (new constraint(lhs, funcConstruct[obj.funcName], obj.id))]);
+        /*for(i=0; i<obj.funcIDList.length; i++){
+                        if(obj.args[i] === undefined){
+                    errors = errors.concat([new error(obj.funcIDList[i], "Empty space")]);
+              }else{
+                    next = buildConstraints(obj.args[i], obj.funcIDList[i]);
+                    errors = errors.concat(next.errors);
+                    constraints = constraints.concat(next.constraints);
+              }
+        }*/
 	}else if(obj instanceof ExprConst){
             lhs = new elemId(obj.id);
-            constraints = constraints.concat([new constraint(lhs, new variable(obj.constName), obj.id)]);
             if(parentId !== undefined){
 		constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
             }
             if(obj.outputType !== undefined){
 		constraints = constraints.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
-            }
-            //deleted from the following if statement:  && containsName(functions, obj.constName)===-1
-            if(containsName(constants, obj.constName) === -1){
-		errors = errors.concat([new error(obj.id, "The variable or constant " + obj.constName + " does not exist.")]);
+            }else{
+               constraints = constraints.concat([new constraint(lhs, new variable(obj.constName), obj.id)]);
             }
 	}else if(isLiteral(obj)){
             lhs = new elemId(obj.id);
             if(parentId !== undefined){
 		constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
             }
-            constraints = constraints.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
+            literals = literals.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
             if(obj.value === undefined){
 		errors = errors.concat([new error(obj.id, "Empty space")]);
             }
@@ -3474,6 +3485,7 @@
                     next = buildConstraints(obj.listOfBooleanAnswer[i].answer, obj.listOfBooleanAnswer[i].funcIDList[1]);
                     constraints = constraints.concat(next.constraints);
                     errors = errors.concat(next.errors);
+                    literals = literals.concat(next.literals);
 		}else{
                     errors = errors.concat([new error(obj.listOfBooleanAnswer[i].funcIDList[1], "Empty space")]);
 		}
@@ -3483,6 +3495,7 @@
                     next = buildConstraints(obj.listOfBooleanAnswer[i].bool, obj.listOfBooleanAnswer[i].funcIDList[0]);
                     constraints = constraints.concat(next.constraints);
                     errors = errors.concat(next.errors);
+                    literals = literals.concat(next.literals);
 		}else{
                     errors = errors.concat([new error(obj.listOfBooleanAnswer[i].funcIDList[0], "Empty space")]);
 		}
@@ -3490,10 +3503,11 @@
             }
 	}
 	return {errors: errors, 
-		constraints: constraints};
+		constraints: constraints,
+    literals: literals};
     }
     //unifies constraints
-    function unify(constr){
+    function unify(constr, literals){
 	var subst = [];
 	var next;
 	var errors = [];
@@ -3502,24 +3516,42 @@
             if(objectEquality(next.lhs, next.rhs, ["source"])){
 		// do nothing, just to short circuit
             }else if(next.lhs instanceof elemId || next.lhs instanceof variable){
-		substitute(next.rhs, next.lhs, constr);
-		substitute(next.rhs, next.lhs, subst);
-		subst.unshift(new constraint(next.lhs, next.rhs, next.source));
+            		substitute(next.rhs, next.lhs, constr);
+            		substitute(next.rhs, next.lhs, subst);
+                substitute(next.rhs, next.lhs, literals);
+            		subst.unshift(new constraint(next.lhs, next.rhs, next.source));
             }else if(next.rhs instanceof elemId || next.rhs instanceof variable){
-		substitute(next.lhs, next.rhs, constr);
-		substitute(next.lhs, next.rhs, subst);
-		subst.unshift(new constraint(next.rhs, next.lhs, next.source));
+            		substitute(next.lhs, next.rhs, constr);
+            		substitute(next.lhs, next.rhs, subst);
+                substitute(next.rhs, next.lhs, literals);
+            		subst.unshift(new constraint(next.rhs, next.lhs, next.source));
             }else if(next.rhs instanceof construct &&
                      next.lhs instanceof construct &&
                      (next.rhs.constructor === next.lhs.constructor) &&
                      (next.rhs.elemList.length === next.lhs.elemList.length)){
-		for(var i = 0; i<next.rhs.elemList.length; i++){
-                    constr.unshift(new constraint(next.rhs.elemList[i], next.lhs.elemList[i], next.source));
-		}
+                  		for(var i = 0; i<next.rhs.elemList.length; i++){
+                                      constr.unshift(new constraint(next.rhs.elemList[i], next.lhs.elemList[i], next.source));
+                  		}
             }else{
-		errors.unshift(new error(next.source, "Type mismatch"));
+		          errors.unshift(new error(next.source, "Type mismatch"));
             }
-	}
+    }
+    while(literals.length > 0){
+      next = literals.pop();
+            if(objectEquality(next.lhs, next.rhs, ["source"])){
+    // do nothing, just to short circuit
+            }else if(next.lhs instanceof elemId || next.lhs instanceof variable){
+                substitute(next.rhs, next.lhs, subst);
+                substitute(next.rhs, next.lhs, literals);
+                subst.unshift(new constraint(next.lhs, next.rhs, next.source));
+            }else if(next.rhs instanceof elemId || next.rhs instanceof variable){
+                substitute(next.lhs, next.rhs, subst);
+                substitute(next.rhs, next.lhs, literals);
+                subst.unshift(new constraint(next.rhs, next.lhs, next.source));
+            }else{
+    errors.unshift(new error(next.source, "Type mismatch"));
+            }
+    }
 	//adding generic types
 	for(var i = 0; i < subst.length; i++){
             if(subst[i].lhs instanceof variable && (subst[i].rhs instanceof elemId)){
