@@ -1126,6 +1126,7 @@
     }
 
     function removeOutputs(){
+      $(".outputMessage").remove();
       $(".output").remove();
     }
 
