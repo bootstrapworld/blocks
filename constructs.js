@@ -1,4 +1,4 @@
-//(function(){
+(function(){
 
     "use strict";
     // this function is strict...
@@ -2405,13 +2405,13 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
     }
 
     function createNumBlock(codeObject,constantEnvironment,functionEnvironment){
-	var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input Numbers\" onkeyup=\"sync("+codeObject.id+", $(this))\" style=\"width:50px;\"";
+	var block =  "<table class=\"Numbers expr\" " + "id=\""+codeObject.id+"\" width=\"10px\"><tr><th><input class=\"input Numbers\" onblur=\"sync("+codeObject.id+", $(this))\" style=\"width:50px;\"";
 	block+=" value=\""+codeObject.value+"\">";
 	return block + "</th></tr></table>";
     }
 
     function createStringBlock(codeObject,constantEnvironment,functionEnvironment){
-	var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"</th><th><input class=\"input Strings\" onkeyup=\"sync("+codeObject.id+", $(this))\" class=\"Strings\"";
+	var block =  "<table class=\"Strings expr\" " + "id=\""+codeObject.id+"\"><tr><th>\"</th><th><input class=\"input Strings\" onblur=\"sync("+codeObject.id+", $(this))\" class=\"Strings\"";
 	block += " value=\"" + encode(codeObject.value) + "\">";
 	return block + "</th><th>\"</th></tr></table>";
     }
@@ -4080,22 +4080,22 @@ function changeType(curValue,selectID,defineExprID){
     }
 
 
-    // window.sync = sync;
-    // window.changeType=changeType;
-    // window.deleteArg = deleteArg;
-    // //window.removeFunctionFromDrawers=removeFunctionFromDrawers;
+    window.sync = sync;
+    window.changeType=changeType;
+    window.deleteArg = deleteArg;
+    //window.removeFunctionFromDrawers=removeFunctionFromDrawers;
 
 
     //FOR TESTING PURPOSES
-//     window.typeInfer = typeInfer;
-//     window.typeCheck=typeCheck;
-//     window.parseProgram=parseProgram;
-//     window.program=function(){return program};
-//     window.storageProgram=function(){return storageProgram};
-//     window.functionProgram=function(){return functionProgram};
-//     window.historyarr=function(){return historyarr};
-//     window.future=function(){return future};
-//     window.buildConstraints=buildConstraints;
+    window.typeInfer = typeInfer;
+    window.typeCheck=typeCheck;
+    window.parseProgram=parseProgram;
+    window.program=function(){return program};
+    window.storageProgram=function(){return storageProgram};
+    window.functionProgram=function(){return functionProgram};
+    window.historyarr=function(){return historyarr};
+    window.future=function(){return future};
+    window.buildConstraints=buildConstraints;
 
-// }());
+}());
 
