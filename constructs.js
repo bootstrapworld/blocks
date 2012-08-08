@@ -1,4 +1,4 @@
-(function(){
+//(function(){
 
     "use strict";
     // this function is strict...
@@ -1509,6 +1509,8 @@
             }
 	});
 
+	//keeps track of the highest z-index among the defines. used to make sure the definePopup you're dragging is the topmost
+	var defineZIndex = 10;
 	/*
 	  functionButton brings up a popup of a 'define' window 
 	*/
@@ -1520,7 +1522,12 @@
 	    $($popupHTML).css('position','absolute');
 	    $($popupHTML).css('top','50px');
 	    $($popupHTML).css('left','220px');
-	    $($popupHTML).draggable();
+	    $($popupHTML).draggable({
+		start:function(event, ui){
+		    $(this).css('z-index', defineZIndex);
+		    defineZIndex = defineZIndex + 1;
+		}
+	    });
 
 	    //adds droppable to expression
 	    addDroppableToDefineExpr($popupHTML.find('.functionExpr'));
@@ -1541,44 +1548,38 @@
 		    confirmClose = false;
 		    alert('rename your function')
 		}
-		if (confirmClose) {
+		if (confirmClose && contractCompleted(codeObject.contract)) {
 		    $(this).closest('.definePopup').css('visibility','hidden');
+		} else if (confirmClose && !contractCompleted(codeObject.contract)){
+		    $(this).closest('.definePopup').detach();
+		    removeFunctionFromArray(defineName);
 		}
 	    });
 	    $(".deleteFunctionButton").bind('click', function() {
 		var name = $popupHTML.find('.definitionName').attr('prevName');
-		console.log(name);
-		//remove from storage
-		changeProgramFunctions(name, codeObject, storageProgram, true);
 
-		//remove from program
-		changeProgramFunctions(name, codeObject, program, true);
-
-		//remove from functions
-		changeProgramFunctions(name, codeObject, functionProgram, true);
-		console.log();
 		//remove from userFunctions
-		var i;
-		for (i = 0; i < userFunctions.length; i++){
-		    if (userFunctions[i].name === name){
-			console.log('deleted');
-			userFunctions.splice(i, 1);
-			break;
-		    }
-		}
+		removeFromUserFunctions(name);
 
-		//remove from functiosProgram
+		//remove from functionProgram
 		for (i = 0; i < functionProgram.length; i++){
 		    if (codeObject.id === functionProgram[i].id){
 			functionProgram.splice(i, 1);
 			break;
 		    }
 		}
+		//remove from storage
+		changeProgramFunctions(name, codeObject, storageProgram, true);
 
+		//remove from program
+		changeProgramFunctions(name, codeObject, program, true);
+
+		//remove from function
+		changeProgramFunctions(name, codeObject, functionProgram, true);
+		
 		//remove popup
 		$popupHTML.detach();
 		buildFuncConstructs();
-		console.log(program);
 		renderProgram();
 		renderFunctions();
 	    });
@@ -1588,388 +1589,424 @@
 	setActivatedVisible($("#options").scrollTop());
     }
 
-
-    /*====================================================================================
-      ___                                ___             _         _           
-      | _ \_ _ ___  __ _ _ _ __ _ _ __   | _ \___ _ _  __| |___ _ _(_)_ _  __ _ 
-      |  _/ '_/ _ \/ _` | '_/ _` | '  \  |   / -_) ' \/ _` / -_) '_| | ' \/ _` |
-      |_| |_| \___/\__, |_| \__,_|_|_|_| |_|_\___|_||_\__,_\___|_| |_|_||_\__, |
-      |___/                                                  |___/ 
-      =====================================================================================*/
-
-
-    /*
-      Adds a block to the end of the list given the HTML of the block.
-    */
-    // function renderBlocktoProgram(block){
-    //              document.getElementById("List").appendChild(block);
-    // }
-
-
-
-
- 
-    // functionButton brings up a popup of a 'define' window 
-
-    // $(document).on("click","#functionButton",function() {
-    //     var codeObject = new ExprDefineFunc;
-    //     functionProgram  .push(codeObject);
-    //     var $popupHTML = $(makeDefinePopup(codeObject));
-    //     $('body').append($($popupHTML));
-    //     $($popupHTML).css('position','absolute');
-    //     $($popupHTML).css('top','50px');
-    //     $($popupHTML).css('left','220px');
-    //     $($popupHTML).draggable();
-
-    //     //adds droppable to expression
-    //     addDroppableToDefineExpr($popupHTML.find('.functionExpr'));
-
-    //     //adds draggable to first argument
-    //     addDraggableToArgument($popupHTML.find('.argument'), codeObject, $popupHTML.find('select').eq(0).attr('id'));
-
-    //     /*
-    //       closes the corresponding 'define' window
-    //     */
-    //     $(".closeFunctionButton").bind('click', function() {
-    // 	var confirmClose = true;
-    // 	var defineName = codeObject.contract.funcName;
-    // 	if(defineName === ""){
-    // 	    removeFunctionFromArray(codeObject.contract.funcName);
-    // 	}
-    // 	else if(functionNameRepeated(defineName)){
-    // 	    confirmClose = false;
-    // 	    alert('rename your function')
-    // 	}
-    // 	if (confirmClose) {
-    // 	    $(this).closest('.definePopup').css('visibility','hidden');
-    // 	}
-    //     });
-    // });
-
-    /*
-      makeContractDropdown creates a new selection and plus button for the contract part of define
-    */
-    function makeContractDropdown(funcIDListID, defineExpr) {
-	return "<th style=\"text-align:left;\">" + generateTypeDrop(funcIDListID, defineExpr)  + "</th><th style=\"text-align:left;\" class=\"buttonHolder\"></th>";
-    }
-    /*
-      makeDefinePopup creates a new ExprDefine
-    */
-    function makeDefinePopup(codeObject) {
-	var i;
-	var popupHTML = "<div class=\"definePopup\"><table style=\"background-color:#fff;\" class=\"DefineFun Define\" id=\"" + codeObject.id+ "\"><tr style=\"text-align:right;\"><button class=\"closeFunctionButton\">x</button><button class=\"deleteFunctionButton\">delete</button></tr>"
-
-	//CONTRACT name
-	popupHTML += "<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+",$(this))\" ";
-	if(codeObject.contract.funcName!=undefined){
-            popupHTML += "value=\""+encode(codeObject.contract.funcName)+"\"";
-	}
-	popupHTML += " /></th><th> : </th>";
-
-	//CONTRACT args
-	var typeDrop;
-	for(i=0; i<codeObject.argumentNames.length; i++){
-	    typeDrop = generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject);
-	    if (codeObject.contract.argumentTypes[i+1] != undefined){
-		$(typeDrop).val(codeObject.contract.argumentTypes[i+1])
-	    }
-            popupHTML += " <th style=\"text-align:left;\">"+typeDrop+"</th><th style=\"text-align:left;\" class=\"buttonHolder\"></th>";
-	}
-	popupHTML += "<th style=\"text-align:left;\"> <button class=\"addArgument\">+</button> </th>";
-
-	//CONTRACT output
-	var outputDrop = generateTypeDrop(codeObject.contract.funcIDList[0],codeObject);
-	var outputType = codeObject.contract.outputType;
-	if (outputType != undefined){
-	    $(outputDrop).val(outputType);
-	}
-	popupHTML += " <th style=\"text-align:left;\"> -> </th><th style=\"text-align:left;\">"+outputDrop+"</th></tr>";
-
-	//DEFINE BLOCK NAME
-	popupHTML+="<tr><th>define</th>";
-	popupHTML += "<th class=\"expr\"> <input class=\"definitionName\" onkeyup=\"sync("+codeObject.id+",$(this))\" ";
-	if(codeObject.contract.funcName!=undefined){
-            popupHTML += "value=\""+encode(codeObject.contract.funcName)+"\"";
-	}
-	popupHTML += " /></th>";
-	//DEFINE BLOCK ARGUMENTS
-	for(i=0;i<codeObject.argumentNames.length;i++){
-            popupHTML += "<th width=\"10px\" class=\"expr argument\"";
-            if(codeObject.contract.argumentTypes[i]!=undefined){
-		popupHTML+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
-            }
-            popupHTML+="><input style=\"width:70px;\" id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+",$(this))\"  disabled=\"disabled\" class=\"argName\" ";
-            if(codeObject.argumentNames[i]!=undefined){
-		popupHTML+="value=\""+encode(codeObject.argumentNames[i])+"\"";
-            }
-            popupHTML+=" /></th>";
-	}
-	popupHTML+="<th></th>";
-
-	//PURPOSE
-	var tableWidth = 4 +( (codeObject.funcIDList.length - 1) * 3);
-	popupHTML += "<tr><th style=\"text-align:left;\">purpose:</th><th colspan=\""+ tableWidth +"\"> <input style=\"width:100%\" class=\"contractPurpose\" value=\"\" onkeyup=\"sync("+codeObject.id + ",$(this))\"></th></tr>";
-
-	//DEFINE EXPRESSION
-	popupHTML+="<tr><th ";
-	if(codeObject.contract.outputType!=undefined){
-            popupHTML += " style=\"background:"+colors[codeObject.contract.outputType]+"\" ";
-	}
-	if(codeObject.expr != undefined){
-            popupHTML+="class=\"functionExpr noborder droppable expr\" name=\"Expr\" id="+codeObject.funcIDList[0]+">";
-            popupHTML+=createBlock(codeObject.expr,constantEnvironment.concat(createNewConstants(codeObject)),functionEnvironment);
-            popupHTML+="</th>";
-	}
-	else{
-            popupHTML+="name=\"Expr\" class=\"functionExpr droppable expr\" id="+codeObject.funcIDList[0]+" colspan=\""+ tableWidth + "\">Expr</th>";
-	}
-
-
-	popupHTML += "</th></tr></table></div>"
-	return popupHTML; 
-
-    };
-
-    /*
-      createProgramHTML takes the program array and translates it into HTML
-    */
-    var createProgramHTML = function(){
-	var pageHTML = "";
-	for (var i = 0; i < program.length; i++){
-            pageHTML += "<li>" + createBlock(program[i],constants,functions.concat(userFunctions)) + "</li>";
-            if(program[i] instanceof ExprDefineConst){
-		//constants.push({name:program[i].name;type:program[i].outputType})
-            }
-            else if(program[i] instanceof ExprDefineFunc){
-		//ADD
-            }
-	}
-	//makeDrawers();
-	//drawerButton(activated);
-	return pageHTML;
-    };
-
-    /*
-      createStorageHTML takes the storageProgram array and converts the codeObjects into HTML.
-      storageProgram is a global variable so it does not need to be passed in as a function.
-      createBlock is used as a helper to generate HTML.
-    */
-    var createStorageHTML = function(){
-	var storageHTML = "";
-	for (var i = 0; i < storageProgram.length; i++){
-	    storageHTML += "<li>" + createBlock(storageProgram[i], constants, functions.concat(userFunctions)) + "</li>";
-	}
-	return storageHTML;
-    };
-
-    /*
-      renderProgram changes contents of #List to the current program and the contents of #storage
-      to the current storageProgram
-    */
-    var renderProgram = function(){
-	$("#actualStorage").html(createStorageHTML());
-	$("#List").html(createProgramHTML());
-	addDroppableFeature($("#List .droppable"));
-
-	// $("#List table").children().each(function(){
-	//         addDraggingFeature($(this).find("table"));
-	// });
-	setLiWidth($("#List li"));
-	setLiWidth($("#storagePopup li"));
-	typeCheck(program);
-	makeDrawers(functions.concat(userFunctions), constants);
-	$("#storage").text('Storage (' + storageProgram.length + ')');
-	addUItoStorage();
-    };
-
 /*
-  renderFunctions renders the functions expressions
+removeFromUserFunctions removes the function with the given name from the array userFunctions
+
+@param name - (string) the name of the function which you are trying to remove
+@return void - removes a function from userFunctions
 */
-function renderFunctions() {
-    for (var i = 0; i < functionProgram.length; i++){
-	$("#" + functionProgram[i].funcIDList[0]).html(createBlock(functionProgram[i].expr, constants.concat(createNewConstants(functionProgram[i])), functions.concat(userFunctions)));
-	addDraggableToDefineExpr($("#" + functionProgram[i].funcIDList[0]).find('table'));
-	addDroppableWithinDefineExpr($("#" + functionProgram[i].funcIDList[0]).find('.droppable'));
-     }
- }
-
- /*
-   encode takes in a string and encodes it such that bugs resulting from &, ", #, etc are eliminated"
-   decode does something similar for the same purpose
- */
-     function encode(string){
-	 return String(string)
-	     .replace(/&/g, '&amp;')
-	     .replace(/"/g, '&quot;')
-	     .replace(/'/g, '&#39;')
-	     .replace(/</g, '&lt;')
-	     .replace(/>/g, '&gt;');
-     }
-     function decode(string){
-	 return String(string)
-	     .replace('&amp;', '&')
-	     .replace('&quot;','\"')
-	     .replace('&#39;','\'')
-	     .replace('&lt;',"<")
-	     .replace('&gt;',">");
-     }
-
-     /*
-       changeName changes the name of a define block
-
-       @param defineExpr - the ExprDefineFunc you want to change
-       @param newName - (string) the name you want to give to defineExpr
-       @return void. changes a ExprDefineFunc
-     */
-     function changeName(defineExpr, newName){
-	 defineExpr.contract.funcName = newName;
-     }
-
-
-      // changeArgName changes the name of an argument in a define block
-     function changeArgName(defineExpr, newName, argIndex){
-	     defineExpr.argumentNames[argIndex] = newName;
-     }
-
-     /*
-       contains determines whether or not an element already exists within an array
-
-       @param elm - an element
-       @param arr - an array of the type of element
-       @return - boolean. true if it's repeated, false otherwise
-     */
-     function contains(elm, arr) {
-	 for (var i = 0; i < arr.length; i++){
-	     if (arr[i] === elm){
-		 return true;
-	     }
-	 }
-	 return false;
-     }
-
-     /*
-       gets called on keyup of input
-     */
-     function sync(objectID, $input){
-	 var block=searchForIndex(objectID+"",program);
-	 if (block == undefined){
-	     block = searchForIndex(objectID+"", functionProgram  );
-	 } 
-	 var DOMBlock=$("#" + objectID);
-	 if(block instanceof ExprNumber || block instanceof ExprString){
-	     block.value=decode(DOMBlock.find(".input").attr('value'));
-	     DOMBlock.find(".input").attr('value',DOMBlock.find(".input").attr('value'));
-	 }
-	 else if(block instanceof ExprDefineConst){
-	     block.constName=decode(DOMBlock.find('.constName').attr('value'));
-	     DOMBlock.find('.constName').attr('value',DOMBlock.find('.constName').attr('value'));
-	 }
-	 else if(block instanceof ExprDefineFunc){
-
-	     window.clearTimeout(timeout);
-
-	     //updateGUI
-	     var newInput = $input.attr('value') + "";
-	     var defInput = $("#" + objectID).find('.definitionName').first();
-	     var contractInput = $("#" + objectID).find('.contractName').first();
-
-	     //CONTRACT/DEFINITION NAME
-	     if ($input.hasClass('contractName') || $input.hasClass('definitionName')){
-
-		 if($input.hasClass('contractName')){
-		     defInput.attr('value',(newInput));
-		 } 
-		 else if ($input.hasClass('definitionName')){
-		     contractInput.attr('value',(newInput));
-		 }
-
-		 timeout = setTimeout(function() {
-		     if (newInput === "" || !legalFunctionName(newInput)){
-			 defInput.css('background-color','red');
-			 contractInput.css('background-color','red');
-			 $(document).click(function(){
-			     var prevName = $input.attr('prevName');
-			     defInput.attr('value', prevName);
-			     contractInput.attr('value',prevName);
-			     if (defInput.attr('value') !== "" && !functionNameRepeated(defInput.attr('value'))){
-				 defInput.css('background-color','');
-				 contractInput.css('background-color', '');
-			     }
-			 });
-		     } else {
-			 changeName(block, newInput);
-			 defInput.css('background-color','');
-			 contractInput.css('background-color', '');
-
-			 // add/remove from drawers
-			 toggleFunctionInDrawer(block, $input.attr('prevName'));
-			 if (contractCompleted(block.contract)){
-			     defInput.attr('prevName', newInput);
-			     contractInput.attr('prevName', newInput);
-			}
-		    }
-		}, 500);
-	    }
-	    
-	    //DEFINE ARGUMENTS
-	    else if ($input.hasClass('argName')) {
-		if (/*$input.val() !== "" && */contains($input.val(), block.argumentNames)){
-		    $input.css('background-color','red');
-		} else {
-		    $input.css('background-color','');
-		}
-		changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList) - 1);
-		toggleFunctionInDrawer(block, defInput.attr('prevName'));
-	    }
-	    else if ($input.hasClass('contractPurpose')){
-		block.contract.purpose = newInput;
-	    }
-	    
+function removeFromUserFunctions(name){
+    for (var i = 0; i < userFunctions.length; i++){
+	if (userFunctions[i].name === name){
+	    userFunctions.splice(i, 1);
+	    break;
 	}
     }
+}
 
 
-    /*
-      changeAppOutput changes the output type of an ExprApp
+      /*====================================================================================
+	___                                ___             _         _           
+	| _ \_ _ ___  __ _ _ _ __ _ _ __   | _ \___ _ _  __| |___ _ _(_)_ _  __ _ 
+	|  _/ '_/ _ \/ _` | '_/ _` | '  \  |   / -_) ' \/ _` / -_) '_| | ' \/ _` |
+	|_| |_| \___/\__, |_| \__,_|_|_|_| |_|_\___|_||_\__,_\___|_| |_|_||_\__, |
+	|___/                                                  |___/ 
+	=====================================================================================*/
 
-      @param appExpr - ExprApp whose output you want to change
-      @param newOutputType - the new output type 
-      @return void - alters ExprApp
-    */
-    function changeAppOutput(appExpr, newOutputType){
-	appExpr.outputType = newOutputType;
-    }
 
-    /*
-      toggleFunctionInDrawer removes and adds functions to drawers
-      @param defineExpr - (ExprDefineFunc) the block which you might add/remove to/from the drawer
-      @param prevName - (string) the name the defineExpr used to have
-    */
-function toggleFunctionInDrawer(defineExpr, prevName, deleteIndex) {
-	if (contractCompleted(defineExpr.contract)){
-	    changeProgramFunctions(prevName, defineExpr, program, false, deleteIndex);
-	    changeProgramFunctions(prevName, defineExpr, storageProgram, false, deleteIndex);
-	    changeProgramFunctions(prevName, defineExpr, functionProgram, false, deleteIndex);
-	    addFunctionToDrawers(defineExpr);
-	}
-    }
+      /*
+	Adds a block to the end of the list given the HTML of the block.
+      */
+      // function renderBlocktoProgram(block){
+      //              document.getElementById("List").appendChild(block);
+      // }
 
-    /*
-      changeProgramFunctions changes the outputType, args, and funcName attributes of ExprApps in the prog
 
-      @param prevName - (string) the funcName of all ExprApps you want to change
-      @param defineExpr - (ExprDefineFunc) the define block being changed
-      @param prog - the program you will parse through
-      @param removeDefine - (bool) true if you are looking to remove the define expression, false if you are look
-      to simply edit it
-      @param deleteIndex - (int) the integer at which you want to remove a expression within an ExprApp's arguments. 
-      undefined if you don't want to remove an argument
-    */
-function changeProgramFunctions(prevName, defineExpr, prog, removeDefine, deleteIndex){
-    var i;
-    if (prog === functionProgram){
-	for (i = 0; i < prog.length; i++){
-	    //changes Expr of define block
+
+
+
+      // functionButton brings up a popup of a 'define' window 
+
+      // $(document).on("click","#functionButton",function() {
+      //     var codeObject = new ExprDefineFunc;
+      //     functionProgram  .push(codeObject);
+      //     var $popupHTML = $(makeDefinePopup(codeObject));
+      //     $('body').append($($popupHTML));
+      //     $($popupHTML).css('position','absolute');
+      //     $($popupHTML).css('top','50px');
+      //     $($popupHTML).css('left','220px');
+      //     $($popupHTML).draggable();
+
+      //     //adds droppable to expression
+      //     addDroppableToDefineExpr($popupHTML.find('.functionExpr'));
+
+      //     //adds draggable to first argument
+      //     addDraggableToArgument($popupHTML.find('.argument'), codeObject, $popupHTML.find('select').eq(0).attr('id'));
+
+      //     /*
+      //       closes the corresponding 'define' window
+      //     */
+      //     $(".closeFunctionButton").bind('click', function() {
+      // 	var confirmClose = true;
+      // 	var defineName = codeObject.contract.funcName;
+      // 	if(defineName === ""){
+      // 	    removeFunctionFromArray(codeObject.contract.funcName);
+      // 	}
+      // 	else if(functionNameRepeated(defineName)){
+      // 	    confirmClose = false;
+      // 	    alert('rename your function')
+      // 	}
+      // 	if (confirmClose) {
+      // 	    $(this).closest('.definePopup').css('visibility','hidden');
+      // 	}
+      //     });
+      // });
+
+      /*
+	makeContractDropdown creates a new selection and plus button for the contract part of define
+      */
+      function makeContractDropdown(funcIDListID, defineExpr) {
+	  return "<th style=\"text-align:left;\">" + generateTypeDrop(funcIDListID, defineExpr)  + "</th><th style=\"text-align:left;\" class=\"buttonHolder\"></th>";
+      }
+      /*
+	makeDefinePopup creates a new ExprDefine
+      */
+      function makeDefinePopup(codeObject) {
+	  var i;
+	  var popupHTML = "<div class=\"definePopup\"><table style=\"background-color:#fff;\" class=\"DefineFun Define\" id=\"" + codeObject.id+ "\"><tr style=\"text-align:right;\"><button class=\"closeFunctionButton\">x</button><button class=\"deleteFunctionButton\">delete</button></tr>"
+
+	  //CONTRACT name
+	  popupHTML += "<tr><th><input class=\"contractName\" onkeyup=\"sync("+codeObject.id+",$(this))\" ";
+	  if(codeObject.contract.funcName!=undefined){
+	      popupHTML += "value=\""+encode(codeObject.contract.funcName)+"\"";
+	  }
+	  popupHTML += " /></th><th> : </th>";
+
+	  //CONTRACT args
+	  var typeDrop;
+	  for(i=0; i<codeObject.argumentNames.length; i++){
+	      typeDrop = generateTypeDrop(codeObject.contract.funcIDList[i+1],codeObject);
+	      if (codeObject.contract.argumentTypes[i+1] != undefined){
+		  $(typeDrop).val(codeObject.contract.argumentTypes[i+1])
+	      }
+	      popupHTML += " <th style=\"text-align:left;\">"+typeDrop+"</th><th style=\"text-align:left;\" class=\"buttonHolder\"></th>";
+	  }
+	  popupHTML += "<th style=\"text-align:left;\"> <button class=\"addArgument\">+</button> </th>";
+
+	  //CONTRACT output
+	  var outputDrop = generateTypeDrop(codeObject.contract.funcIDList[0],codeObject);
+	  var outputType = codeObject.contract.outputType;
+	  if (outputType != undefined){
+	      $(outputDrop).val(outputType);
+	  }
+	  popupHTML += " <th style=\"text-align:left;\"> -> </th><th style=\"text-align:left;\">"+outputDrop+"</th></tr>";
+
+	  //DEFINE BLOCK NAME
+	  popupHTML+="<tr><th>define</th>";
+	  popupHTML += "<th class=\"expr\"> <input class=\"definitionName\" onkeyup=\"sync("+codeObject.id+",$(this))\" ";
+	  if(codeObject.contract.funcName!=undefined){
+	      popupHTML += "value=\""+encode(codeObject.contract.funcName)+"\"";
+	  }
+	  popupHTML += " /></th>";
+	  //DEFINE BLOCK ARGUMENTS
+	  for(i=0;i<codeObject.argumentNames.length;i++){
+	      popupHTML += "<th width=\"10px\" class=\"expr argument\"";
+	      if(codeObject.contract.argumentTypes[i]!=undefined){
+		  popupHTML+=" style=\"background:"+colors[codeObject.contract.argumentTypes[i]]+"\" ";
+	      }
+	      popupHTML+="><input style=\"width:70px;\" id=\""+codeObject.funcIDList[i+1]+"\" onkeyup=\"sync("+codeObject.id+",$(this))\"  disabled=\"disabled\" class=\"argName\" ";
+	      if(codeObject.argumentNames[i]!=undefined){
+		  popupHTML+="value=\""+encode(codeObject.argumentNames[i])+"\"";
+	      }
+	      popupHTML+=" /></th>";
+	  }
+	  popupHTML+="<th></th>";
+
+	  //PURPOSE
+	  var tableWidth = 4 +( (codeObject.funcIDList.length - 1) * 3);
+	  popupHTML += "<tr><th style=\"text-align:left;\">purpose:</th><th colspan=\""+ tableWidth +"\"> <input style=\"width:100%\" class=\"contractPurpose\" value=\"\" onkeyup=\"sync("+codeObject.id + ",$(this))\"></th></tr>";
+
+	  //DEFINE EXPRESSION
+	  popupHTML+="<tr><th ";
+	  if(codeObject.contract.outputType!=undefined){
+	      popupHTML += " style=\"background:"+colors[codeObject.contract.outputType]+"\" ";
+	  }
+	  if(codeObject.expr != undefined){
+	      popupHTML+="class=\"functionExpr noborder droppable expr\" name=\"Expr\" id="+codeObject.funcIDList[0]+">";
+	      popupHTML+=createBlock(codeObject.expr,constantEnvironment.concat(createNewConstants(codeObject)),functionEnvironment);
+	      popupHTML+="</th>";
+	  }
+	  else{
+	      popupHTML+="name=\"Expr\" class=\"functionExpr droppable expr\" id="+codeObject.funcIDList[0]+" colspan=\""+ tableWidth + "\">Expr</th>";
+	  }
+
+
+	  popupHTML += "</th></tr></table></div>"
+	  return popupHTML; 
+
+      };
+
+      /*
+	createProgramHTML takes the program array and translates it into HTML
+      */
+      var createProgramHTML = function(){
+	  var pageHTML = "";
+	  for (var i = 0; i < program.length; i++){
+	      pageHTML += "<li>" + createBlock(program[i],constants,functions.concat(userFunctions)) + "</li>";
+	      if(program[i] instanceof ExprDefineConst){
+		  //constants.push({name:program[i].name;type:program[i].outputType})
+	      }
+	      else if(program[i] instanceof ExprDefineFunc){
+		  //ADD
+	      }
+	  }
+	  //makeDrawers();
+	  //drawerButton(activated);
+	  return pageHTML;
+      };
+
+      /*
+	createStorageHTML takes the storageProgram array and converts the codeObjects into HTML.
+	storageProgram is a global variable so it does not need to be passed in as a function.
+	createBlock is used as a helper to generate HTML.
+      */
+      var createStorageHTML = function(){
+	  var storageHTML = "";
+	  for (var i = 0; i < storageProgram.length; i++){
+	      storageHTML += "<li>" + createBlock(storageProgram[i], constants, functions.concat(userFunctions)) + "</li>";
+	  }
+	  return storageHTML;
+      };
+
+      /*
+	renderProgram changes contents of #List to the current program and the contents of #storage
+	to the current storageProgram
+      */
+      var renderProgram = function(){
+	  $("#actualStorage").html(createStorageHTML());
+	  $("#List").html(createProgramHTML());
+	  addDroppableFeature($("#List .droppable"));
+
+	  // $("#List table").children().each(function(){
+	  //         addDraggingFeature($(this).find("table"));
+	  // });
+	  setLiWidth($("#List li"));
+	  setLiWidth($("#storagePopup li"));
+	  typeCheck(program);
+	  makeDrawers(functions.concat(userFunctions), constants);
+	  $("#storage").text('Storage (' + storageProgram.length + ')');
+	  addUItoStorage();
+      };
+
+  /*
+    renderFunctions renders the functions expressions
+  */
+  function renderFunctions() {
+      for (var i = 0; i < functionProgram.length; i++){
+	  var currFunc = $("#" + functionProgram[i].funcIDList[0]);
+	  if (functionProgram[i].expr === undefined){
+	      currFunc.html('Expr');
+	  } else{
+	      currFunc.html(createBlock(functionProgram[i].expr, constants.concat(createNewConstants(functionProgram[i])), functions.concat(userFunctions)));
+	      addDraggableToDefineExpr($("#" + functionProgram[i].funcIDList[0]).find('table'));
+	      addDroppableWithinDefineExpr($("#" + functionProgram[i].funcIDList[0]).find('.droppable'));
+	  }
+      }
+   }
+
+   /*
+     encode takes in a string and encodes it such that bugs resulting from &, ", #, etc are eliminated"
+     decode does something similar for the same purpose
+   */
+       function encode(string){
+	   return String(string)
+	       .replace(/&/g, '&amp;')
+	       .replace(/"/g, '&quot;')
+	       .replace(/'/g, '&#39;')
+	       .replace(/</g, '&lt;')
+	       .replace(/>/g, '&gt;');
+       }
+       function decode(string){
+	   return String(string)
+	       .replace('&amp;', '&')
+	       .replace('&quot;','\"')
+	       .replace('&#39;','\'')
+	       .replace('&lt;',"<")
+	       .replace('&gt;',">");
+       }
+
+       /*
+	 changeName changes the name of a define block
+
+	 @param defineExpr - the ExprDefineFunc you want to change
+	 @param newName - (string) the name you want to give to defineExpr
+	 @return void. changes a ExprDefineFunc
+       */
+       function changeName(defineExpr, newName){
+	   defineExpr.contract.funcName = newName;
+       }
+
+
+	// changeArgName changes the name of an argument in a define block
+       function changeArgName(defineExpr, newName, argIndex){
+	       defineExpr.argumentNames[argIndex] = newName;
+       }
+
+       /*
+	 contains determines whether or not an element already exists within an array
+
+	 @param elm - an element
+	 @param arr - an array of the type of element
+	 @return - boolean. true if it's repeated, false otherwise
+       */
+       function contains(elm, arr) {
+	   for (var i = 0; i < arr.length; i++){
+	       if (arr[i] === elm){
+		   return true;
+	       }
+	   }
+	   return false;
+       }
+
+       /*
+	 gets called on keyup of input
+       */
+       function sync(objectID, $input){
+	   var block=searchForIndex(objectID+"",program);
+	   if (block == undefined){
+	       block = searchForIndex(objectID+"", functionProgram  );
+	   } 
+	   var DOMBlock=$("#" + objectID);
+	   if(block instanceof ExprNumber || block instanceof ExprString){
+	       block.value=decode(DOMBlock.find(".input").attr('value'));
+	       DOMBlock.find(".input").attr('value',DOMBlock.find(".input").attr('value'));
+	   }
+	   else if(block instanceof ExprDefineConst){
+	       block.constName=decode(DOMBlock.find('.constName').attr('value'));
+	       DOMBlock.find('.constName').attr('value',DOMBlock.find('.constName').attr('value'));
+	   }
+	   else if(block instanceof ExprDefineFunc){
+
+	       window.clearTimeout(timeout);
+
+	       //updateGUI
+	       var newInput = $input.attr('value') + "";
+	       var defInput = $("#" + objectID).find('.definitionName').first();
+	       var contractInput = $("#" + objectID).find('.contractName').first();
+
+	       //CONTRACT/DEFINITION NAME
+	       if ($input.hasClass('contractName') || $input.hasClass('definitionName')){
+
+		   if($input.hasClass('contractName')){
+		       defInput.attr('value',(newInput));
+		   } 
+		   else if ($input.hasClass('definitionName')){
+		       contractInput.attr('value',(newInput));
+		   }
+
+		   timeout = setTimeout(function() {
+		       if (newInput === "" || !legalFunctionName(newInput)){ //not valid
+			   if (defInput.attr('prevName') !== newInput){
+			       defInput.css('background-color','red');
+			       contractInput.css('background-color','red');
+			       removeFromUserFunctions(defInput.attr('prevName'));
+			       renderProgram();
+/*			       $(document).click(function(){
+				   var prevName = $input.attr('prevName');
+				   defInput.attr('value', prevName);
+				   contractInput.attr('value',prevName);
+				   if (defInput.attr('value') !== "" && !functionNameRepeated(defInput.attr('value'))){
+				       defInput.css('background-color','');
+				       contractInput.css('background-color', '');
+				   }
+
+			       });*/
+			   }
+		       } else {
+			   
+			   defInput.css('background-color','');
+			   contractInput.css('background-color', '');
+			   changeName(block, newInput);
+			   
+			   // add/remove from drawers
+			   toggleFunctionInDrawer(block, $input.attr('prevName'));
+			   if (contractCompleted(block.contract)){
+			       defInput.attr('prevName', newInput);
+			       contractInput.attr('prevName', newInput);
+			  }
+		      }
+		  }, 75);
+	      }
+
+	      //DEFINE ARGUMENTS
+	      else if ($input.hasClass('argName')) {
+		 
+		      timeout = setTimeout(function() {
+		  if ($input.val() === "" || contains($input.val(), block.argumentNames)){
+		      if ($input.attr('prevName') !== $input.val() ){
+			  $input.css('background-color','red');
+		      }
+		  } else {
+		      $input.css('background-color','');
+			  $input.attr('prevName', $input.val());
+		      changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList) - 1);
+		      toggleFunctionInDrawer(block, defInput.attr('prevName'));
+
+		  }
+		 // changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList) - 1);
+		//  toggleFunctionInDrawer(block, defInput.attr('prevName'));
+		 // }, 75);
+		      }, 100);
+	      }
+	      else if ($input.hasClass('contractPurpose')){
+		  block.contract.purpose = newInput;
+	      }
+
+	  }
+      }
+
+
+      /*
+	changeAppOutput changes the output type of an ExprApp
+
+	@param appExpr - ExprApp whose output you want to change
+	@param newOutputType - the new output type 
+	@return void - alters ExprApp
+      */
+      function changeAppOutput(appExpr, newOutputType){
+	  appExpr.outputType = newOutputType;
+      }
+
+      /*
+	toggleFunctionInDrawer removes and adds functions to drawers and edits it if it already exists
+	@param defineExpr - (ExprDefineFunc) the block which you might add/remove to/from the drawer
+	@param prevName - (string) the name the defineExpr used to have
+      */
+  function toggleFunctionInDrawer(defineExpr, prevName, deleteIndex) {
+      if (contractCompleted(defineExpr.contract)){
+	  changeProgramFunctions(prevName, defineExpr, program, false, deleteIndex);
+	  changeProgramFunctions(prevName, defineExpr, storageProgram, false, deleteIndex);
+	  changeProgramFunctions(prevName, defineExpr, functionProgram, false, deleteIndex);
+	  addFunctionToDrawers(defineExpr);
+      }
+  }
+
+      /*
+	changeProgramFunctions changes the outputType, args, and funcName attributes of ExprApps in the prog
+
+	@param prevName - (string) the funcName of all ExprApps you want to change
+	@param defineExpr - (ExprDefineFunc) the define block being changed
+	@param prog - the program you will parse through
+	@param removeDefine - (bool) true if you are looking to remove the define expression, false if you are look
+	to simply edit it
+	@param deleteIndex - (int) the integer at which you want to remove a expression within an ExprApp's arguments. 
+	undefined if you don't want to remove an argument
+      */
+  function changeProgramFunctions(prevName, defineExpr, prog, removeDefine, deleteIndex){
+      var i;
+      if (prog === functionProgram){
+	  for (i = 0; i < prog.length; i++){
+	      //changes Expr of define block
 	    if (removeDefine === true && prog[i].expr != undefined && prog[i].expr.funcName === defineExpr.contract.funcName){
 		prog[i].expr = undefined;
 	    }
@@ -2414,7 +2451,6 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
     */
 function changeType(curValue,selectID,defineExprID){
     selectID+="";
-    $("#" + selectID + " option[value='Type']").attr('disabled','disabled');
     var defineExpr=searchForIndex(defineExprID+"",functionProgram  ); 
 
     var funcIDIndex = getElmIndexInArray(selectID, defineExpr.contract.funcIDList);
@@ -2458,22 +2494,36 @@ function changeType(curValue,selectID,defineExprID){
 	    }
         }
     }
+
+    //checking to see if it define name already exists
     var defineName = $("#" + defineExpr.id).find('.definitionName');
     var contractName = $("#" + defineExpr.id).find('.contractName');	
     var newName = defineName.attr('value');
-    toggleFunctionInDrawer(defineExpr, $("#" +defineExprID).find('.definitionName').attr('prevName'));
-    if (contractCompleted(defineExpr.contract)){
-	defineName.attr('prevName', newName);
-	contractName.attr('prevName',newName);
+    if (legalFunctionName(defineExpr.contract.funcName) || $("#" + selectID + " option[value='Type']").attr('disabled') === "disabled"){
+
 	defineName.css('background-color','');
 	contractName.css('background-color','');
+	toggleFunctionInDrawer(defineExpr, $("#" +defineExprID).find('.definitionName').attr('prevName'));
+	defineName.attr('prevName', newName);
+	contractName.attr('prevName',newName);
+    } else {//if the name already exists
+	if (contractCompleted(defineExpr.contract)){
+	    console.log('here');
+	    defineName.css('background-color','red');
+	    contractName.css('background-color','red');
+	}
     }
+
+    //disables option 'Type'
+    $("#" + selectID + " option[value='Type']").attr('disabled','disabled');
 }
 
     //adds draggable within define expressions
     function addDraggableToDefineExpr($table) {
 	$table.draggable({
 	    helper:'clone',
+	    appendTo:'body',
+	    connectToSortable:'#List, .droppable',
 	    start:function(event, ui){
 		draggedClone = $(this);
 		programCarrying = searchForIndex($(this).attr("id"), functionProgram  );
@@ -2484,10 +2534,12 @@ function changeType(curValue,selectID,defineExprID){
 	    stop:function(event, ui){
 		if (programCarrying != null && carrying != null){
 		    console.log('here');
+
 		    setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).closest('th').attr("id"), programCarrying, functionProgram  );
 		    programCarrying = null;
 		    carrying = null;
 		}
+		renderFunctions();
 	    }
 	});
     }
@@ -2834,7 +2886,7 @@ function changeType(curValue,selectID,defineExprID){
 			    $(replacement).find('input').attr('readonly', false);
 			    setLiWidth($("#List li"));
 			    program.splice($("#List li").index(replacement), 0, programCarrying);
-			    $("#storage").html('Storage (' + storageProgram.length + ')');
+//			    $("#storage").html('Storage (' + storageProgram.length + ')');
 			    addToHistory(tempProgram, tempStorageProgram);
 			    programCarrying = null;
 			    carrying = null;
@@ -2847,9 +2899,15 @@ function changeType(curValue,selectID,defineExprID){
             }
 	});
 
-
-
-	$('.definePopup').draggable();
+/*
+	var defineZIndex = 10;
+	$('.definePopup').draggable({
+	    start:function(event, ui){
+		console.log($(this));
+		$(this).css('z-index', defineZIndex);
+		defineZIndex = defineZIndex + 1;
+	    }
+	});*/
     });
 
     function addUItoStorage() {
@@ -2910,7 +2968,7 @@ function changeType(curValue,selectID,defineExprID){
 	    tolerance:'pointer',
 	    drop:function(event, ui) {
 		if (!$(ui.draggable).is('.draggable')){
-      typeCheck(program);
+		    typeCheck(program);
 		    var replacement = "<li>" + carrying + "</li>";
 		    addToHistory(tempProgram,cloneProgram(storage));
 		    $("#actualStorage").append(replacement);
@@ -2922,7 +2980,7 @@ function changeType(curValue,selectID,defineExprID){
 		    }
 		    $(ui.draggable).remove();
 		    setLiWidth($("#actualStorage li"));
-		    $("#storage").html("Storage (" + storageProgram.length + ")");
+		   // $("#storage").html("Storage (" + storageProgram.length + ")");
 		    carrying = null;
 		    programCarrying = null;
 		}
@@ -3027,7 +3085,8 @@ function changeType(curValue,selectID,defineExprID){
 	if (jQuerySelection !== null){
             if(!jQuerySelection.hasClass('noDrag')){
 		jQuerySelection.draggable({
-		    connectToSortable: "#List",
+		    connectToSortable: '#List',
+		    containment:'#content',
 		    appendTo:'body',
                     helper:'clone',
                     start:function(event, ui){
@@ -4007,7 +4066,7 @@ function changeType(curValue,selectID,defineExprID){
     }
 
 
-    window.sync = sync;
+/*    window.sync = sync;
     window.changeType=changeType;
     window.deleteArg = deleteArg;
     //window.removeFunctionFromDrawers=removeFunctionFromDrawers;
@@ -4023,4 +4082,4 @@ function changeType(curValue,selectID,defineExprID){
     window.future=function(){return future};
     window.buildConstraints=buildConstraints;
 
-}());
+}());*/
