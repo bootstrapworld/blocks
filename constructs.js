@@ -1817,6 +1817,7 @@
       gets called on keyup of input
     */
     function sync(objectID, $input){
+      removeOutputs();
 	var block=searchForIndex(objectID+"",program);
 	if (block == undefined){
 	    block = searchForIndex(objectID+"", functionProgram  );
