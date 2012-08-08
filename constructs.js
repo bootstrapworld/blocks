@@ -980,7 +980,7 @@
 		    }
 		}
 		//save id, program... maybe history, future, trash
-		localStorage[saveName]=JSON.stringify(cloneProgram(program))+"___"+JSON.stringify(cloneProgram(functionProgram))+"___"+JSON.stringify(cloneProgram(storageProgram));
+		localStorage[saveName]=JSON.stringify(cloneProgram(program))+"___"+JSON.stringify(userFunctions)+"___"+JSON.stringify(cloneProgram(functionProgram))+"___"+JSON.stringify(cloneProgram(storageProgram));
 	    }
 	    else{
 		alert("I am sorry but your browser does not support storage.");
@@ -1000,10 +1000,13 @@
 		var programString=localStorage.getItem(loadName).split("___");
 		program=[];
 		functionProgram=[];
-		storageProgram=[]
+		storageProgram=[];
+    userFunctions=[];
 		objectArrayToProgram(JSON.parse(programString[0]),program);
-		objectArrayToProgram(JSON.parse(programString[1]),functionProgram);
-		objectArrayToProgram(JSON.parse(programString[2]),storageProgram);
+    userFunctions=JSON.parse(programString[1]);
+    buildFuncConstructs()
+		objectArrayToProgram(JSON.parse(programString[2]),functionProgram);
+		objectArrayToProgram(JSON.parse(programString[3]),storageProgram);
 		//do I change the history and trash? overwrite it?
 		renderProgram();
 		historyarr=[];
