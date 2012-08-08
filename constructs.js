@@ -1,4 +1,4 @@
-(function(){
+//(function(){
 
     "use strict";
     // this function is strict...
@@ -790,24 +790,24 @@
 
     $(document).ready(function(){
 	
-	//HOOKING UP TO WESCHEME EVALUATOR
-	var evaluator = new Evaluator({
-            write: function(thing) {
-                console.log(thing);
-                $("#actualCode").append(thing);
-            }
-        });
-	var xhr = new easyXDM.Rpc(
-            { remote: "http://wescheme-compiler.hashcollision.org/index.html",
-              // This lazy flag must be set to avoid a very ugly
-              // issue with Firefox 3.5.
-              lazy: true
-            },
-            { remote: { compileProgram: {} }});
+	// //HOOKING UP TO WESCHEME EVALUATOR
+	// var evaluator = new Evaluator({
+ //            write: function(thing) {
+ //                console.log(thing);
+ //                $("#actualCode").append(thing);
+ //            }
+ //        });
+	// var xhr = new easyXDM.Rpc(
+ //            { remote: "http://wescheme-compiler.hashcollision.org/index.html",
+ //              // This lazy flag must be set to avoid a very ugly
+ //              // issue with Firefox 3.5.
+ //              lazy: true
+ //            },
+ //            { remote: { compileProgram: {} }});
 
-	evaluator.setCompileProgram(function(name, program, success, fail) {
-            xhr.compileProgram(name, program, success, fail);
-        });
+	// evaluator.setCompileProgram(function(name, program, success, fail) {
+ //            xhr.compileProgram(name, program, success, fail);
+ //        });
 
 
 
@@ -3244,6 +3244,17 @@
 		removeTopLevelCondColor(ArrayofBlocks[i]);
             }
 	}
+	console.log("CHILDREN")
+	console.log($(".BoolAnswer"))
+	$(".BoolAnswer").children().children().each(function(){$(this).css('background-color', $(this).closest('.Cond').css('background-color'))});
+    }
+    function setPairColor(DOMelem){
+    	var toColor = undefined;
+    	for(color in colors){
+    		if(colors.hasOwnProperty(color)){
+
+    		}
+    	}
     }
     function removeTopLevelCondColor(obj){
 	removeInferTypes($(document.getElementById(obj.id)), program);
@@ -3257,7 +3268,7 @@
     }
     function topLevelCondWithErrors(obj){
 	for(var i= 0; i<obj.listOfBooleanAnswer.length; i++){
-	    if(obj.listOfBooleanAnswer[i].answer !== undefined && $(document.getElementById(obj.listOfBooleanAnswer[i].answer.id)).hasClass("ERROR")){
+	    if(obj.listOfBooleanAnswer[i].answer != undefined && $(document.getElementById(obj.listOfBooleanAnswer[i].answer.id)).hasClass("ERROR")){
 		return true;
 	    }else if(obj.listOfBooleanAnswer[i].answer instanceof ExprCond && topLevelCondWithErrors(obj.listOfBooleanAnswer[i].answer)){
 		return true;
@@ -3459,7 +3470,8 @@
 		constraints = constraints.concat([new constraint(lhs, new elemId(parentId), obj.id)]);
             }
             if(obj.outputType !== undefined){
-		constraints = constraints.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
+              //since the output type is defined, it can simply be treated as a literal. In our current program, this case should always be used
+		literals = literals.concat([new constraint(lhs, new elemType(obj.outputType), obj.id)]);
             }else{
                constraints = constraints.concat([new constraint(lhs, new variable(obj.constName), obj.id)]);
             }
@@ -3479,7 +3491,8 @@
             }
             for(i=0; i<obj.listOfBooleanAnswer.length; i++){
 		//this ensures that boolAnswer pairs, which do not actually matter to constraints, get colored
-		constraints = constraints.concat([new constraint(lhs, new elemId(obj.listOfBooleanAnswer[i].id), obj.listOfBooleanAnswer[i].id)])
+		//turned out this mattered, so I took it out
+		//constraints = constraints.concat([new constraint(lhs, new elemId(obj.listOfBooleanAnswer[i].id), obj.listOfBooleanAnswer[i].funcIDList[1])])
 		//deal with answers
 		if(obj.listOfBooleanAnswer[i].answer !== undefined){
                     next = buildConstraints(obj.listOfBooleanAnswer[i].answer, obj.listOfBooleanAnswer[i].funcIDList[1]);
@@ -3641,11 +3654,12 @@
 		for(k=0; k<condErr.length; k++){
                     helpfulErrors.push(condErr[k]);
 		}
-            }else if(curr instanceof ExprDefineFunc){
-		if(curr.id === array[i].id){console.log("Error: define block error")};
+  }else if(curr instanceof ExprDefineFunc){
+		//if(curr.id === array[i].id){console.log("Error: define block error")}
 		for(k =0; k<curr.contract.funcIDList.length; k++){
                     //if the id at index k matches the id in the contract, or the id in the define's funcIDList, or the expressions id
-                    if(curr.contract.funcIDList[k] === array[i].id || curr.funcIDList[k] === array[i].id || (curr.expr !== undefined && array[i].id === curr.expr.id)){
+                    if(curr.contract.funcIDList[k] === array[i].id || curr.funcIDList[k] === array[i].id
+                      || (curr.expr !== undefined && array[i].id === curr.expr.id) || curr.id === array[i].id){
 			if(k === 0){
                             //error in output type of contract
                             if(curr.contract.outputType === undefined){console.log("ERROR! CONTRACT OUPUT TYPE UNDEFINED")};
@@ -3870,21 +3884,21 @@
     }
 
 
-    window.sync = sync;
-    window.changeType=changeType;
-    window.deleteArg = deleteArg;
-    //window.removeFunctionFromDrawers=removeFunctionFromDrawers;
+    // window.sync = sync;
+    // window.changeType=changeType;
+    // window.deleteArg = deleteArg;
+    // //window.removeFunctionFromDrawers=removeFunctionFromDrawers;
 
-    //FOR TESTING PURPOSES
-    window.typeInfer = typeInfer;
-    window.typeCheck=typeCheck;
-    window.parseProgram=parseProgram;
-    window.program=program;
-    window.storageProgram=storageProgram;
-    window.functionProgram=functionProgram;
-    window.historyarr=historyarr;
-    window.future=future;
-    window.buildConstraints=buildConstraints;
+    // //FOR TESTING PURPOSES
+    // window.typeInfer = typeInfer;
+    // window.typeCheck=typeCheck;
+    // window.parseProgram=parseProgram;
+    // window.program=program;
+    // window.storageProgram=storageProgram;
+    // window.functionProgram=functionProgram;
+    // window.historyarr=historyarr;
+    // window.future=future;
+    // window.buildConstraints=buildConstraints;
 
 
-}());
+//}());
