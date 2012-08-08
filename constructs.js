@@ -1002,10 +1002,10 @@
 		functionProgram=[];
 		storageProgram=[];
     userFunctions=[];
-		objectArrayToProgram(JSON.parse(programString[0]),program);
     userFunctions=JSON.parse(programString[1]);
     buildFuncConstructs()
 		objectArrayToProgram(JSON.parse(programString[2]),functionProgram);
+    objectArrayToProgram(JSON.parse(programString[0]),program);
 		objectArrayToProgram(JSON.parse(programString[3]),storageProgram);
 		//do I change the history and trash? overwrite it?
 		renderProgram();
@@ -4162,6 +4162,8 @@
     window.historyarr=function(){return historyarr};
     window.future=function(){return future};
     window.buildConstraints=buildConstraints;
+    window.functions=function(){return functions};
+    window.userFunctions=function(){return userFunctions};
 
 }());
 
