@@ -3717,10 +3717,12 @@ function changeType(curValue,selectID,defineExprID){
     }
     //unifies constraints
     function unify(constr, literals){
+
 	var subst = [];
 	var next;
 	var errors = [];
 	while(constr.length > 0){
+
             next = constr.pop();
             if(objectEquality(next.lhs, next.rhs, ["source"])){
 		// do nothing, just to short circuit
@@ -3732,7 +3734,7 @@ function changeType(curValue,selectID,defineExprID){
             }else if(next.rhs instanceof elemId || next.rhs instanceof variable){
             		substitute(next.lhs, next.rhs, constr);
             		substitute(next.lhs, next.rhs, subst);
-                substitute(next.rhs, next.lhs, literals);
+                substitute(next.lhs, next.rhs, literals);
             		subst.unshift(new constraint(next.rhs, next.lhs, next.source));
             }else if(next.rhs instanceof construct &&
                      next.lhs instanceof construct &&
@@ -3761,6 +3763,7 @@ function changeType(curValue,selectID,defineExprID){
     errors.unshift(new error(next.source, "Type mismatch"));
             }
     }
+
 	//adding generic types
 	for(var i = 0; i < subst.length; i++){
             if(subst[i].lhs instanceof variable && (subst[i].rhs instanceof elemId)){
