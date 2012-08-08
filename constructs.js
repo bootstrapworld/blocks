@@ -3473,7 +3473,7 @@ function changeType(curValue,selectID,defineExprID){
 
     function returnMessage(outputClass,message){
 	return function(event){
-            $(document.body).append("<span class=\""+outputClass+"\" style=\"left:"+event.pageX+"px;top:"+event.pageY+"px;\">"+message+"</span>");
+            $("#code").append("<span class=\""+outputClass+"\" style=\"left:"+(event.pageX-200)+"px;top:"+(event.pageY-50)+"px;\">"+message+"</span>");
             adding=true;
             event.stopPropagation;
             event.stopImmediatePropagation;
@@ -3484,7 +3484,7 @@ function changeType(curValue,selectID,defineExprID){
         function returnDOMElement(outputClass,jQuerySelection){
           console.log(jQuerySelection)
   return function(event){
-            $(document.body).append(jQuerySelection.addClass(outputClass).attr("style","left:"+event.pageX+"px;top:"+event.pageY+"px"))
+            $("#code").append(jQuerySelection.addClass(outputClass).attr("style","left:"+(event.pageX-200)+"px;top:"+(event.pageY-50)+"px"))
             adding=true;
             event.stopPropagation;
             event.stopImmediatePropagation;

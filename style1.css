@@ -209,8 +209,11 @@ table{
 
 .output{
     background-color:white;
+    overflow:auto
 }
 
 .errorOutput{
     background-color:#FCF0AD;
+    width:300px;
+    overflow:auto;
 }
