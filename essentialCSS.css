@@ -169,11 +169,19 @@ table{
 }
 
 .ErrorMessage{
-
+  position:absolute;
+  z-index:999999;
 }
 
 .outputMessage{
 }
+
 .output{
-  
+  position:absolute;
+  z-index:999999;
+}
+
+.errorOutput{
+  position:absolute;
+  z-index:999999;
 }
