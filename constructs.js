@@ -1116,7 +1116,8 @@
     function makeEvaluator(id,blockString){
              var evaluator = new Evaluator({
                   write: function(thing) {
-                    if($(thing).attr("style")!=="white-space: pre; font-family: monospace; "){
+                    console.log(thing)
+                    if($(thing).find("br").length!==1){
                       console.log("adding",thing)
                       $($(document.getElementById(id)).children("tbody").children("tr")[0]).append("<div class=\"outputMessage\">Result</div");
                       $($($(document.getElementById(id)).children("tbody").children("tr")[0]).find(".outputMessage")[0])
