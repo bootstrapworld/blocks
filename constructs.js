@@ -1014,7 +1014,7 @@
 		}
             }
             for(i=0;i<functionProgram.length;i++){
-		typeInfered=typeInfer(storageProgram[i])
+		typeInfered=typeInfer(functionProgram[i])
 		if(typeInfered.typeErrors.length>0 || typeInfered.blankErrors.length>0){
 		    legal=false
 		}
@@ -1024,12 +1024,12 @@
 		return;
             }
             else{
-              var storageString="";
-              for(var i=0;i<storageProgram.length;i++){
-                storageString+=interpreter(storageProgram[i])
+              var definitionString="";
+              for(var i=0;i<functionProgram.length;i++){
+                definitionString+=interpreter(functionProgram[i])
               }
               removeOutputs();
-              evaluateBlock(0,storageString);
+              evaluateBlock(0,definitionString);
               }
 
 		
@@ -1094,8 +1094,8 @@
 	toggleFunctionInDrawer(defineExpr);
     });
 
-    function evaluateBlock(i,storageString){
-                var blockString=storageString+interpreter(program[i]);
+    function evaluateBlock(i,definitionString){
+                var blockString=definitionString+interpreter(program[i]);
                 var id=program[i].id
                 console.log(blockString,id)
                 var myEval=makeEvaluator(id,blockString);
@@ -1106,7 +1106,7 @@
                 i++;
                 console.log("added");
                 if(i<program.length){
-                  evaluateBlock(i,storageString);
+                  evaluateBlock(i,definitionString);
                 }
                 else{
                   $("#stopButton").attr("disabled","disabled");
@@ -1116,10 +1116,10 @@
     function makeEvaluator(id,blockString){
              var evaluator = new Evaluator({
                   write: function(thing) {
-                    console.log(thing)
+                    console.log($(document.getElementById(id)));
                     if($(thing).find("br").length!==1){
                       console.log("adding",thing)
-                      $($(document.getElementById(id)).children("tbody").children("tr")[0]).append("<div class=\"outputMessage\">Result</div");
+                      $($(document.getElementById(id)).children("tbody").children("tr")[0]).append("<th class=\"outputMessage\">Result</th>");
                       $($($(document.getElementById(id)).children("tbody").children("tr")[0]).find(".outputMessage")[0])
                                   .click(
                                           returnDOMElement("output",$(thing))
@@ -2347,7 +2347,7 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
     //add stuff to make empty work and have new rows append to ExprCond
     function createCondBlock(codeObject,constantEnvironment,functionEnvironment){
 
-	var block =  "<table class=\"Cond expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th style=\"float:left\">cond</th></tr>";
+	var block =  "<table class=\"Cond expr Expressions\" " + "id=\""+codeObject.id+"\"><tr><th colspan=\"3\" style=\"float:left\">cond</th></tr>";
 	for(var i=0;i<codeObject.listOfBooleanAnswer.length;i++){
             block+="<tr class=\"BoolAnswer\"><th><table class=\"noDrag\" id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";
             if(codeObject.listOfBooleanAnswer.length!==1){
