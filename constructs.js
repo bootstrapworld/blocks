@@ -846,11 +846,27 @@
 	    $(document).find(".ErrorMessage").each(
 		function(){
 		    if(Modernizr.touch && !adding){
-			console.log("Correctly removing");
-			$(this).remove();
-		    }
-		    adding=false
-		})});
+			     console.log("Correctly removing");
+			       $(this).remove();
+		    }})
+  $(document).find(".errorOutput").each(
+    function(){
+        if(!adding){
+           console.log("Correctly removing");
+             $(this).remove();
+        }
+		    
+		});
+    $(document).find(".output").each(
+    function(){
+        if(!adding){
+           console.log("Correctly removing");
+             $(this).remove();
+        }
+        
+    });
+  adding=false
+})
 
 	/*
 	  sets focus equal to the input that is focused. 
@@ -1079,7 +1095,7 @@
     });
 
     function evaluateBlock(i,storageString){
-                var blockString=storageString+"(sleep 2)"+interpreter(program[i]);
+                var blockString=storageString+interpreter(program[i]);
                 var id=program[i].id
                 console.log(blockString,id)
                 var myEval=makeEvaluator(id,blockString);
@@ -1100,8 +1116,15 @@
     function makeEvaluator(id,blockString){
              var evaluator = new Evaluator({
                   write: function(thing) {
-                    console.log("adding to",id);
-                    $($(document.getElementById(id)).children("tbody").children("tr")[0]).append($(thing).addClass("outputMessage"))
+                    if($(thing).attr("style")!=="white-space: pre; font-family: monospace; "){
+                      console.log("adding",thing)
+                      $($(document.getElementById(id)).children("tbody").children("tr")[0]).append("<div class=\"outputMessage\">Result</div");
+                      $($($(document.getElementById(id)).children("tbody").children("tr")[0]).find(".outputMessage")[0])
+                                  .click(
+                                          returnDOMElement("output",$(thing))
+                                        );
+                    }
+                    //$($(document.getElementById(id)).children("tbody").children("tr")[0]).append($(thing).addClass("outputMessage"))
                       //$("#actualCode").append(thing);
                   }
               });
@@ -1119,7 +1142,11 @@
                     function(){},
                     function(err){
                       console.log(evaluator.getMessageFromExn(err))
-                      $($(document.getElementById(id)).children("tbody").children("tr")[0]).append("<div class=\"outputMessage\" title=\""+encode(evaluator.getMessageFromExn(err))+"\">Error</div")
+                      $($(document.getElementById(id)).children("tbody").children("tr")[0]).append("<div class=\"outputMessage\">Error</div");
+                      $($($(document.getElementById(id)).children("tbody").children("tr")[0]).find(".outputMessage")[0])
+                                  .click(
+                                          returnMessage("errorOutput",encode(evaluator.getMessageFromExn(err)))
+                                        );
                       //$("#actualCode").text("\nError:\n"+evaluator.getMessageFromExn(err)+"");
                     });
           return evaluator;
@@ -1128,6 +1155,7 @@
     function removeOutputs(){
       $(".outputMessage").remove();
       $(".output").remove();
+      $(".errorOutput").remove();
     }
 
     /*
@@ -1851,6 +1879,7 @@ function renderFunctions() {
        gets called on keyup of input
      */
      function sync(objectID, $input){
+      removeOutputs();
 	 var block=searchForIndex(objectID+"",program);
 	 if (block == undefined){
 	     block = searchForIndex(objectID+"", functionProgram  );
@@ -3442,15 +3471,24 @@ function changeType(curValue,selectID,defineExprID){
 	}
     }
 
-    function returnMessage(message){
+    function returnMessage(outputClass,message){
 	return function(event){
-	    console.log("LEFT "+JSON.stringify(event.pageX))
-	    console.log("TOP "+JSON.stringify(event.pageY))
-            $(document.body).append("<span class=\"ErrorMessage\" style=\"left:"+event.pageX+"px;top:"+event.pageY+"px;\">"+message+"</span>");
+            $(document.body).append("<span class=\""+outputClass+"\" style=\"left:"+event.pageX+"px;top:"+event.pageY+"px;\">"+message+"</span>");
             adding=true;
             event.stopPropagation;
             event.stopImmediatePropagation;
 	}
+    }
+
+
+        function returnDOMElement(outputClass,jQuerySelection){
+          console.log(jQuerySelection)
+  return function(event){
+            $(document.body).append(jQuerySelection.addClass(outputClass).attr("style","left:"+event.pageX+"px;top:"+event.pageY+"px"))
+            adding=true;
+            event.stopPropagation;
+            event.stopImmediatePropagation;
+  }
     }
 
     function createErrorMessages(typeErrors){
@@ -3461,7 +3499,7 @@ function changeType(curValue,selectID,defineExprID){
 		//console.log(typeErrors[i].message);//the message that needs to be added
 		if(Modernizr.touch){
                     //GET THE EQUIVILENT OF A HOVER EVENT
-                    $(document.getElementById(typeErrors[i].idArr[j])).click(returnMessage(typeErrors[i].message));
+                    $(document.getElementById(typeErrors[i].idArr[j])).click(returnMessage("ErrorMessage",typeErrors[i].message));
 		}else{
                     if($(document.getElementById(typeErrors[i].idArr[j])).attr('title')=="" || $(document.getElementById(typeErrors[i].idArr[j])).attr('title') == undefined){
 			$(document.getElementById(typeErrors[i].idArr[j])).attr('title',typeErrors[i].message);
