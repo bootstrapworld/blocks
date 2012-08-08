@@ -1825,16 +1825,10 @@ function renderFunctions() {
 	 defineExpr.contract.funcName = newName;
      }
 
-     /*
-       changeArgName changes the name of an argument in a define block
 
-       @param defineExpr - the ExprDefinFunc you want to change
-       @param newName - (string) the name you want to give to defineExpr
-       @param argIndex - (int) the index of the argument in relation to the other arguments
-       @return void. changes a ExprDefineFunc
-     */
+      // changeArgName changes the name of an argument in a define block
      function changeArgName(defineExpr, newName, argIndex){
-	 defineExpr.argumentNames[argIndex] = newName;
+	     defineExpr.argumentNames[argIndex] = newName;
      }
 
      /*
@@ -4028,6 +4022,5 @@ function changeType(curValue,selectID,defineExprID){
     window.historyarr=function(){return historyarr};
     window.future=function(){return future};
     window.buildConstraints=buildConstraints;
-
 
 }());
