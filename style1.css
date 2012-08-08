@@ -192,7 +192,7 @@ table{
 .ErrorMessage{
     background-color:#FCF0AD;
     position:absolute;
-    z-index:999999;
+    
 }
 
 .definition{
@@ -201,4 +201,19 @@ table{
     border-bottom: 1px solid #000;
     border-top:1px solid #000;
     background-color:white;
+}
+
+.outputMessage{
+    background-color:white;
+}
+
+.output{
+    background-color:white;
+    overflow:auto
+}
+
+.errorOutput{
+    background-color:#FCF0AD;
+    width:300px;
+    overflow:auto;
 }
