@@ -1,4 +1,4 @@
-//(function(){
+(function(){
 
     "use strict";
     // this function is strict...
@@ -2418,63 +2418,63 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
       types within the contract
       @param codeObjectID - (string) ID of the code object representing the define block
     */
-    function changeType(curValue,selectID,defineExprID){
-	selectID+="";
-	$("#" + selectID + " option[value='Type']").attr('disabled','disabled');
-	var defineExpr=searchForIndex(defineExprID+"",functionProgram  ); 
+function changeType(curValue,selectID,defineExprID){
+    selectID+="";
+    $("#" + selectID + " option[value='Type']").attr('disabled','disabled');
+    var defineExpr=searchForIndex(defineExprID+"",functionProgram  ); 
 
-	var funcIDIndex = getElmIndexInArray(selectID, defineExpr.contract.funcIDList);
-	var argBlockID = defineExpr.funcIDList[funcIDIndex];
+    var funcIDIndex = getElmIndexInArray(selectID, defineExpr.contract.funcIDList);
+    var argBlockID = defineExpr.funcIDList[funcIDIndex];
 
-	//modifiedblock refers to the GUI element whose background color will change
-	var modifiedblock =  $("#" + argBlockID).closest('th');
-	
-	if (modifiedblock != undefined){
-	    deleteTypeClass(modifiedblock);
-	    if(curValue !== "Type"){
-		modifiedblock.addClass(decode(curValue));
-		$("#" + selectID).css('background-color','');
-		if (funcIDIndex !==0){ //arg is typeable
-		    $(modifiedblock).find('input').attr('disabled',false);
-		}
+    //modifiedblock refers to the GUI element whose background color will change
+    var modifiedblock =  $("#" + argBlockID).closest('th');
+    
+    if (modifiedblock != undefined){
+	deleteTypeClass(modifiedblock);
+	if(curValue !== "Type"){
+	    modifiedblock.addClass(decode(curValue));
+	    $("#" + selectID).css('background-color','');
+	    if (funcIDIndex !==0){ //arg is typeable
+		$(modifiedblock).find('input').attr('disabled',false);
 	    }
-	    else { //remove typeable from arg
-		$(modifiedblock).find('input').attr('disabled', true);
-	    }
-
-	} else {
-	    throw new Error('changeType: modifiedblock is not defined')
+	}
+	else { //remove typeable from arg
+	    $(modifiedblock).find('input').attr('disabled', true);
 	}
 
-	//modifying the contract (code object representation)n
-	for(var i=0; i<defineExpr.contract.funcIDList.length; i++){
-	    addToHistory(cloneProgram(program), cloneProgram(storageProgram));
-            if(selectID===defineExpr.contract.funcIDList[i] && i!==0){
-		if (curValue === "Type"){
-		    defineExpr.contract.argumentTypes[i-1] = undefined;
-		} else { 
-		    defineExpr.contract.argumentTypes[i-1]= curValue;
-		}
-            }
-            else if(selectID===defineExpr.contract.funcIDList[i] && i===0){
-		if (curValue === "Type"){
-		    defineExpr.contract.outputType= undefined;
-		} else {
-		    defineExpr.contract.outputType = curValue;
-		}
-            }
-	}
-	var defineName = $("#" + defineExpr.id).find('.definitionName');
-	var contractName = $("#" + defineExpr.id).find('.contractName');}	var newName = defineName.attr('value');
-	toggleFunctionInDrawer(defineExpr, $("#" +defineExprID).find('.definitionName').attr('prevName'));
-	if (contractCompleted(defineExpr.contract)){
-	    defineName.attr('prevName', newName);
-	    contractName.attr('prevName',newName);
-	    defineName.css('background-color','');
-	    contractName.css('background-color','');
-	}
+    } else {
+	throw new Error('changeType: modifiedblock is not defined')
     }
 
+    //modifying the contract (code object representation)n
+    for(var i=0; i<defineExpr.contract.funcIDList.length; i++){
+	addToHistory(cloneProgram(program), cloneProgram(storageProgram));
+        if(selectID===defineExpr.contract.funcIDList[i] && i!==0){
+	    if (curValue === "Type"){
+		defineExpr.contract.argumentTypes[i-1] = undefined;
+	    } else { 
+		defineExpr.contract.argumentTypes[i-1]= curValue;
+	    }
+        }
+        else if(selectID===defineExpr.contract.funcIDList[i] && i===0){
+	    if (curValue === "Type"){
+		defineExpr.contract.outputType= undefined;
+	    } else {
+		defineExpr.contract.outputType = curValue;
+	    }
+        }
+    }
+    var defineName = $("#" + defineExpr.id).find('.definitionName');
+    var contractName = $("#" + defineExpr.id).find('.contractName');	
+    var newName = defineName.attr('value');
+    toggleFunctionInDrawer(defineExpr, $("#" +defineExprID).find('.definitionName').attr('prevName'));
+    if (contractCompleted(defineExpr.contract)){
+	defineName.attr('prevName', newName);
+	contractName.attr('prevName',newName);
+	defineName.css('background-color','');
+	contractName.css('background-color','');
+    }
+}
 
     //adds draggable within define expressions
     function addDraggableToDefineExpr($table) {
@@ -4011,7 +4011,7 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
 	}
 	return idArr;
     }
-/*
+
 
     window.sync = sync;
     window.changeType=changeType;
@@ -4029,5 +4029,5 @@ function changeExprApp(appExpr, prevName, defineExpr, removeDefine, deleteIndex)
     window.future=function(){return future};
     window.buildConstraints=buildConstraints;
 
-*/
-//}());
+
+}());
