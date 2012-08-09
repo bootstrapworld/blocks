@@ -1785,6 +1785,8 @@
 	$($popupHTML).css('position','absolute');
 	$($popupHTML).css('top','50px');
 	$($popupHTML).css('left','220px');
+	$($popupHTML).css('z-index', defineZIndex);
+	defineZIndex = defineZIndex + 1;
 	$($popupHTML).draggable({
 	    start:function(event, ui){
 		$(this).css('z-index', defineZIndex);
@@ -1849,7 +1851,7 @@
 	    removeFromUserFunctions(name);
 
 	    //remove from functionProgram
-	    for (i = 0; i < functionProgram.length; i++){
+	    for (var i = 0; i < functionProgram.length; i++){
 		if (codeObject.id === functionProgram[i].id){
 		    functionProgram.splice(i, 1);
 		    break;
@@ -2802,26 +2804,57 @@
         });
     }
 
+    function onTop($hovered){
+	var hoveredZArray = [];
+	$(".hovered").each(function(){
+	    hoveredZArray.push($(this).closest('.definePopup').css('z-index'));
+	});
+
+	var hoveredZ = $($hovered).closest('.definePopup').css('z-index');
+	for (var i = 0; i < hoveredZArray.length; i++){
+	    if (hoveredZArray[i] > hoveredZ){
+		return false;
+	    }
+	}
+	$(".hovered").each(function(){
+	    $(this).removeClass('highlighted');
+	});
+	return true;
+    }
+
     //adds droppable to define expressions
     function addDroppableToDefineExpr(defineExpr) {
+	var defineCodeObject = searchForIndex(defineExpr.closest('.DefineFun').attr('id'), functionProgram);
         $(defineExpr).droppable({
             tolerance: 'pointer',
 	    accept:function(d){
-		if ($(carrying).hasClass('expr')){
+		if (carrying != null && programCarrying != null && $(defineExpr).children().length === 0 && $(carrying).hasClass('expr') && contractCompleted(defineCodeObject.contract)){
 		    return true;
-		} else{
+		} else if (!contractCompleted(defineCodeObject.contract)){
+		    //change color of incompleted contract parts to red
+		    return false;
+		} else {
 		    return false;
 		}
 	    },
             greedy: true,
-            hoverClass: "highlighted",
+	    over:function(event, ui){
+		$(this).addClass('hovered');
+		if (onTop($(this))){
+		    $(this).addClass('highlighted');
+		}
+	    },
+	    out:function(event, ui){
+		$(this).removeClass('hovered');
+		if ($(this).hasClass('highlighted')){
+		    $(this).removeClass('highlighted');
+		}
+	    },
+//            hoverClass: "highlighted",
             drop: function (event, ui) {
-
-                var outputSelect = $(this).closest('.DefineFun').find('tr').eq(1).find('th').last().find('select');
-                if (carrying != null && programCarrying != null && $(this).children().length === 0 && outputSelect.val() !== 'Type') {
+	        if (carrying != null && programCarrying != null && $(this).children().length === 0 && $(this).hasClass('highlighted')) {
                     $(this).html(carrying);
-                    var defineCode = searchForIndex($(this).closest('.DefineFun').attr('id'), functionProgram);
-                    defineCode.expr = programCarrying;
+                    defineCodeObject.expr = programCarrying;
 
                     //make things within droppable
                     $(this).find('.droppable').each(function () {
@@ -2836,15 +2869,9 @@
                     carrying = null;
                     programCarrying = null;
 
-                } else if (outputSelect.val() === 'Type') {
-                    if (outputSelect.val() === 'Type') {
-                        outputSelect.css('background-color', 'red');
-                    }
-                    $(ui.helper).remove();
-
-                    carrying = null;
-                    programCarrying = null;
-                }
+                } 
+		$(this).removeClass('hovered');
+		$(this).removeClass('highlighted');
             }
         });
     }
