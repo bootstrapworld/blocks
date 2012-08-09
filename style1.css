@@ -1,19 +1,10 @@
 body{
-    background: steelblue url('canvas.jpg');
+    background-color:#000;
     font-family:Arial;
     font-size:11pt;
-    position:absolute;
+    position:fixed;
     left:0px;
     margin: 0px;
-<<<<<<< HEAD
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -o-user-select: none;
-    -khtml-user-select: none;
-    user-select: none;
-    overflow:hidden;
-=======
->>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
 }
 
 
@@ -27,8 +18,7 @@ GENERAL
     top:0px;
     width:100%;
     height:50px;
-    background:black;
-    color: white;
+    background-color:gray;
     padding:0px;
 }
 
@@ -44,127 +34,89 @@ GENERAL
     top:50px;
     left:0px;
     padding:0px;
-}
+ }
 
 #Drawer{
-    position:absolute;
-    left:0px;
-    height: 100%;
-    width: 200px;
-    background: #555;
-    border-right: 3px solid black;
-}
-
+     position:fixed;
+     left:0px;
+     background-color:darkslateblue;
+     height: 100%;
+     width: 200px;
+ }
 
 #code{
-<<<<<<< HEAD
-    position:absolute;
-    top:0px;
-    left:200px;
-}
-
-
-
-/*****************************
- CODE / HEADER
- *****************************/
-=======
      position:absolute;
      top:0px;
      left:200px;
  }
->>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
 
+ /*****************************
+  CODE / HEADER
+  *****************************/
 
 .header {
-    float: right;
-    margin: 15px;
+     float: right;
+     margin: 15px;
 }
-
 
 table{
-<<<<<<< HEAD
-    border-radius: 2px;
-=======
      border-style: solid; 
      border-radius: 10px;
->>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
-}
-th {
-  margin: 0px;
-  padding: 0px;
-  border: none;
 }
 
-input{ 
-  border: none;
-  text-align: center;
+th table{
+    border:none;
+}
+
+th {
+     white-space:nowrap;
 }
 
 .expr{
-    border:  outset 2px;
-    border-radius: 10px;
-    padding: 2px;
-    cursor: move;
+     border: gray; 
+     border-style: solid;
+     border-radius: 10px;
+     padding: 2px;
 }
-<<<<<<< HEAD
-#List{
-    list-style:none;
-}
-=======
 
 
 
->>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
 #List li{
-    cursor:mover;
-   // z-index:100;
-    margin: 20px 0px;
-//    background-color:red;
+     cursor:mover;
+     margin-bottom:5px;
 }
+
 form{
-    height: 10px;
+     height: 10px;
 }
+
 .droppable{
-    border: inset 2px;
-    border-radius: 10px;
-    padding: 2px;
-    min-width:  20px; /* deep nesting shouldn't squeeze a drop-target */
-    font-weight: normal;
+     border: gray;
+     border-style: solid; 
+     border-radius: 10px;
+     padding: 2px;
 }
-<<<<<<< HEAD
-.placeholder{
-    width:100%;
-    height:15px;
-}
-=======
 
 
 
->>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
 /*****************************
  DRAWER
  *****************************/
 
 #options{
-<<<<<<< HEAD
-    width:200px;
-    height:100%;
-    z-index:100;
-    overflow:auto;
-=======
      width:200px;
      float:top;
      background-color:darkslateblue;
      z-index:100;
->>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
+     overflow-y: auto;
 }
 
 #options span {
-    border: 2px outset;
-    border-radius: 5px;
-    padding: 3px;
-    cursor: move;
+     padding: 5px;
+     border: 1px solid black;
+     border-radius: 5px;
+     line-height:30px;
+     white-space: nowrap;
 }
 
 #options .toggleHeader{
@@ -172,43 +124,30 @@ form{
     text-align:center;
     border-bottom: 1px solid #000;
     border-top:1px solid #000;
-    margin-bottom: 10px;
-    -moz-box-shadow: 3px 3px 4px #000;
-    -webkit-box-shadow: 3px 3px 4px #000;
-    box-shadow: 3px 3px 4px #000;
-    -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";     /* For IE 8 */
 }
 
 #options  div{
-    margin: 1px;
+    margin: 3px;
     display:none;
 }
 
 #options h1{
     margin-top:0px;
     margin-bottom:0px;
-    cursor: pointer;
+    font-size:20px;
 }
 
-#options div  br{display: none;}
-#options div  span{
-    display: inline-block; 
-    margin: 3px;
-}
-
-
-#selectors{
+#storage{
     position:fixed;
-    background-color:gray;
-    width:100%;
     bottom:0px;
-    height:50px;
+    padding-top: 5px;
+    padding-left:5px;
+    width:195px;
+    height:100px;
+    background-color:#fff;
+    list-style:none;
 }
 
-<<<<<<< HEAD
-.ui-draggable{
-    z-index: 10;
-=======
 #storagePopup {
     position:absolute;
     top:50px;
@@ -227,7 +166,6 @@ form{
     height:500px;
     background-color:white;
     padding:10px;
->>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
 }
 
 .noborder{
@@ -243,19 +181,6 @@ table{
     background-color:white;
 }
 
-<<<<<<< HEAD
-/*****************************
- Things we'd like shaded...
- The header, the drawer, anything being dragged, and any non-nested expr
- *****************************/
-.ui-sortable-helper, #List li>*, #header, #Drawer{
-    box-shadow: 3px 3px 4px #000;
-    -moz-box-shadow: 3px 3px 4px #000;
-    -webkit-box-shadow: 3px 3px 4px #000;
-    -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
-}
-
-=======
 .wired{
     opacity:.4;
 }
@@ -292,4 +217,14 @@ table{
     width:300px;
     overflow:auto;
 }
->>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
+
+/******************************
+Dialog Box
+********************************/
+/*prevents user from clicking outside dialog box when open*/
+.ui-widget-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+.ui-dialog {
+background-color:#fff;
+padding: 5px;
+}
