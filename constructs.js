@@ -1026,8 +1026,17 @@
 
 	$(document).on('click',".addCond",function(){
 	    addToHistory(cloneProgram(program), cloneProgram(storageProgram));
-	    searchForIndex($(this).closest('table').attr('id'),program).listOfBooleanAnswer.push(new ExprBoolAnswer());
+      if(searchForIndex($(this).closest('table').attr('id'),program)!=undefined){
+	       searchForIndex($(this).closest('table').attr('id'),program).listOfBooleanAnswer.push(new ExprBoolAnswer());
+      }
+      else if(searchForIndex($(this).closest('table').attr('id'),functionProgram)!=undefined){
+         searchForIndex($(this).closest('table').attr('id'),functionProgram).listOfBooleanAnswer.push(new ExprBoolAnswer());
+      }
+      else if(searchForIndex($(this).closest('table').attr('id'),constantProgram)!=undefined){
+         searchForIndex($(this).closest('table').attr('id'),constantProgram).listOfBooleanAnswer.push(new ExprBoolAnswer());
+      }
 	    renderProgram(createProgramHTML())
+      renderFunctions();
 	});
 
 	$("#runButton").click(function(){
@@ -1083,15 +1092,25 @@
 	});
 
 	$(document).on('click',".removeCond",function(){
-	    var listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),program).listOfBooleanAnswer
+	    var listOfTuples
+        if(searchForIndex($(this).closest('.Cond').attr('id'),program)!=undefined){
+          listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),program).listOfBooleanAnswer
+        }
+        else if(searchForIndex($(this).closest('.Cond').attr('id'),functionProgram)!=undefined){
+          listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),functionProgram).listOfBooleanAnswer
+        }
+        else if(searchForIndex($(this).closest('.Cond').attr('id'),constantProgram)!=undefined){
+          listOfTuples=searchForIndex($(this).closest('.Cond').attr('id'),constantProgram).listOfBooleanAnswer
+        }
 	    if(listOfTuples.length!=1){
-		addToHistory(cloneProgram(program), cloneProgram(storageProgram));
-		for(var i=0;i<listOfTuples.length;i++){
-		    if(listOfTuples[i].id===$(this).closest('table').attr('id')){
-			listOfTuples.splice(i,1)
-		    }
+		      addToHistory(cloneProgram(program), cloneProgram(storageProgram));
+		      for(var i=0;i<listOfTuples.length;i++){
+		          if(listOfTuples[i].id===$(this).closest('table').attr('id')){
+			           listOfTuples.splice(i,1)
+		      }
 		}  
 		renderProgram(createProgramHTML());
+    renderFunctions();
 	    }    
 	});
     });
@@ -1360,6 +1379,9 @@
 		foundName = true;
 	    }
 	}
+  if(defineName===""){
+    foundName=true;
+  }
 	if (foundName === false) {
 	    throw new Error('removeFunctionFromArray: could not find defineName');
 	}
@@ -1562,6 +1584,7 @@
 	    if ($(this).attr('name') != undefined){
 		console.log('here2');
 		$("#" + $(this).attr('name')).closest('.definePopup').css('visibility','visible');
+          typeCheck(functionProgram);
 	    }
 	});
 	$("#storage").click(function(){
@@ -1857,6 +1880,7 @@
 	setLiWidth($("#List li"));
 	setLiWidth($("#storagePopup li"));
 	typeCheck(program);
+  typeCheck(storageProgram);
 	makeDrawers(functions.concat(userFunctions), constants);
 	$("#storage").text('Storage (' + storageProgram.length + ')');
 	addUItoStorage();
@@ -1876,6 +1900,8 @@
 		addDroppableWithinDefineExpr($("#" + functionProgram[i].funcIDList[0]).find('.droppable'));
 	    }
 	}
+  typeCheck(functionProgram);
+  typeCheck(program)
     }
 
     /*
@@ -2590,6 +2616,7 @@
 	    appendTo:'body',
 	    connectToSortable:'#List, .droppable',
 	    start:function(event, ui){
+        typeCheck(functionProgram);
 		draggedClone = $(this);
 		programCarrying = searchForIndex($(this).attr("id"), functionProgram  );
 		carrying = getHTML($(this));
@@ -2597,6 +2624,7 @@
 		setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined,functionProgram  );
 	    },
 	    stop:function(event, ui){
+        typeCheck(functionProgram);
 		if (programCarrying != null && carrying != null){
 		    console.log('here');
 
@@ -2616,6 +2644,7 @@
 	    greedy:true,
             hoverClass:"highlighted",
 	    drop:function(event, ui) {
+
 		var outputSelect = $(this).closest('.DefineFun').find('tr').eq(1).find('th').last().find('select');
 		if (carrying != null && programCarrying != null && $(this).children().length === 0 && outputSelect.val() !== 'Type'){
 		    $(this).html(carrying);
@@ -2631,7 +2660,7 @@
 		    $(this).find('table').each(function(){
 			addDraggableToDefineExpr($(this));
 		    });
-
+        typeCheck(functionProgram);
 		    carrying = null;
 		    programCarrying = null;
 
@@ -2937,6 +2966,7 @@
 		    $(ui.item).remove();
 		}
 		typeCheck(program);
+    typeCheck(functionProgram);
             },
             receive:function(event,ui){
 		if(ui.item === null){
@@ -3034,6 +3064,7 @@
 	    drop:function(event, ui) {
 		if (!$(ui.draggable).is('.draggable')){
 		    typeCheck(program);
+        typeCheck(functionProgram);
 		    var replacement = "<li>" + carrying + "</li>";
 		    addToHistory(tempProgram,cloneProgram(storage));
 		    $("#actualStorage").append(replacement);
@@ -3094,6 +3125,7 @@
             },
             stop: function(event,ui){
 		typeCheck(program);
+    typeCheck(functionProgram);
             },
             helper: function(event, ui){
 		programCarrying = makeCodeFromOptions($(this).text());
@@ -3230,6 +3262,7 @@
 			$(this).removeClass("highlighted");
 			ui.draggable.detach();
 			typeCheck(program);
+      typeCheck(functionProgram);
                     }
 		}
             });
@@ -3501,8 +3534,8 @@
             $(document.getElementById(ArrayofBlocks[i].id)).find("th").each(function(){removeInferTypes($(this), ArrayofBlocks)});
             createInferTypes(blockTypeInfer.types, ArrayofBlocks);
             createErrorMessages(blockTypeInfer.typeErrors);
-            if(ArrayofBlocks[i] instanceof ExprCond && topLevelCondWithErrors(ArrayofBlocks[i])){
-		removeTopLevelCondColor(ArrayofBlocks[i]);
+            if(ArrayofBlocks[i] instanceof ExprCond && topLevelCondWithErrors(ArrayofBlocks[i],ArrayofBlocks)){
+		            removeTopLevelCondColor(ArrayofBlocks[i],ArrayofBlocks);
             }
 	}
 	console.log("CHILDREN")
@@ -3517,13 +3550,13 @@
     	    }
 	}
     }
-    function removeTopLevelCondColor(obj){
-	removeInferTypes($(document.getElementById(obj.id)), program);
+    function removeTopLevelCondColor(obj,arrayofobj){
+	removeInferTypes($(document.getElementById(obj.id)), arrayofobj);
 	for(var i= 0; i<obj.listOfBooleanAnswer.length; i++){
-	    removeInferTypes($(document.getElementById(obj.listOfBooleanAnswer[i].id)), program);
-	    removeInferTypes($(document.getElementById(obj.listOfBooleanAnswer[i].funcIDList[1])), program);
+	    removeInferTypes($(document.getElementById(obj.listOfBooleanAnswer[i].id)), arrayofobj);
+	    removeInferTypes($(document.getElementById(obj.listOfBooleanAnswer[i].funcIDList[1])), arrayofobj);
 	    if(obj.listOfBooleanAnswer[i].answer instanceof ExprCond){
-		removeTopLevelCondColor(obj.listOfBooleanAnswer[i].answer);
+		removeTopLevelCondColor(obj.listOfBooleanAnswer[i].answer,arrayofobj);
 	    }
 	}
     }
@@ -3936,12 +3969,19 @@
 			if(k === 0){
                             //error in output type of contract
                             if(curr.contract.outputType === undefined){console.log("ERROR! CONTRACT OUPUT TYPE UNDEFINED")};
-                            if(curr.expr.outputType !== undefined){
-				helpfulErrors.push(new errorMatch([curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
-								  + curr.contract.outputType+"\" but found output type \""+ curr.expr.outputType + "\" in the expression"));
-                            }else{
-				helpfulErrors.push(new errorMatch([curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
-								  + curr.contract.outputType+"\" but a block with a different output type in the expression"));
+                      if(curr.expr.outputType !== undefined){
+                              if(curr.expr instanceof ExprCond){
+                                condErr = buildCondError(curr.expr.id, curr.expr, curr.contract.outputType);
+                                  for(k=0; k<condErr.length; k++){
+                                    helpfulErrors.push(condErr[k]);
+                                  }
+                              }else {
+				                          helpfulErrors.push(new errorMatch([curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
+								                  + curr.contract.outputType+"\" but found output type \""+ curr.expr.outputType + "\" in the expression"));
+                                }
+                    }else{
+	                           helpfulErrors.push(new errorMatch([curr.expr.id], "Contract output and actual expression output do not match. Contract expected output type \""
+								        + curr.contract.outputType+"\" but a block with a different output type in the expression"));
                             }
 			}else{
                             //error in one of the contract positions representing an argument name
