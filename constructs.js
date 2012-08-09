@@ -2806,6 +2806,13 @@
     function addDroppableToDefineExpr(defineExpr) {
         $(defineExpr).droppable({
             tolerance: 'pointer',
+	    accept:function(d){
+		if ($(carrying).hasClass('expr')){
+		    return true;
+		} else{
+		    return false;
+		}
+	    },
             greedy: true,
             hoverClass: "highlighted",
             drop: function (event, ui) {
