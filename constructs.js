@@ -2028,7 +2028,7 @@
             popupHTML += " style=\"background:" + colors[codeObject.contract.outputType] + "\" ";
         }
         if (codeObject.expr != undefined) {
-            popupHTML += "class=\"functionExpr noborder droppable expr\" name=\"Expr\" id=" + codeObject.funcIDList[0] + ">";
+            popupHTML += "class=\"functionExpr noborder droppable expr\" name=\"Expr\" id=" + codeObject.funcIDList[0] + "colspan=\"" + tableWidth + "\">";
             popupHTML += createBlock(codeObject.expr, constants.concat(createNewConstants(codeObject)), functions.concat(userFunctions));
             popupHTML += "</th>";
         } else {
