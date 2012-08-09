@@ -1976,7 +1976,7 @@
         for (i = 0; i < codeObject.argumentNames.length; i++) {
             typeDrop = generateTypeDrop(codeObject.contract.funcIDList[i + 1], codeObject);
             if (codeObject.contract.argumentTypes[i + 1] != undefined) {
-                $(typeDrop).val(codeObject.contract.argumentTypes[i + 1])
+                $(typeDrop).val(codeObject.contract.argumentTypes[i + 1]);
             }
             popupHTML += " <th style=\"text-align:left;\">" + typeDrop + "</th><th style=\"text-align:left;\" class=\"buttonHolder\"></th>";
         }
@@ -1999,10 +1999,11 @@
         popupHTML += " /></th>";
         //DEFINE BLOCK ARGUMENTS
         for (i = 0; i < codeObject.argumentNames.length; i++) {
-            popupHTML += "<th width=\"10px\" class=\"expr argument\"";
+            popupHTML += "<th width=\"10px\" class=\"expr argument";
             if (codeObject.contract.argumentTypes[i] != undefined) {
-                popupHTML += " style=\"background:" + colors[codeObject.contract.argumentTypes[i]] + "\" ";
+                popupHTML += codeObject.contract.argumentTypes[i];
             }
+            popupHTML+="\""
             popupHTML += "><input style=\"width:70px;\" id=\"" + codeObject.funcIDList[i + 1] + "\" onkeyup=\"sync(" + codeObject.id + ",$(this))\"  disabled=\"disabled\" class=\"argName\" ";
             if (codeObject.argumentNames[i] != undefined) {
                 popupHTML += "value=\"" + encode(codeObject.argumentNames[i]) + "\"";
@@ -2099,7 +2100,8 @@
                 addDroppableWithinDefineExpr($("#" + functionProgram[i].funcIDList[0]).find('.droppable'));
             }
         }
-        typeCheckAll()
+        typeCheckAll();
+
     }
 
     function typeCheckAll(){
