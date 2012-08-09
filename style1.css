@@ -109,6 +109,7 @@ form{
      float:top;
      background-color:darkslateblue;
      z-index:100;
+     overflow-y: auto;
 }
 
 #options span {
@@ -216,4 +217,15 @@ table{
     background-color:#FCF0AD;
     width:300px;
     overflow:auto;
+}
+
+/******************************
+Dialog Box
+********************************/
+/*prevents user from clicking outside dialog box when open*/
+.ui-widget-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+.ui-dialog {
+background-color:#fff;
+padding: 5px;
 }
