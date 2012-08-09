@@ -1188,9 +1188,14 @@
                 objectArrayToProgram(JSON.parse(programString[0]), program);
                 objectArrayToProgram(JSON.parse(programString[3]), storageProgram);
                 //do I change the history and trash? overwrite it?
-                renderProgram();
                 historyarr = [];
                 future = [];
+                console.log(functionProgram)
+                for(var  myFunction in functionProgram){
+                  createDefinePopup(functionProgram[myFunction]);
+                }
+                renderProgram();
+                $(".definePopup").css("visibility","hidden")
                 $("#undoButton").attr('disabled', 'disabled');
                 $("#redoButton").attr('disabled', 'disabled');
             }
@@ -1777,9 +1782,10 @@
     var defineZIndex = 10;
 
     //renders the defineblock on screen
-    function createDefinePopup(){
-	var codeObject = new ExprDefineFunc;
-	functionProgram.push(codeObject);
+    function createDefinePopup(codeObject){
+	
+      if(codeObject === undefined){codeObject = new ExprDefineFunc;}
+	 functionProgram.push(codeObject);
 	var $popupHTML = $(makeDefinePopup(codeObject));
 	$('body').append($($popupHTML));
 	$($popupHTML).css('position','absolute');
@@ -1972,7 +1978,7 @@
         for (i = 0; i < codeObject.argumentNames.length; i++) {
             typeDrop = generateTypeDrop(codeObject.contract.funcIDList[i + 1], codeObject);
             if (codeObject.contract.argumentTypes[i + 1] != undefined) {
-                $(typeDrop).val(codeObject.contract.argumentTypes[i + 1])
+                $(typeDrop).val(codeObject.contract.argumentTypes[i + 1]);
             }
             popupHTML += " <th style=\"text-align:left;\">" + typeDrop + "</th><th style=\"text-align:left;\" class=\"buttonHolder\"></th>";
         }
@@ -1995,10 +2001,11 @@
         popupHTML += " /></th>";
         //DEFINE BLOCK ARGUMENTS
         for (i = 0; i < codeObject.argumentNames.length; i++) {
-            popupHTML += "<th width=\"10px\" class=\"expr argument\"";
+            popupHTML += "<th width=\"10px\" class=\"expr argument";
             if (codeObject.contract.argumentTypes[i] != undefined) {
-                popupHTML += " style=\"background:" + colors[codeObject.contract.argumentTypes[i]] + "\" ";
+                popupHTML += codeObject.contract.argumentTypes[i];
             }
+            popupHTML+="\""
             popupHTML += "><input style=\"width:70px;\" id=\"" + codeObject.funcIDList[i + 1] + "\" onkeyup=\"sync(" + codeObject.id + ",$(this))\"  disabled=\"disabled\" class=\"argName\" ";
             if (codeObject.argumentNames[i] != undefined) {
                 popupHTML += "value=\"" + encode(codeObject.argumentNames[i]) + "\"";
@@ -2018,7 +2025,7 @@
         }
         if (codeObject.expr != undefined) {
             popupHTML += "class=\"functionExpr noborder droppable expr\" name=\"Expr\" id=" + codeObject.funcIDList[0] + ">";
-            popupHTML += createBlock(codeObject.expr, constantEnvironment.concat(createNewConstants(codeObject)), functionEnvironment);
+            popupHTML += createBlock(codeObject.expr, constants.concat(createNewConstants(codeObject)), functions.concat(userFunctions));
             popupHTML += "</th>";
         } else {
             popupHTML += "name=\"Expr\" class=\"functionExpr droppable expr\" id=" + codeObject.funcIDList[0] + " colspan=\"" + tableWidth + "\">Expr</th>";
@@ -2075,8 +2082,7 @@
         // });
         setLiWidth($("#List li"));
         setLiWidth($("#storagePopup li"));
-        typeCheck(program);
-        typeCheck(storageProgram);
+        typeCheckAll();
         makeDrawers(functions.concat(userFunctions), constants);
         $("#storage").text('Storage (' + storageProgram.length + ')');
         addUItoStorage();
@@ -2096,8 +2102,16 @@
                 addDroppableWithinDefineExpr($("#" + functionProgram[i].funcIDList[0]).find('.droppable'));
             }
         }
-        typeCheck(functionProgram);
-        typeCheck(program)
+        typeCheckAll();
+
+    }
+
+    function typeCheckAll(){
+      typeCheck(program);
+      typeCheck(storageProgram);
+      typeCheck(functionProgram);
+      typeCheck(constantProgram);
+      $(".highlighted").removeClass("highlighted")
     }
 
     /*
@@ -2783,15 +2797,14 @@
             appendTo: 'body',
             connectToSortable: '#List, .droppable',
             start: function (event, ui) {
-                typeCheck(functionProgram);
                 draggedClone = $(this);
                 programCarrying = searchForIndex($(this).attr("id"), functionProgram);
                 carrying = getHTML($(this));
                 ui.helper.addClass("wired");
                 setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined, functionProgram);
+                typeCheckAll();
             },
             stop: function (event, ui) {
-                typeCheck(functionProgram);
                 if (programCarrying != null && carrying != null) {
                     console.log('here');
 
@@ -2800,6 +2813,7 @@
                     carrying = null;
                 }
                 renderFunctions();
+                typeCheckAll();
             }
         });
     }
@@ -2841,7 +2855,11 @@
 	    over:function(event, ui){
 		$(this).addClass('hovered');
 		if (onTop($(this))){
-		    $(this).addClass('highlighted');
+                   if (programCarrying != undefined && carrying != undefined && $(this).children().length === 0) {
+                        if (flattenAllFuncIDLists(programCarrying).indexOf($(this).attr("id")) === -1) {
+                            $(this).addClass("highlighted")
+                        }
+                    }
 		}
 	    },
 	    out:function(event, ui){
@@ -2850,7 +2868,7 @@
 		    $(this).removeClass('highlighted');
 		}
 	    },
-//            hoverClass: "highlighted",
+
             drop: function (event, ui) {
 	        if (carrying != null && programCarrying != null && $(this).children().length === 0 && $(this).hasClass('highlighted')) {
                     $(this).html(carrying);
@@ -2865,7 +2883,7 @@
                     $(this).find('table').each(function () {
                         addDraggableToDefineExpr($(this));
                     });
-                    typeCheck(functionProgram);
+                    typeCheckAll();
                     carrying = null;
                     programCarrying = null;
 
@@ -2887,7 +2905,16 @@
         $(jQuerySelection).droppable({
             tolerance: 'pointer',
             greedy: true,
-            hoverClass: "highlighted",
+                            over: function (event, ui) {
+                    if (programCarrying != undefined && carrying != undefined && $(this).children().length === 0) {
+                        if (flattenAllFuncIDLists(programCarrying).indexOf($(this).attr("id")) === -1) {
+                            $(this).addClass("highlighted")
+                        }
+                    }
+                },
+                out: function (event, ui) {
+                    $(this).removeClass("highlighted");
+                },
             drop: function (event, ui) {
                 if (carrying != null && programCarrying != null && $(this).children().length === 0) {
                     $(this).html(carrying);
@@ -2905,6 +2932,7 @@
                     }
                     programCarrying = null;
                     carrying = null;
+                    typeCheckAll();
                 }
             }
         });
@@ -3163,8 +3191,7 @@
                 } else {
                     $(ui.item).remove();
                 }
-                typeCheck(program);
-                typeCheck(functionProgram);
+                typeCheckAll()
             },
             receive: function (event, ui) {
                 if (ui.item === null) {
@@ -3259,8 +3286,7 @@
             tolerance: 'pointer',
             drop: function (event, ui) {
                 if (!$(ui.draggable).is('.draggable')) {
-                    typeCheck(program);
-                    typeCheck(functionProgram);
+                    typeCheckAll()
                     var replacement = "<li>" + carrying + "</li>";
                     addToHistory(tempProgram, cloneProgram(storage));
                     $("#actualStorage").append(replacement);
@@ -3319,8 +3345,7 @@
                 }
             },
             stop: function (event, ui) {
-                typeCheck(program);
-                typeCheck(functionProgram);
+                typeCheckAll();
             },
             helper: function (event, ui) {
                 programCarrying = makeCodeFromOptions($(this).text());
@@ -3453,8 +3478,7 @@
                         $(this).css("border", "none");
                         $(this).removeClass("highlighted");
                         ui.draggable.detach();
-                        typeCheck(program);
-                        typeCheck(functionProgram);
+                        typeCheckAll()
                     }
                 }
             });
@@ -3716,31 +3740,26 @@
             removeInferTypes($(document.getElementById(ArrayofBlocks[i].id)), ArrayofBlocks);
             $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function () {
                 removeErrorMessages($(this), ArrayofBlocks)
-            });
-            $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function () {
                 removeInferTypes($(this), ArrayofBlocks)
             });
             $(document.getElementById(ArrayofBlocks[i].id)).find("th").each(function () {
-                removeInferTypes($(this), ArrayofBlocks)
+                if(!$(this).hasClass('argument') && !$(this).hasClass('argName')){
+                    removeInferTypes($(this), ArrayofBlocks)
+                }
             });
             createInferTypes(blockTypeInfer.types, ArrayofBlocks);
             createErrorMessages(blockTypeInfer.typeErrors);
             if (ArrayofBlocks[i] instanceof ExprCond && topLevelCondWithErrors(ArrayofBlocks[i], ArrayofBlocks)) {
                 removeTopLevelCondColor(ArrayofBlocks[i], ArrayofBlocks);
             }
-	}
-	$(".BoolAnswer").children().children().each(function(){$(this).css('background-color', $(this).closest('.Cond').css('background-color'))});
 
-    }
-
-    function setPairColor(DOMelem) {
-        var toColor = undefined;
-        for (color in colors) {
-            if (colors.hasOwnProperty(color)) {
-
-            }
         }
+        $(".BoolAnswer").children().children().each(function () {
+            $(this).css('background-color', $(this).closest('.Cond').css('background-color'))
+        });
     }
+
+
 
     function removeTopLevelCondColor(obj, arrayofobj) {
         removeInferTypes($(document.getElementById(obj.id)), arrayofobj);
@@ -3793,7 +3812,7 @@
                 id = typeMap[i].rhs.id;
                 type = typeMap[i].lhs.elemList[0].type;
             }
-            if (isNaN(type) && !$(document.getElementById(id)).hasClass("ContractType")) {
+            if (isNaN(type) && !$(document.getElementById(id)).hasClass("ContractType") && !$(document.getElementById(id)).hasClass("argName") && !$(document.getElementById(id)).hasClass("argument")){
 
                 if ($(document.getElementById(id)).hasClass("Cond")) {
                     searchForIndex(id, ArrayofBlocks).outputType = type;
@@ -3890,7 +3909,16 @@
             //if(obj.argumentNames.length + 1 !== obj.funcIDList.length){
             //          throw new Error("Each argument did not have an id or vice versa")
             //  }
-
+            //expr
+            //this needs to come first, fixes problem with error pointing to define rather than the exprapp
+            if (obj.expr !== undefined) {
+                next = buildConstraints(obj.expr, obj.funcIDList[0]);
+                constraints = constraints.concat(next.constraints);
+                errors = errors.concat(next.errors);
+                literals = literals.concat(next.literals);
+            } else {
+                errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
+            }
             elemList = [];
 
             //also check for invalid names
@@ -3919,16 +3947,7 @@
             errors = errors.concat(next.errors);
             constraints = constraints.concat(next.constraints);
             literals = literals.concat(next.literals);
-            //expr
-            //this needs to come first, fixes problem with error pointing to define rather than the exprapp
-            if (obj.expr !== undefined) {
-                next = buildConstraints(obj.expr, obj.funcIDList[0]);
-                constraints = constraints.concat(next.constraints);
-                errors = errors.concat(next.errors);
-                literals = literals.concat(next.literals);
-            } else {
-                errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
-            }
+
         } else if (obj instanceof ExprApp) {
             lhs = new elemId(obj.id);
             elemList = [];
@@ -4398,6 +4417,7 @@
     //FOR TESTING PURPOSES
     window.typeInfer = typeInfer;
     window.typeCheck = typeCheck;
+    window.typeCheckAll=typeCheckAll;
     window.parseProgram = parseProgram;
     window.program = function () {
         return program

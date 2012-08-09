@@ -666,6 +666,15 @@ contains(new constraint(new elemId(c1.id), new elemType("Numbers"), "58"), unify
 console.log("Testing buildTypeErrors");
 errorCheck(buildTypeErrors(unify(buildConstraints(c2).constraints, buildConstraints(c2).literals).errors, c2), [new errorMatch([c2.listOfBooleanAnswer[0].answer.id, c2.listOfBooleanAnswer[1].answer.id],
 	"The output type of this cond is not consistent, there are answers that return different types.")]);
+var d3 = new ExprDefineFunc();
+d3.contract.funcName = "test2";
+d3.contract.argumentTypes[0] = "Numbers";
+d3.contract.outputType = "Strings";
+d3.argumentNames = "num";
+var num = new ExprConst("num");
+num.outputType = "Numbers";
+d3.expr = num;
+errorCheck(buildTypeErrors(unify(buildConstraints(d3).constraints, buildConstraints(d3).literals).errors, d3), [new errorMatch([d3.expr.id], "Contract output and actual expression output do not match. Contract expected output type \"Strings\" but found output type \"Numbers\" in the expression" )])
 //This test case fails because we never have an undefined output type variable, so I haven't written anything to track an undefined output type variab;e
 //errorCheck(buildTypeErrors(unify(buildConstraints(d2).constraints, buildConstraints(d2).literals).errors, d2), [new errorMatch([d2.contract.funcIDList[1], d2.funcIDList[1], f3.args[0].id],
 //		"The variable \"x\" was assigned type \"Strings\" in the contract, but at least one instance of this variable had a different type.")]);
