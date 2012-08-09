@@ -1710,7 +1710,7 @@
 			Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(allConstants[typeDrawers[Type][i]].name)+"</span>";
 		    }
 		}
-
+		
 		else if(Type==="Define"){
 		    for(i=0;i<typeDrawers[Type].length;i++){
 			Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span>";
@@ -1744,7 +1744,7 @@
 			}
 		    }
 		}
-
+		
 		Drawers+="</div>";
 	    }
 	}
@@ -1789,7 +1789,7 @@
 
     //renders the defineblock on screen
     function createDefinePopup(codeObject){
-
+	
       if(codeObject === undefined){codeObject = new ExprDefineFunc;functionProgram.push(codeObject);}
 	var $popupHTML = $(makeDefinePopup(codeObject));
 	$('body').append($($popupHTML));
@@ -1876,7 +1876,7 @@
 
 	    //remove from function
 	    changeProgramFunctions(name, codeObject, functionProgram, true);
-
+	    
 	    //remove popup
 	    $popupHTML.detach();
 	    buildFuncConstructs();
@@ -2221,10 +2221,10 @@
 						       });*/
 			}
 		    } else {
-
+			
 			defInput.css('background-color','');
 			contractInput.css('background-color', '');
-
+			
 			// add/remove from drawers
 			toggleFunctionInDrawer(block, $input.attr('prevName'));
 			if (contractCompleted(block.contract)){
@@ -2237,7 +2237,7 @@
 
 	    //DEFINE ARGUMENTS
 	    else if ($input.hasClass('argName')) {
-
+		
 		timeout = setTimeout(function() {
 		    if ($input.val() === "" || contains($input.val(), block.argumentNames)){
 			if ($input.attr('prevName') !== $input.val() ){
