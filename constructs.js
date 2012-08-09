@@ -1855,7 +1855,7 @@
 	    removeFromUserFunctions(name);
 
 	    //remove from functionProgram
-	    for (i = 0; i < functionProgram.length; i++){
+	    for (var i = 0; i < functionProgram.length; i++){
 		if (codeObject.id === functionProgram[i].id){
 		    functionProgram.splice(i, 1);
 		    break;
@@ -2795,15 +2795,14 @@
             appendTo: 'body',
             connectToSortable: '#List, .droppable',
             start: function (event, ui) {
-                typeCheckAll();
                 draggedClone = $(this);
                 programCarrying = searchForIndex($(this).attr("id"), functionProgram);
                 carrying = getHTML($(this));
                 ui.helper.addClass("wired");
                 setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined, functionProgram);
+                typeCheckAll();
             },
             stop: function (event, ui) {
-                typeCheckAll();
                 if (programCarrying != null && carrying != null) {
                     console.log('here');
 
@@ -2812,6 +2811,7 @@
                     carrying = null;
                 }
                 renderFunctions();
+                typeCheckAll();
             }
         });
     }
@@ -2910,6 +2910,7 @@
                     }
                     programCarrying = null;
                     carrying = null;
+                    typeCheckAll();
                 }
             }
         });
@@ -3717,12 +3718,12 @@
             removeInferTypes($(document.getElementById(ArrayofBlocks[i].id)), ArrayofBlocks);
             $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function () {
                 removeErrorMessages($(this), ArrayofBlocks)
-            });
-            $(document.getElementById(ArrayofBlocks[i].id)).find("table").each(function () {
                 removeInferTypes($(this), ArrayofBlocks)
             });
             $(document.getElementById(ArrayofBlocks[i].id)).find("th").each(function () {
-                removeInferTypes($(this), ArrayofBlocks)
+                if(!$(this).hasClass('argument') && !$(this).hasClass('argName')){
+                    removeInferTypes($(this), ArrayofBlocks)
+                }
             });
             createInferTypes(blockTypeInfer.types, ArrayofBlocks);
             createErrorMessages(blockTypeInfer.typeErrors);
@@ -3886,7 +3887,16 @@
             //if(obj.argumentNames.length + 1 !== obj.funcIDList.length){
             //          throw new Error("Each argument did not have an id or vice versa")
             //  }
-
+            //expr
+            //this needs to come first, fixes problem with error pointing to define rather than the exprapp
+            if (obj.expr !== undefined) {
+                next = buildConstraints(obj.expr, obj.funcIDList[0]);
+                constraints = constraints.concat(next.constraints);
+                errors = errors.concat(next.errors);
+                literals = literals.concat(next.literals);
+            } else {
+                errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
+            }
             elemList = [];
 
             //also check for invalid names
@@ -3915,16 +3925,7 @@
             errors = errors.concat(next.errors);
             constraints = constraints.concat(next.constraints);
             literals = literals.concat(next.literals);
-            //expr
-            //this needs to come first, fixes problem with error pointing to define rather than the exprapp
-            if (obj.expr !== undefined) {
-                next = buildConstraints(obj.expr, obj.funcIDList[0]);
-                constraints = constraints.concat(next.constraints);
-                errors = errors.concat(next.errors);
-                literals = literals.concat(next.literals);
-            } else {
-                errors = errors.concat([new error(obj.funcIDList[0], "Empty space")]);
-            }
+
         } else if (obj instanceof ExprApp) {
             lhs = new elemId(obj.id);
             elemList = [];
