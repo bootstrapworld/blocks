@@ -1076,9 +1076,13 @@
             return toContinue;
         });
 
+        $(document).on('mouseup', function (e) {
+          mouseCount--;
+        });
 
         $(document).on('mousedown', function (e) {
-            return formValidation(e)
+          mouseCount++
+            return formValidation(e);
         });
 
         //Sets undo and redo buttons to disabled on startup
@@ -2108,7 +2112,6 @@
 
     function typeCheckAll(){
       typeCheck(program);
-      typeCheck(storageProgram);
       typeCheck(functionProgram);
       typeCheck(constantProgram);
       $(".highlighted").removeClass("highlighted")
@@ -3094,6 +3097,7 @@
       |___/|_| \__,_\__, | \_____|  |___/|_| \___/ .__/
       |___/                        |_|
       =====================================================================================*/
+      var mouseCount=0
 
     //What is currently being carried. Type: DOM
     var carrying = undefined;
@@ -3139,6 +3143,7 @@
             appendTo: 'body',
             helper: 'clone',
             start: function (event, ui) {
+              mouseCount=1;
                 removeOutputs();
                 if (ui.item === null) {
                     throw new Error("sortable start: ui.item is undefined");
@@ -3206,7 +3211,7 @@
                             $(replacement).find('input').attr('readonly', false);
                             setLiWidth($("#List li"));
                             program.splice($("#List li").index(replacement), 0, programCarrying);
-                            //          $("#storage").html('Storage (' + storageProgram.length + ')');
+                            $("#storage").empty().text('Storage (' + storageProgram.length + ')');
                             addToHistory(tempProgram, tempStorageProgram);
                             programCarrying = null;
                             carrying = null;
@@ -3285,7 +3290,7 @@
         $("#storage").droppable({
             tolerance: 'pointer',
             drop: function (event, ui) {
-                if (!$(ui.draggable).is('.draggable')) {
+                if (!$(ui.draggable).is('.draggable') && mouseCount==0) {
                     typeCheckAll()
                     var replacement = "<li>" + carrying + "</li>";
                     addToHistory(tempProgram, cloneProgram(storage));
@@ -3298,7 +3303,7 @@
                     }
                     $(ui.draggable).remove();
                     setLiWidth($("#actualStorage li"));
-                    // $("#storage").html("Storage (" + storageProgram.length + ")");
+                    $("#storage").empty().text('Storage (' + storageProgram.length + ')');
                     carrying = null;
                     programCarrying = null;
                 }
@@ -4441,5 +4446,8 @@
     window.userFunctions = function () {
         return userFunctions
     };
+    window.mouseCount = function(){
+      return mouseCount;
+    }
 
 }());
