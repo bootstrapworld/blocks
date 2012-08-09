@@ -2109,6 +2109,7 @@
       typeCheck(storageProgram);
       typeCheck(functionProgram);
       typeCheck(constantProgram);
+      $(".highlighted").removeClass("highlighted")
     }
 
     /*
@@ -2827,7 +2828,16 @@
 		}
 	    },
             greedy: true,
-            hoverClass: "highlighted",
+              over: function (event, ui) {
+                    if (programCarrying != undefined && carrying != undefined && $(this).children().length === 0) {
+                        if (flattenAllFuncIDLists(programCarrying).indexOf($(this).attr("id")) === -1) {
+                            $(this).addClass("highlighted")
+                        }
+                    }
+                },
+              out: function (event, ui) {
+                    $(this).removeClass("highlighted");
+              },
             drop: function (event, ui) {
 
                 var outputSelect = $(this).closest('.DefineFun').find('tr').eq(1).find('th').last().find('select');
@@ -2873,7 +2883,16 @@
         $(jQuerySelection).droppable({
             tolerance: 'pointer',
             greedy: true,
-            hoverClass: "highlighted",
+                            over: function (event, ui) {
+                    if (programCarrying != undefined && carrying != undefined && $(this).children().length === 0) {
+                        if (flattenAllFuncIDLists(programCarrying).indexOf($(this).attr("id")) === -1) {
+                            $(this).addClass("highlighted")
+                        }
+                    }
+                },
+                out: function (event, ui) {
+                    $(this).removeClass("highlighted");
+                },
             drop: function (event, ui) {
                 if (carrying != null && programCarrying != null && $(this).children().length === 0) {
                     $(this).html(carrying);
