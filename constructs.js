@@ -3650,8 +3650,6 @@
                 removeTopLevelCondColor(ArrayofBlocks[i], ArrayofBlocks);
             }
         }
-        console.log("CHILDREN")
-        console.log($(".BoolAnswer"))
         $(".BoolAnswer").children().children().each(function () {
             $(this).css('background-color', $(this).closest('.Cond').css('background-color'))
         });
@@ -3717,7 +3715,7 @@
                 id = typeMap[i].rhs.id;
                 type = typeMap[i].lhs.elemList[0].type;
             }
-            if (isNaN(type) && !$(document.getElementById(id)).hasClass("ContractType")) {
+            if (isNaN(type) && !$(document.getElementById(id)).hasClass("ContractType") && !$(document.getElementById(id)).hasClass("argName") && !$(document.getElementById(id)).hasClass("argument")){
 
                 if ($(document.getElementById(id)).hasClass("Cond")) {
                     searchForIndex(id, ArrayofBlocks).outputType = type;
