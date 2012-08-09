@@ -1534,24 +1534,25 @@
     /*
       removeFunctionFromArray removes codeObject from functionProgram  
 
-      @param defineName - a string representing the name of a ExprDefineFunc that
+      @param defineID - a string representing the ID of a ExprDefineFunc that
       you want to remove
     */
-    function removeFunctionFromArray(defineName) {
-        console.log(functionProgram, defineName);
-        var foundName = false;
-        for (var i = 0; i < functionProgram.length && !foundName; i++) {
-            if (functionProgram[i].contract.funcName === defineName) {
-                functionProgram.splice(i, 1);
-                foundName = true;
-            }
-        }
-        if (defineName === "") {
+    function removeFunctionFromArray(defineID) {
+
+	var foundName = false;
+	for (var i = 0; i < functionProgram.length && !foundName; i++){
+	    if (functionProgram[i].id === defineID) {
+		functionProgram.splice(i, 1);
+		foundName = true;
+	    }
+	}
+/*
+        if (define === "") {
             foundName = true;
-        }
-        if (foundName === false) {
-            throw new Error('removeFunctionFromArray: could not find defineName');
-        }
+        }*/
+	if (foundName === false) {
+	    throw new Error('removeFunctionFromArray: could not find defineName');
+	}
     }
 
 
@@ -1684,151 +1685,191 @@
     //makeDrawers takes in all of the functions and all of the constants and will change the HTML so that each of the types is an openable drawer and when that drawer is opened
     //all of the functions corresponding to that type are displayed
     // INJECTION ATTACK FIXME
-    function makeDrawers(allFunctions, allConstants) {
-        var typeDrawers = makeTypesArray(allFunctions, allConstants);
-        var Drawers = "<div id=\"options\">\n";
-        var i;
-        for (var Type in typeDrawers) {
-            if (typeDrawers.hasOwnProperty(Type)) {
-                Drawers += "<h1 class=\"toggleHeader " + encode(Type) + "\">" + encode(Type) + "</h1>";
-                Drawers += "<div id=\"" + encode(Type) + "\">";
-                if (Type === "Constants") {
-                    for (i = 0; i < typeDrawers[Type].length; i++) {
-                        Drawers += " <span class=\"draggable " + encode(Type) + "\">" + encode(allConstants[typeDrawers[Type][i]].name) + "</span>";
-                    }
-                } else if (Type === "Define") {
-                    for (i = 0; i < typeDrawers[Type].length; i++) {
-                        Drawers += " <span class=\"draggable " + encode(Type) + "\">" + encode(typeDrawers[Type][i]) + "</span>";
-                    }
-                } else if (Type === "Expressions") {
-                    for (i = 0; i < typeDrawers[Type].length; i++) {
-                        Drawers += " <span class=\"draggable " + encode(Type) + "\">" + encode(typeDrawers[Type][i]) + "</span>";
-                    }
-                } else {
-                    for (i = 0; i < typeDrawers[Type].length; i++) {
-                        if (typeDrawers[Type][i] === "true") {
-                            Drawers += " <span class=\"Booleans draggable\">true</span>";
-                        } else if (typeDrawers[Type][i] === "false") {
-                            Drawers += " <span class=\"Booleans draggable\">false</span>";
-                        } else if (typeDrawers[Type][i] === "Text") {
-                            Drawers += " <span class=\"Strings draggable\">Text</span>";
-                        } else if (typeDrawers[Type][i] === "Number") {
-                            Drawers += " <span class=\"Numbers draggable\">Number</span>";
-                        } else {
-                            if (allFunctions[typeDrawers[Type][i]].id != undefined) { //if user defined
-                                Drawers += "<span class=\"draggable " + encode(allFunctions[typeDrawers[Type][i]].output) + "\" name=\"" + allFunctions[typeDrawers[Type][i]].id + "\">" + encode(allFunctions[typeDrawers[Type][i]].name) + "</span>";
-                            } else {
-                                Drawers += " <span class=\"draggable " + encode(allFunctions[typeDrawers[Type][i]].output) + "\">" + encode(allFunctions[typeDrawers[Type][i]].name) + "</span>";
-                            }
-                        }
-                    }
-                }
 
-                Drawers += "</div>";
+    function makeDrawers(allFunctions,allConstants){
+	var typeDrawers = makeTypesArray(allFunctions,allConstants);
+	var Drawers="<div id=\"options\">\n";
+	var i;
+	for(var Type in typeDrawers){
+            if(typeDrawers.hasOwnProperty(Type)){
+		Drawers+="<h1 class=\"toggleHeader " + encode(Type) + "\">"+encode(Type)+"</h1>";
+		Drawers += "<div id=\""+encode(Type)+"\">";
+		if(Type==="Constants"){
+                    for(i=0;i<typeDrawers[Type].length;i++){
+			Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(allConstants[typeDrawers[Type][i]].name)+"</span>";
+		    }
+		}
+		
+		else if(Type==="Define"){
+		    for(i=0;i<typeDrawers[Type].length;i++){
+			Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span>";
+		    }
+		}
+		else if(Type==="Expressions"){
+		    for(i=0;i<typeDrawers[Type].length;i++){
+			Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(typeDrawers[Type][i])+"</span>";
+		    }
+		}
+		else{
+		    for(i=0;i<typeDrawers[Type].length;i++){
+			if(typeDrawers[Type][i]==="true"){
+			    Drawers+=" <span class=\"Booleans draggable\">true</span>";
+			}
+			else if(typeDrawers[Type][i]==="false"){
+			    Drawers+=" <span class=\"Booleans draggable\">false</span>";
+			}
+			else if(typeDrawers[Type][i]==="Text"){
+			    Drawers+=" <span class=\"Strings draggable\">Text</span>";
+			}
+			else if(typeDrawers[Type][i]==="Number"){
+			    Drawers+=" <span class=\"Numbers draggable\">Number</span>";
+			}
+			else{
+			    if(allFunctions[typeDrawers[Type][i]].id != undefined){//if user defined
+				Drawers += "<span class=\"draggable "+encode(allFunctions[typeDrawers[Type][i]].output)+"\" name=\"" + allFunctions[typeDrawers[Type][i]].id + "\">"+encode(allFunctions[typeDrawers[Type][i]].name)+"</span>";
+			    } else {
+				Drawers+=" <span class=\"draggable "+encode(allFunctions[typeDrawers[Type][i]].output)+"\">"+encode(allFunctions[typeDrawers[Type][i]].name)+"</span>";
+			    }
+			}
+		    }
+		}
+		
+		Drawers+="</div>";
+	    }
+	}
+
+	Drawers+="<h1 class=\"definition DefineFunction\" id=\"functionButton\">Define Function</h1>";
+	Drawers+="<h1 class=\"definition DefineConstant\" id=\"constantButton\">Define Constant</h1>";
+	Drawers+="</div>"
+
+	//MAKE STORAGE
+	Drawers+="/<div id=\"storage\">Storage</div>";
+
+	$("#Drawer").html(Drawers);
+	$("#options span").dblclick(function(){
+	    console.log('here1');
+	    if ($(this).attr('name') != undefined){
+		console.log('here2');
+		$("#" + $(this).attr('name')).closest('.definePopup').css('visibility','visible');
+	    }
+	});
+	$("#storage").click(function(){
+            if($("#storagePopup").css('visibility')==="visible"){
+		$("#storagePopup").css('visibility','hidden');
             }
-        }
-
-        Drawers += "<h1 class=\"definition DefineFunction\" id=\"functionButton\">Define Function</h1>";
-        Drawers += "<h1 class=\"definition DefineConstant\" id=\"constantButton\">Define Constant</h1>";
-        Drawers += "</div>"
-
-        //MAKE STORAGE
-        Drawers += "/<div id=\"storage\">Storage</div>";
-
-        $("#Drawer").html(Drawers);
-        $("#options span").dblclick(function () {
-            console.log('here1');
-            if ($(this).attr('name') != undefined) {
-                console.log('here2');
-                $("#" + $(this).attr('name')).closest('.definePopup').css('visibility', 'visible');
-                typeCheck(functionProgram);
+            else{
+		$("#storagePopup").css('visibility','visible');
             }
-        });
-        $("#storage").click(function () {
-            if ($("#storagePopup").css('visibility') === "visible") {
-                $("#storagePopup").css('visibility', 'hidden');
-            } else {
-                $("#storagePopup").css('visibility', 'visible');
-            }
-        });
+	});
 
-        //keeps track of the highest z-index among the defines. used to make sure the definePopup you're dragging is the topmost
-        var defineZIndex = 10;
-        /*
-    functionButton brings up a popup of a 'define' window 
-  */
-        $("#functionButton").click(function () {
-            var codeObject = new ExprDefineFunc;
-            functionProgram.push(codeObject);
-            var $popupHTML = $(makeDefinePopup(codeObject));
-            $('body').append($($popupHTML));
-            $($popupHTML).css('position', 'absolute');
-            $($popupHTML).css('top', '50px');
-            $($popupHTML).css('left', '220px');
-            $($popupHTML).draggable({
-                start: function (event, ui) {
-                    $(this).css('z-index', defineZIndex);
-                    defineZIndex = defineZIndex + 1;
-                }
-            });
+	/*
+	  functionButton brings up a popup of a 'define' window 
+	*/
+	$("#functionButton").click(function(){
+	    createDefinePopup();
+	});
+	drawerToggle();
+	makeDrawersDraggable();
+	setActivatedVisible($("#options").scrollTop());
+    }
 
-            //adds droppable to expression
-            addDroppableToDefineExpr($popupHTML.find('.functionExpr'));
+    //forces the dragged define block to be on top
+    var defineZIndex = 10;
 
-            //adds draggable to first argument
-            addDraggableToArgument($popupHTML.find('.argument'), codeObject, $popupHTML.find('select').eq(0).attr('id'));
+    //renders the defineblock on screen
+    function createDefinePopup(){
+	var codeObject = new ExprDefineFunc;
+	functionProgram.push(codeObject);
+	var $popupHTML = $(makeDefinePopup(codeObject));
+	$('body').append($($popupHTML));
+	$($popupHTML).css('position','absolute');
+	$($popupHTML).css('top','50px');
+	$($popupHTML).css('left','220px');
+	$($popupHTML).draggable({
+	    start:function(event, ui){
+		$(this).css('z-index', defineZIndex);
+		defineZIndex = defineZIndex + 1;
+	    }
+	});
 
-            /*
-        closes the corresponding 'define' window
-      */
-            $(".closeFunctionButton").bind('click', function () {
-                var confirmClose = true;
-                var defineName = codeObject.contract.funcName;
-                if (defineName === "") {
-                    removeFunctionFromArray(codeObject.contract.funcName);
-                } else if (functionNameRepeated(defineName)) {
-                    confirmClose = false;
-                    alert('rename your function')
-                }
-                if (confirmClose && contractCompleted(codeObject.contract)) {
-                    $(this).closest('.definePopup').css('visibility', 'hidden');
-                } else if (confirmClose && !contractCompleted(codeObject.contract)) {
-                    $(this).closest('.definePopup').detach();
-                    removeFunctionFromArray(defineName);
-                }
-            });
-            $(".deleteFunctionButton").bind('click', function () {
-                var name = $popupHTML.find('.definitionName').attr('prevName');
+	//adds droppable to expression
+	addDroppableToDefineExpr($popupHTML.find('.functionExpr'));
 
-                //remove from userFunctions
-                removeFromUserFunctions(name);
+	//adds draggable to first argument
+	addDraggableToArgument($popupHTML.find('.argument'), codeObject, $popupHTML.find('select').eq(0).attr('id'));
+	/*
+	  closes the corresponding 'define' window
+	*/
+	$popupHTML.find(".closeFunctionButton").bind('click', function() {
+	    console.log('click');
+	    console.log();
+	    var codeObject = searchForIndex($(this).closest('.DefinePopup').find('.DefineFun').attr('id'), functionProgram);
+	    console.log(codeObject);
+	    var closeButton = $(this);
+	    var confirmClose = true;
+	    var defineName = codeObject.contract.funcName;
+	    if(functionNameRepeated(defineName)){
+		confirmClose = false;
+		alert('rename your function')
+	    }
+	    if (confirmClose && contractCompleted(codeObject.contract)) {
+		$(this).closest('.definePopup').css('visibility','hidden');
+	    } else if (confirmClose && !contractCompleted(codeObject.contract)){
+		if (codeObject.expr === undefined) {
+		    console.log(codeObject.id, "a");
+		    removeFunctionFromArray(codeObject.id);
+		    $(this).closest('.definePopup').detach();
+		} else {
+		    var dialogDiv = $("<div>").attr('id', 'dialog');
+		    //	dialogDiv.attr('title', 'Confirmation Required');
+		    dialogDiv.append("The contract is incomplete, and if you close this window, your work will not be saved. Are you sure you want to close this definition?");
+		    $(dialogDiv).dialog({
+			title:'Confirmation Required',
+			modal:true,
+			buttons: {
+			    "Yes": function() {
+				removeFunctionFromArray(codeObject.id);
+				$(closeButton).closest('.definePopup').detach();
+				$(this).dialog("close");
+			    },
+			    "Cancel" : function() {
+				$(this).dialog("close");
+			    }
+			}
+		    });
+		    $(dialogDiv).dialog("open");
+		}
+	    }
+	});
 
-                //remove from functionProgram
-                for (i = 0; i < functionProgram.length; i++) {
-                    if (codeObject.id === functionProgram[i].id) {
-                        functionProgram.splice(i, 1);
-                        break;
-                    }
-                }
-                //remove from storage
-                changeProgramFunctions(name, codeObject, storageProgram, true);
+	$popupHTML.find(".deleteFunctionButton").bind('click', function() {
+	    var name = $popupHTML.find('.definitionName').attr('prevName');
 
-                //remove from program
-                changeProgramFunctions(name, codeObject, program, true);
+	    //remove from userFunctions
+	    removeFromUserFunctions(name);
 
-                //remove from function
-                changeProgramFunctions(name, codeObject, functionProgram, true);
+	    //remove from functionProgram
+	    for (i = 0; i < functionProgram.length; i++){
+		if (codeObject.id === functionProgram[i].id){
+		    functionProgram.splice(i, 1);
+		    break;
+		}
+	    }
+	    //remove from storage
+	    changeProgramFunctions(name, codeObject, storageProgram, true);
 
-                //remove popup
-                $popupHTML.detach();
-                buildFuncConstructs();
-                renderProgram();
-                renderFunctions();
-            });
-        });
-        drawerToggle();
-        makeDrawersDraggable();
-        setActivatedVisible($("#options").scrollTop());
+	    //remove from program
+	    changeProgramFunctions(name, codeObject, program, true);
+
+	    //remove from function
+	    changeProgramFunctions(name, codeObject, functionProgram, true);
+	    
+	    //remove popup
+	    $popupHTML.detach();
+	    buildFuncConstructs();
+	    renderProgram();
+	    renderFunctions();
+	});
     }
 
     /*
@@ -2105,95 +2146,99 @@
     /*
       gets called on keyup of input
     */
-    function sync(objectID, $input) {
-        removeOutputs();
-        var block = searchForIndex(objectID + "", program);
-        if (block == undefined) {
-            block = searchForIndex(objectID + "", functionProgram);
-        }
-        var DOMBlock = $("#" + objectID);
-        if (block instanceof ExprNumber || block instanceof ExprString) {
-            block.value = decode(DOMBlock.find(".input").attr('value'));
-            DOMBlock.find(".input").attr('value', DOMBlock.find(".input").attr('value'));
-        } else if (block instanceof ExprDefineConst) {
-            block.constName = decode(DOMBlock.find('.constName').attr('value'));
-            DOMBlock.find('.constName').attr('value', DOMBlock.find('.constName').attr('value'));
-        } else if (block instanceof ExprDefineFunc) {
 
-            window.clearTimeout(timeout);
+    function sync(objectID, $input){
+	removeOutputs();
+	var block=searchForIndex(objectID+"",program);
+	if (block == undefined){
+	    block = searchForIndex(objectID+"", functionProgram  );
+	} 
+	var DOMBlock=$("#" + objectID);
+	if(block instanceof ExprNumber || block instanceof ExprString){
+	    block.value=decode(DOMBlock.find(".input").attr('value'));
+	    DOMBlock.find(".input").attr('value',DOMBlock.find(".input").attr('value'));
+	}
+	else if(block instanceof ExprDefineConst){
+	    block.constName=decode(DOMBlock.find('.constName').attr('value'));
+	    DOMBlock.find('.constName').attr('value',DOMBlock.find('.constName').attr('value'));
+	}
+	else if(block instanceof ExprDefineFunc){
 
-            //updateGUI
-            var newInput = $input.attr('value') + "";
-            var defInput = $("#" + objectID).find('.definitionName').first();
-            var contractInput = $("#" + objectID).find('.contractName').first();
+	    window.clearTimeout(timeout);
 
-            //CONTRACT/DEFINITION NAME
-            if ($input.hasClass('contractName') || $input.hasClass('definitionName')) {
+	    //updateGUI
+	    var newInput = $input.attr('value') + "";
+	    var defInput = $("#" + objectID).find('.definitionName').first();
+	    var contractInput = $("#" + objectID).find('.contractName').first();
 
-                if ($input.hasClass('contractName')) {
-                    defInput.attr('value', (newInput));
-                } else if ($input.hasClass('definitionName')) {
-                    contractInput.attr('value', (newInput));
-                }
+	    //CONTRACT/DEFINITION NAME
+	    if ($input.hasClass('contractName') || $input.hasClass('definitionName')){
 
-                timeout = setTimeout(function () {
-                    if (newInput === "" || !legalFunctionName(newInput)) { //not valid
-                        if (defInput.attr('prevName') !== newInput) {
-                            defInput.css('background-color', 'red');
-                            contractInput.css('background-color', 'red');
-                            removeFromUserFunctions(defInput.attr('prevName'));
-                            renderProgram();
-                            /*             $(document).click(function(){
-                   var prevName = $input.attr('prevName');
-                   defInput.attr('value', prevName);
-                   contractInput.attr('value',prevName);
-                   if (defInput.attr('value') !== "" && !functionNameRepeated(defInput.attr('value'))){
-                   defInput.css('background-color','');
-                   contractInput.css('background-color', '');
-                   }
+		if($input.hasClass('contractName')){
+		    defInput.attr('value',(newInput));
+		} 
+		else if ($input.hasClass('definitionName')){
+		    contractInput.attr('value',(newInput));
+		}
 
-                   });*/
-                        }
-                    } else {
+		timeout = setTimeout(function() {
+		    changeName(block, newInput);
+		    if (newInput === "" || !legalFunctionName(newInput)){ //not valid
+			if (defInput.attr('prevName') !== newInput){
+			    defInput.css('background-color','red');
+			    contractInput.css('background-color','red');
+			    removeFromUserFunctions(defInput.attr('prevName'));
+			    renderProgram();
+			    /*			       $(document).click(function(){
+						       var prevName = $input.attr('prevName');
+						       defInput.attr('value', prevName);
+						       contractInput.attr('value',prevName);
+						       if (defInput.attr('value') !== "" && !functionNameRepeated(defInput.attr('value'))){
+						       defInput.css('background-color','');
+						       contractInput.css('background-color', '');
+						       }
 
-                        defInput.css('background-color', '');
-                        contractInput.css('background-color', '');
-                        changeName(block, newInput);
+						       });*/
+			}
+		    } else {
+			
+			defInput.css('background-color','');
+			contractInput.css('background-color', '');
+			
+			// add/remove from drawers
+			toggleFunctionInDrawer(block, $input.attr('prevName'));
+			if (contractCompleted(block.contract)){
+			    defInput.attr('prevName', newInput);
+			    contractInput.attr('prevName', newInput);
+			}
+		    }
+		}, 75);
+	    }
 
-                        // add/remove from drawers
-                        toggleFunctionInDrawer(block, $input.attr('prevName'));
-                        if (contractCompleted(block.contract)) {
-                            defInput.attr('prevName', newInput);
-                            contractInput.attr('prevName', newInput);
-                        }
-                    }
-                }, 75);
-            }
+	    //DEFINE ARGUMENTS
+	    else if ($input.hasClass('argName')) {
+		
+		timeout = setTimeout(function() {
+		    if ($input.val() === "" || contains($input.val(), block.argumentNames)){
+			if ($input.attr('prevName') !== $input.val() ){
+			    $input.css('background-color','red');
+			}
+		    } else {
+			$input.css('background-color','');
+			$input.attr('prevName', $input.val());
+			changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList) - 1);
+			toggleFunctionInDrawer(block, defInput.attr('prevName'));
 
-            //DEFINE ARGUMENTS
-            else if ($input.hasClass('argName')) {
-
-                timeout = setTimeout(function () {
-                    if ($input.val() === "" || contains($input.val(), block.argumentNames)) {
-                        if ($input.attr('prevName') !== $input.val()) {
-                            $input.css('background-color', 'red');
-                        }
-                    } else {
-                        $input.css('background-color', '');
-                        $input.attr('prevName', $input.val());
-                        changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList) - 1);
-                        toggleFunctionInDrawer(block, defInput.attr('prevName'));
-
-                    }
-                    // changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList) - 1);
-                    //  toggleFunctionInDrawer(block, defInput.attr('prevName'));
-                    // }, 75);
-                }, 100);
-            } else if ($input.hasClass('contractPurpose')) {
-                block.contract.purpose = newInput;
-            }
-
-        }
+		    }
+		    // changeArgName(block, newInput, getElmIndexInArray($input.attr('id'), block.funcIDList) - 1);
+		    //  toggleFunctionInDrawer(block, defInput.attr('prevName'));
+		    // }, 75);
+		}, 100);
+	    }
+	    else if ($input.hasClass('contractPurpose')){
+		block.contract.purpose = newInput;
+	    }
+	}
     }
 
 
@@ -2761,6 +2806,13 @@
     function addDroppableToDefineExpr(defineExpr) {
         $(defineExpr).droppable({
             tolerance: 'pointer',
+	    accept:function(d){
+		if ($(carrying).hasClass('expr')){
+		    return true;
+		} else{
+		    return false;
+		}
+	    },
             greedy: true,
             hoverClass: "highlighted",
             drop: function (event, ui) {
@@ -3649,12 +3701,9 @@
             if (ArrayofBlocks[i] instanceof ExprCond && topLevelCondWithErrors(ArrayofBlocks[i], ArrayofBlocks)) {
                 removeTopLevelCondColor(ArrayofBlocks[i], ArrayofBlocks);
             }
-        }
-        console.log("CHILDREN")
-        console.log($(".BoolAnswer"))
-        $(".BoolAnswer").children().children().each(function () {
-            $(this).css('background-color', $(this).closest('.Cond').css('background-color'))
-        });
+	}
+	$(".BoolAnswer").children().children().each(function(){$(this).css('background-color', $(this).closest('.Cond').css('background-color'))});
+
     }
 
 
