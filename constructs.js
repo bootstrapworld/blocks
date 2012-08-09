@@ -4411,12 +4411,17 @@
         return idArr;
     }
 
+    window.ExprApp = ExprApp;
+    window.ExprCond = ExprCond;
+    window.ExprBoolAnswer = ExprBoolAnswer;
+    window.ExprDefineFunc = ExprDefineFunc;
+    window.ExprDefineConst = ExprDefineConst;
+
 
     window.sync = sync;
     window.changeType = changeType;
     window.deleteArg = deleteArg;
     window.removeFunctionFromDrawers = removeFunctionFromDrawers;
-
 
 
     //FOR TESTING PURPOSES
