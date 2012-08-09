@@ -980,7 +980,7 @@
 		    }
 		}
 		//save id, program... maybe history, future, trash
-		localStorage[saveName]=JSON.stringify(cloneProgram(program))+"___"+JSON.stringify(userFunctions)+"___"+JSON.stringify(cloneProgram(functionProgram))+"___"+JSON.stringify(cloneProgram(storageProgram));
+		localStorage[saveName]=JSON.stringify(cloneProgram(program))+"___"+JSON.stringify(userFunctions)+"___"+JSON.stringify(cloneProgram(functionProgram))+"___"+JSON.stringify(cloneProgram(storageProgram)+"___"+JSON.stringify(constants)+"___"+JSON.stringify(constantProgram));
 	    }
 	    else{
 		alert("I am sorry but your browser does not support storage.");
@@ -1002,10 +1002,13 @@
 		functionProgram=[];
 		storageProgram=[];
 		userFunctions=[];
-		objectArrayToProgram(JSON.parse(programString[0]),program);
+		constants=[];
+		constants=JSON.parse(programString[4]);
 		userFunctions=JSON.parse(programString[1]);
 		buildFuncConstructs();
+		objectArrayToProgram(JSON.parse(programString[5]),constantProgram);
 		objectArrayToProgram(JSON.parse(programString[2]),functionProgram);
+    objectArrayToProgram(JSON.parse(programString[0]),program);
 		objectArrayToProgram(JSON.parse(programString[3]),storageProgram);
 		//do I change the history and trash? overwrite it?
 		renderProgram();
@@ -1037,13 +1040,18 @@
 		}
             }
             for(i=0;i<functionProgram.length;i++){
-		typeInfered=typeInfer(functionProgram[i])
-		if(typeInfered.typeErrors.length>0 || typeInfered.blankErrors.length>0){
-		    legal=false
+		          typeInfered=typeInfer(functionProgram[i])
+		          if(typeInfered.typeErrors.length>0 || typeInfered.blankErrors.length>0){
+		          legal=false
 		}
+    for(i=0;i<constantProgram.length;i++){
+              typeInfered=typeInfer(constantProgram[i])
+              if(typeInfered.typeErrors.length>0 || typeInfered.blankErrors.length>0){
+              legal=false
+    }
             }
-            if(!legal){
-		alert("There are type errors or blank spaces in your program.  Please fix them before continuing to run");
+    if(!legal){
+		  alert("There are type errors or blank spaces in your program.  Please fix them before continuing to run");
 		return;
             }
             else{
@@ -1051,6 +1059,9 @@
 		for(var i=0;i<functionProgram.length;i++){
                     definitionString+=interpreter(functionProgram[i])
 		}
+    for(i=0;i<constantProgram.length;i++){
+      definitionString+=interpreter(constantProgram[i])
+    }
 		removeOutputs();
 		evaluateBlock(0,definitionString);
             }
@@ -4162,6 +4173,8 @@
     window.historyarr=function(){return historyarr};
     window.future=function(){return future};
     window.buildConstraints=buildConstraints;
+    window.functions=function(){return functions};
+    window.userFunctions=function(){return userFunctions};
 
 }());
 
