@@ -125,6 +125,7 @@
     */
     function setChildInProgram(parentId, childId, obj, prog) {
         var parent = searchForIndex(parentId, prog);
+	console.log(parent);
         if (parent === undefined) {
             throw new Error("setChildInProgram failure: parentId not found.");
         }
@@ -133,7 +134,7 @@
         }
         if (parent.hasOwnProperty("funcIDList")) {
             var index;
-            if (obj !== undefined) {
+            if (obj != undefined) {
                 index = getAddIndex(parent, childId);
             } else {
                 index = getRemoveIndex(parent, childId);
@@ -2108,10 +2109,9 @@
 
     function typeCheckAll(){
       typeCheck(program);
-      typeCheck(storageProgram);
       typeCheck(functionProgram);
       typeCheck(constantProgram);
-      $(".highlighted").removeClass("highlighted")
+	$(".highlighted").removeClass("highlighted");
     }
 
     /*
@@ -2801,8 +2801,8 @@
                 programCarrying = searchForIndex($(this).attr("id"), functionProgram);
                 carrying = getHTML($(this));
                 ui.helper.addClass("wired");
+		console.log($(this).closest($("th")).closest($("table")).attr('id'), $(this).attr('id'));
                 setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined, functionProgram);
-                typeCheckAll();
             },
             stop: function (event, ui) {
                 if (programCarrying != null && carrying != null) {
@@ -2842,8 +2842,8 @@
         $(defineExpr).droppable({
             tolerance: 'pointer',
 	    accept:function(d){
-		if (carrying != null && programCarrying != null && $(defineExpr).children().length === 0 && $(carrying).hasClass('expr') && contractCompleted(defineCodeObject.contract)){
-		    return true;
+		if (carrying != null && programCarrying != null && defineCodeObject.expr == undefined && $(carrying).hasClass('expr') && contractCompleted(defineCodeObject.contract)){
+		   return true;
 		} else if (!contractCompleted(defineCodeObject.contract)){
 		    //change color of incompleted contract parts to red
 		    return false;
@@ -2853,13 +2853,14 @@
 	    },
             greedy: true,
 	    over:function(event, ui){
+		console.log("YOU ARE OVER NOWORFOEWRHODs");
 		$(this).addClass('hovered');
 		if (onTop($(this))){
                    if (programCarrying != undefined && carrying != undefined && $(this).children().length === 0) {
                         if (flattenAllFuncIDLists(programCarrying).indexOf($(this).attr("id")) === -1) {
-                            $(this).addClass("highlighted")
+                    $(this).addClass("highlighted");
                         }
-                    }
+                   }
 		}
 	    },
 	    out:function(event, ui){
@@ -2870,7 +2871,7 @@
 	    },
 
             drop: function (event, ui) {
-	        if (carrying != null && programCarrying != null && $(this).children().length === 0 && $(this).hasClass('highlighted')) {
+	        if (carrying != null && programCarrying != null && $(this).children().length === 0/* && $(this).hasClass('highlighted')*/) {
                     $(this).html(carrying);
                     defineCodeObject.expr = programCarrying;
 
@@ -2883,13 +2884,22 @@
                     $(this).find('table').each(function () {
                         addDraggableToDefineExpr($(this));
                     });
+		    if (draggedClone != undefined){
+			eliminateBorder(draggedClone.closest('th'));
+		    }
+		    draggedClone = undefined;
                     typeCheckAll();
                     carrying = null;
                     programCarrying = null;
 
+
                 } 
-		$(this).removeClass('hovered');
-		$(this).removeClass('highlighted');
+		if ($(this).hasClass('hovered')){
+		    $(this).removeClass('hovered');
+		}
+		if($(this).hasClass('highlighted')){
+		    $(this).removeClass('highlighted');
+		}
             }
         });
     }
@@ -3369,10 +3379,11 @@
         if (jQuerySelection != null) {
             $(jQuerySelection).draggable({
                 containment: $("#" + functionCodeObject.id),
-                connectToSortable: '#options',
+                //connectToSortable: '#options',
                 appendTo: 'body',
+		zIndex: parseInt($(this).closest('.definePopup').css('z-index')) + 1,
                 start: function (event, ui) {
-                    if (!errorVal) {
+		        if (!errorVal) {
                         tempProgram = cloneProgram(program);
                         ui.helper.addClass("wired");
                     } else {
@@ -3386,7 +3397,8 @@
                     programCarrying = new ExprConst($(this).find('input').val());
                     programCarrying.outputType = $("#" + dropDownID).val();
                     carrying = createBlock(programCarrying, constants.concat(createNewConstants(functionCodeObject)), functions.concat(userFunctions));
-                    return carrying;
+		    $(carrying).css('z-index',$("#" + functionCodeObject.id).css('z-index') + 1);
+		    return carrying;
                 }
             });
         } else {
@@ -3426,6 +3438,9 @@
                         }
                     },
                     stop: function (event, ui) {
+			if ($(this).closest('div').hasClass('definePopup')){
+			    $(this).detach();
+			}
                         if (programCarrying != undefined && carrying != undefined) {
                             program = tempProgram;
                             renderProgram(createProgramHTML());
@@ -3478,7 +3493,7 @@
                         $(this).css("border", "none");
                         $(this).removeClass("highlighted");
                         ui.draggable.detach();
-                        typeCheckAll()
+                        typeCheckAll();
                     }
                 }
             });
@@ -4421,7 +4436,7 @@
     window.parseProgram = parseProgram;
     window.program = function () {
         return program
-    };
+    }; 
     window.storageProgram = function () {
         return storageProgram
     };
