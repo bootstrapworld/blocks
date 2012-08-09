@@ -1188,9 +1188,14 @@
                 objectArrayToProgram(JSON.parse(programString[0]), program);
                 objectArrayToProgram(JSON.parse(programString[3]), storageProgram);
                 //do I change the history and trash? overwrite it?
-                renderProgram();
                 historyarr = [];
                 future = [];
+                console.log(functionProgram)
+                for(var  myFunction in functionProgram){
+                  createDefinePopup(functionProgram[myFunction]);
+                }
+                renderProgram();
+                $(".definePopup").css("visibility","hidden")
                 $("#undoButton").attr('disabled', 'disabled');
                 $("#redoButton").attr('disabled', 'disabled');
             }
@@ -1777,9 +1782,10 @@
     var defineZIndex = 10;
 
     //renders the defineblock on screen
-    function createDefinePopup(){
-	var codeObject = new ExprDefineFunc;
-	functionProgram.push(codeObject);
+    function createDefinePopup(codeObject){
+	
+      if(codeObject === undefined){codeObject = new ExprDefineFunc;}
+	 functionProgram.push(codeObject);
 	var $popupHTML = $(makeDefinePopup(codeObject));
 	$('body').append($($popupHTML));
 	$($popupHTML).css('position','absolute');
@@ -2016,7 +2022,7 @@
         }
         if (codeObject.expr != undefined) {
             popupHTML += "class=\"functionExpr noborder droppable expr\" name=\"Expr\" id=" + codeObject.funcIDList[0] + ">";
-            popupHTML += createBlock(codeObject.expr, constantEnvironment.concat(createNewConstants(codeObject)), functionEnvironment);
+            popupHTML += createBlock(codeObject.expr, constants.concat(createNewConstants(codeObject)), functions.concat(userFunctions));
             popupHTML += "</th>";
         } else {
             popupHTML += "name=\"Expr\" class=\"functionExpr droppable expr\" id=" + codeObject.funcIDList[0] + " colspan=\"" + tableWidth + "\">Expr</th>";
