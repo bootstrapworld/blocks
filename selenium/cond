@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="http://seleniumhq.org/" />
+<title>cond</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">cond</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>file:///gpfs/main/home/ww15/r/blocks/gui.html</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=#selectors div:contains(&quot;Expressions&quot;)</td>
+	<td></td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;cond&quot;)</td>
+	<td>css=#List</td>
+</tr>
+<!--can't delete first bool-answer pair-->
+<tr>
+	<td>click</td>
+	<td>css=button.removeCond</td>
+	<td></td>
+</tr>
+<!--add condition-->
+<tr>
+	<td>click</td>
+	<td>css=button.addCond</td>
+	<td></td>
+</tr>
+<!--delete first condition-->
+<tr>
+	<td>click</td>
+	<td>css=button.removeCond</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=button.addCond</td>
+	<td></td>
+</tr>
+<!--delete second condition-->
+<tr>
+	<td>click</td>
+	<td>//table[@id='34']/tbody/tr/th[3]/button</td>
+	<td></td>
+</tr>
+<!--draggable from drawer to cond block-->
+<tr>
+	<td>click</td>
+	<td>css=#selectors div:contains(&quot;Booleans&quot;)</td>
+	<td></td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;=&quot;)</td>
+	<td>css=#List li:first table tr:nth-child(2) th:first th:first</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=#selectors div:contains(&quot;Strings&quot;)</td>
+	<td></td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:first table tr:nth-child(2) table </td>
+	<td>css=#options span:contains(&quot;string-append&quot;)</td>
+</tr>
+</tbody></table>
+</body>
+</html>

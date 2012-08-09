@@ -1,0 +1,187 @@
+body{
+	list-style:none;
+	-webkit-user-select: text;
+    -moz-user-select: none;
+    -o-user-select: none;
+    -khtml-user-select: none;
+    user-select: none;
+}
+input,select,textarea{
+    -webkit-user-select: text;
+}
+#header{
+	min-height: 30px;
+}
+.overflowing{
+
+}
+
+#Buttons{
+
+}
+#Drawer{
+	min-width: 50px;
+}
+#code{
+    min-height: 100px;
+    min-width: 100px;
+	overflow:auto;
+}
+#List{
+     list-style:none;
+}
+.placeholder{
+     width:100%;
+     height:1px;
+     padding:0px;
+}
+#options{
+	 overflow-x:hidden;
+     overflow-y:auto;
+}
+#storage{
+	min-width:50px;
+    min-height:50px;
+    list-style:none;
+}
+#storagePopup {
+    visibility:hidden;
+    min-width:100px;
+    min-height:100px;
+    list-style:none;
+    overflow:auto;
+}
+#codePopup {
+    visibility:hidden;
+    min-width:100px;
+    min-height:100px;
+    list-style:none;
+    overflow:auto;
+}
+.definition{
+    min-width:100px;
+}
+
+
+
+.headerButton {
+
+}
+
+#content{
+
+ }
+
+
+
+
+ /*****************************
+  CODE / HEADER
+  *****************************/
+
+.header {
+
+}
+
+table{
+
+}
+
+th table{
+
+}
+
+th {
+
+}
+
+.expr{
+;
+}
+
+
+
+#List li{
+
+}
+
+form{
+
+}
+
+.droppable{
+
+}
+
+
+
+#options{
+
+}
+
+#options span {
+
+}
+
+#options .toggleHeader{
+
+}
+
+#options  div{
+
+}
+
+#options h1{
+
+}
+
+#storage{
+
+}
+
+#storagePopup {
+
+}
+
+#codePopup {
+
+}
+
+.noborder{
+
+}
+table .ERROR{
+
+}
+.expr .ERROR{
+
+}
+table{
+
+}
+
+.wired{
+
+}
+
+.highlighted{
+
+}
+
+.ErrorMessage{
+  position:absolute;
+  z-index:999999;
+}
+
+.outputMessage{
+}
+
+.output{
+  position:absolute;
+  z-index:999999;
+}
+
+.errorOutput{
+  position:absolute;
+  z-index:999999;
+}

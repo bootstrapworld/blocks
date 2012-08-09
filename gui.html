@@ -2,19 +2,29 @@
 <!--[if lt IE 9]><script src="http://ie7-js.googlecode.com/svn/version/2.1(beta4)/IE9.js"></script><![endif]-->
 <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
 <script type="text/javascript" src="js/jquery-ui-1.8.21.custom.js"></script>
-
+<script src="js/jquery.ui.touch-punch.js"></script>
+<script src="js/modernizr.js"></script>
+<script src="http://wescheme-compiler.hashcollision.org/easyXDM.js"></script>
+<script src="http://wescheme-compiler.hashcollision.org/evaluator.js"/></script>
+<script src="http://wescheme-compiler.hashcollision.org/support.js"></script>
+<meta name="viewport" content="width=device-width" />
 <link rel="stylesheet" type="text/css" href="style1.css" />
+<link rel="stylesheet" type = "text/css" href = "essentialCSS.css" />
 <body>
-
   <div id="header">
     <p style="float: left; font-weight: bold; font-size: 32px; margin-top: 3px;" class="draggable">DrBlocket</p>
-    <button class="header" style="margin-right: 0px">stop</button>
-    <button class="header" id="runButton">run</button>
-    <button class="header" id="exportButton">export</button>
-    <button class="header" id="loadButton">load</button>
-    <button class="header" id="saveButton">save</button>
-    <button class="header" id="redoButton">redo</button>
-    <button class="header" id="undoButton">undo</button>
+    <div class="overflowing">
+    <div id="Buttons">
+      <button class="headerButton" id="stopButton">stop</button>
+      <button class="headerButton" id="runButton">run</button>
+      <button class="headerButton" id="exportButton">export</button>
+      <button class="headerButton" id="loadButton">load</button>
+      <button class="headerButton" id="saveButton">save</button>
+      <button class="headerButton" id="redoButton">redo</button>
+      <button class="headerButton" id="undoButton">undo</button>
+
+    </div>
+  </div>
   </div>
   <div id="content">	
      <div id="Drawer"></div>
@@ -24,6 +34,13 @@
     </div>
      <div id="storagePopup">
        <h1 style="float:right;"><button id="closestorage">close</button></h1><br>
+       <div id="actualStorage">
+       </div>
+     </div>
+      <div id="codePopup">
+       <h1 style="float:right;"><button id="closecode">close</button></h1><br>
+       <div id="actualCode">
+       </div>
      </div>
   </div>
 </body>

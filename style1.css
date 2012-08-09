@@ -5,12 +5,15 @@ body{
     position:absolute;
     left:0px;
     margin: 0px;
+<<<<<<< HEAD
     -webkit-user-select: none;
     -moz-user-select: none;
     -o-user-select: none;
     -khtml-user-select: none;
     user-select: none;
     overflow:hidden;
+=======
+>>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
 }
 
 
@@ -27,6 +30,13 @@ GENERAL
     background:black;
     color: white;
     padding:0px;
+}
+
+
+
+.headerButton {
+     float: right;
+     margin: 15px;
 }
 
 #content{
@@ -47,6 +57,7 @@ GENERAL
 
 
 #code{
+<<<<<<< HEAD
     position:absolute;
     top:0px;
     left:200px;
@@ -57,6 +68,12 @@ GENERAL
 /*****************************
  CODE / HEADER
  *****************************/
+=======
+     position:absolute;
+     top:0px;
+     left:200px;
+ }
+>>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
 
 
 .header {
@@ -66,7 +83,12 @@ GENERAL
 
 
 table{
+<<<<<<< HEAD
     border-radius: 2px;
+=======
+     border-style: solid; 
+     border-radius: 10px;
+>>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
 }
 th {
   margin: 0px;
@@ -85,9 +107,15 @@ input{
     padding: 2px;
     cursor: move;
 }
+<<<<<<< HEAD
 #List{
     list-style:none;
 }
+=======
+
+
+
+>>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
 #List li{
     cursor:mover;
    // z-index:100;
@@ -104,19 +132,32 @@ form{
     min-width:  20px; /* deep nesting shouldn't squeeze a drop-target */
     font-weight: normal;
 }
+<<<<<<< HEAD
 .placeholder{
     width:100%;
     height:15px;
 }
+=======
+
+
+
+>>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
 /*****************************
  DRAWER
  *****************************/
 
 #options{
+<<<<<<< HEAD
     width:200px;
     height:100%;
     z-index:100;
     overflow:auto;
+=======
+     width:200px;
+     float:top;
+     background-color:darkslateblue;
+     z-index:100;
+>>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
 }
 
 #options span {
@@ -164,14 +205,45 @@ form{
     height:50px;
 }
 
+<<<<<<< HEAD
 .ui-draggable{
     z-index: 10;
+=======
+#storagePopup {
+    position:absolute;
+    top:50px;
+    left:250px;
+    width:500px;
+    height:500px;
+    background-color:gray;
+    padding:10px;
+}
+
+#codePopup {
+    position:absolute;
+    top:50px;
+    left:250px;
+    width:50%;
+    height:500px;
+    background-color:white;
+    padding:10px;
+>>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
 }
 
 .noborder{
     border:none;
 }
+table .ERROR{
+    background-color:red !important;
+}
+.expr .ERROR{
+    background-color:red !important;
+}
+table{
+    background-color:white;
+}
 
+<<<<<<< HEAD
 /*****************************
  Things we'd like shaded...
  The header, the drawer, anything being dragged, and any non-nested expr
@@ -183,3 +255,41 @@ form{
     -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
 }
 
+=======
+.wired{
+    opacity:.4;
+}
+
+.highlighted{
+    background-color:yellow !important;
+}
+
+.ErrorMessage{
+    background-color:#FCF0AD;
+    position:absolute;
+    
+}
+
+.definition{
+    width:100%;
+    text-align:center;
+    border-bottom: 1px solid #000;
+    border-top:1px solid #000;
+    background-color:white;
+}
+
+.outputMessage{
+    background-color:white;
+}
+
+.output{
+    background-color:white;
+    overflow:auto
+}
+
+.errorOutput{
+    background-color:#FCF0AD;
+    width:300px;
+    overflow:auto;
+}
+>>>>>>> ba185e6ad53378bc518f5f44aa57ec3c962392d2
