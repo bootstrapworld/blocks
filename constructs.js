@@ -2079,8 +2079,7 @@
         // });
         setLiWidth($("#List li"));
         setLiWidth($("#storagePopup li"));
-        typeCheck(program);
-        typeCheck(storageProgram);
+        typeCheckAll();
         makeDrawers(functions.concat(userFunctions), constants);
         $("#storage").text('Storage (' + storageProgram.length + ')');
         addUItoStorage();
@@ -2100,8 +2099,14 @@
                 addDroppableWithinDefineExpr($("#" + functionProgram[i].funcIDList[0]).find('.droppable'));
             }
         }
-        typeCheck(functionProgram);
-        typeCheck(program)
+        typeCheckAll()
+    }
+
+    function typeCheckAll(){
+      typeCheck(program);
+      typeCheck(storageProgram);
+      typeCheck(functionProgram);
+      typeCheck(constantProgram);
     }
 
     /*
@@ -2787,7 +2792,7 @@
             appendTo: 'body',
             connectToSortable: '#List, .droppable',
             start: function (event, ui) {
-                typeCheck(functionProgram);
+                typeCheckAll();
                 draggedClone = $(this);
                 programCarrying = searchForIndex($(this).attr("id"), functionProgram);
                 carrying = getHTML($(this));
@@ -2795,7 +2800,7 @@
                 setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined, functionProgram);
             },
             stop: function (event, ui) {
-                typeCheck(functionProgram);
+                typeCheckAll();
                 if (programCarrying != null && carrying != null) {
                     console.log('here');
 
@@ -2838,7 +2843,7 @@
                     $(this).find('table').each(function () {
                         addDraggableToDefineExpr($(this));
                     });
-                    typeCheck(functionProgram);
+                    typeCheckAll();
                     carrying = null;
                     programCarrying = null;
 
@@ -3142,8 +3147,7 @@
                 } else {
                     $(ui.item).remove();
                 }
-                typeCheck(program);
-                typeCheck(functionProgram);
+                typeCheckAll()
             },
             receive: function (event, ui) {
                 if (ui.item === null) {
@@ -3238,8 +3242,7 @@
             tolerance: 'pointer',
             drop: function (event, ui) {
                 if (!$(ui.draggable).is('.draggable')) {
-                    typeCheck(program);
-                    typeCheck(functionProgram);
+                    typeCheckAll()
                     var replacement = "<li>" + carrying + "</li>";
                     addToHistory(tempProgram, cloneProgram(storage));
                     $("#actualStorage").append(replacement);
@@ -3298,8 +3301,7 @@
                 }
             },
             stop: function (event, ui) {
-                typeCheck(program);
-                typeCheck(functionProgram);
+                typeCheckAll();
             },
             helper: function (event, ui) {
                 programCarrying = makeCodeFromOptions($(this).text());
@@ -3432,8 +3434,7 @@
                         $(this).css("border", "none");
                         $(this).removeClass("highlighted");
                         ui.draggable.detach();
-                        typeCheck(program);
-                        typeCheck(functionProgram);
+                        typeCheckAll()
                     }
                 }
             });
@@ -4370,6 +4371,7 @@
     //FOR TESTING PURPOSES
     window.typeInfer = typeInfer;
     window.typeCheck = typeCheck;
+    window.typeCheckAll=typeCheckAll;
     window.parseProgram = parseProgram;
     window.program = function () {
         return program
