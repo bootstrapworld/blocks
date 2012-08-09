@@ -1252,6 +1252,7 @@
                     definitionString += interpreter(constantProgram[i])
                 }
                 removeOutputs();
+                console.log(definitionString)
                 evaluateBlock(0, definitionString);
             }
 
@@ -1784,8 +1785,7 @@
     //renders the defineblock on screen
     function createDefinePopup(codeObject){
 	
-      if(codeObject === undefined){codeObject = new ExprDefineFunc;}
-	 functionProgram.push(codeObject);
+      if(codeObject === undefined){codeObject = new ExprDefineFunc;functionProgram.push(codeObject);}
 	var $popupHTML = $(makeDefinePopup(codeObject));
 	$('body').append($($popupHTML));
 	$($popupHTML).css('position','absolute');
