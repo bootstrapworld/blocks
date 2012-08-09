@@ -1076,9 +1076,13 @@
             return toContinue;
         });
 
+        $(document).on('mouseup', function (e) {
+          mouseCount--;
+        });
 
         $(document).on('mousedown', function (e) {
-            return formValidation(e)
+          mouseCount++
+            return formValidation(e);
         });
 
         //Sets undo and redo buttons to disabled on startup
@@ -1252,6 +1256,7 @@
                     definitionString += interpreter(constantProgram[i])
                 }
                 removeOutputs();
+                console.log(definitionString)
                 evaluateBlock(0, definitionString);
             }
 
@@ -1784,13 +1789,14 @@
     //renders the defineblock on screen
     function createDefinePopup(codeObject){
 	
-      if(codeObject === undefined){codeObject = new ExprDefineFunc;}
-	 functionProgram.push(codeObject);
+      if(codeObject === undefined){codeObject = new ExprDefineFunc;functionProgram.push(codeObject);}
 	var $popupHTML = $(makeDefinePopup(codeObject));
 	$('body').append($($popupHTML));
 	$($popupHTML).css('position','absolute');
 	$($popupHTML).css('top','50px');
 	$($popupHTML).css('left','220px');
+	$($popupHTML).css('z-index', defineZIndex);
+	defineZIndex = defineZIndex + 1;
 	$($popupHTML).draggable({
 	    start:function(event, ui){
 		$(this).css('z-index', defineZIndex);
@@ -2106,7 +2112,6 @@
 
     function typeCheckAll(){
       typeCheck(program);
-      typeCheck(storageProgram);
       typeCheck(functionProgram);
       typeCheck(constantProgram);
       $(".highlighted").removeClass("highlighted")
@@ -2816,35 +2821,61 @@
         });
     }
 
+    function onTop($hovered){
+	var hoveredZArray = [];
+	$(".hovered").each(function(){
+	    hoveredZArray.push($(this).closest('.definePopup').css('z-index'));
+	});
+
+	var hoveredZ = $($hovered).closest('.definePopup').css('z-index');
+	for (var i = 0; i < hoveredZArray.length; i++){
+	    if (hoveredZArray[i] > hoveredZ){
+		return false;
+	    }
+	}
+	$(".hovered").each(function(){
+	    $(this).removeClass('highlighted');
+	});
+	return true;
+    }
+
     //adds droppable to define expressions
     function addDroppableToDefineExpr(defineExpr) {
+	var defineCodeObject = searchForIndex(defineExpr.closest('.DefineFun').attr('id'), functionProgram);
         $(defineExpr).droppable({
             tolerance: 'pointer',
 	    accept:function(d){
-		if ($(carrying).hasClass('expr')){
+		if (carrying != null && programCarrying != null && $(defineExpr).children().length === 0 && $(carrying).hasClass('expr') && contractCompleted(defineCodeObject.contract)){
 		    return true;
-		} else{
+		} else if (!contractCompleted(defineCodeObject.contract)){
+		    //change color of incompleted contract parts to red
+		    return false;
+		} else {
 		    return false;
 		}
 	    },
             greedy: true,
-              over: function (event, ui) {
-                    if (programCarrying != undefined && carrying != undefined && $(this).children().length === 0) {
+	    over:function(event, ui){
+		$(this).addClass('hovered');
+		if (onTop($(this))){
+                   if (programCarrying != undefined && carrying != undefined && $(this).children().length === 0) {
                         if (flattenAllFuncIDLists(programCarrying).indexOf($(this).attr("id")) === -1) {
                             $(this).addClass("highlighted")
                         }
                     }
-                },
-              out: function (event, ui) {
-                    $(this).removeClass("highlighted");
-              },
-            drop: function (event, ui) {
+		}
+	    },
+	    out:function(event, ui){
+		$(this).removeClass('hovered');
+		if ($(this).hasClass('highlighted')){
+		    $(this).removeClass('highlighted');
+		}
+	    },
 
-                var outputSelect = $(this).closest('.DefineFun').find('tr').eq(1).find('th').last().find('select');
-                if (carrying != null && programCarrying != null && $(this).children().length === 0 && outputSelect.val() !== 'Type') {
+            drop: function (event, ui) {
+	        if (carrying != null && programCarrying != null && $(this).children().length === 0 && $(this).hasClass('highlighted')) {
                     $(this).html(carrying);
-                    var defineCode = searchForIndex($(this).closest('.DefineFun').attr('id'), functionProgram);
-                    defineCode.expr = programCarrying;
+                    defineCodeObject.expr = programCarrying;
 
                     //make things within droppable
                     $(this).find('.droppable').each(function () {
@@ -2859,15 +2890,9 @@
                     carrying = null;
                     programCarrying = null;
 
-                } else if (outputSelect.val() === 'Type') {
-                    if (outputSelect.val() === 'Type') {
-                        outputSelect.css('background-color', 'red');
-                    }
-                    $(ui.helper).remove();
-
-                    carrying = null;
-                    programCarrying = null;
-                }
+                } 
+		$(this).removeClass('hovered');
+		$(this).removeClass('highlighted');
             }
         });
     }
@@ -3072,6 +3097,7 @@
       |___/|_| \__,_\__, | \_____|  |___/|_| \___/ .__/
       |___/                        |_|
       =====================================================================================*/
+      var mouseCount=0
 
     //What is currently being carried. Type: DOM
     var carrying = undefined;
@@ -3117,6 +3143,7 @@
             appendTo: 'body',
             helper: 'clone',
             start: function (event, ui) {
+              mouseCount=1;
                 removeOutputs();
                 if (ui.item === null) {
                     throw new Error("sortable start: ui.item is undefined");
@@ -3184,7 +3211,7 @@
                             $(replacement).find('input').attr('readonly', false);
                             setLiWidth($("#List li"));
                             program.splice($("#List li").index(replacement), 0, programCarrying);
-                            //          $("#storage").html('Storage (' + storageProgram.length + ')');
+                            $("#storage").empty().text('Storage (' + storageProgram.length + ')');
                             addToHistory(tempProgram, tempStorageProgram);
                             programCarrying = null;
                             carrying = null;
@@ -3263,7 +3290,7 @@
         $("#storage").droppable({
             tolerance: 'pointer',
             drop: function (event, ui) {
-                if (!$(ui.draggable).is('.draggable')) {
+                if (!$(ui.draggable).is('.draggable') && mouseCount==0) {
                     typeCheckAll()
                     var replacement = "<li>" + carrying + "</li>";
                     addToHistory(tempProgram, cloneProgram(storage));
@@ -3276,7 +3303,7 @@
                     }
                     $(ui.draggable).remove();
                     setLiWidth($("#actualStorage li"));
-                    // $("#storage").html("Storage (" + storageProgram.length + ")");
+                    $("#storage").empty().text('Storage (' + storageProgram.length + ')');
                     carrying = null;
                     programCarrying = null;
                 }
@@ -4424,5 +4451,8 @@
     window.userFunctions = function () {
         return userFunctions
     };
+    window.mouseCount = function(){
+      return mouseCount;
+    }
 
 }());
