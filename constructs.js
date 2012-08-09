@@ -1077,9 +1077,13 @@
             return toContinue;
         });
 
+        $(document).on('mouseup', function (e) {
+          mouseCount--;
+        });
 
         $(document).on('mousedown', function (e) {
-            return formValidation(e)
+          mouseCount++
+            return formValidation(e);
         });
 
         //Sets undo and redo buttons to disabled on startup
@@ -1253,6 +1257,7 @@
                     definitionString += interpreter(constantProgram[i])
                 }
                 removeOutputs();
+                console.log(definitionString)
                 evaluateBlock(0, definitionString);
             }
 
@@ -1785,8 +1790,7 @@
     //renders the defineblock on screen
     function createDefinePopup(codeObject){
 	
-      if(codeObject === undefined){codeObject = new ExprDefineFunc;}
-	 functionProgram.push(codeObject);
+      if(codeObject === undefined){codeObject = new ExprDefineFunc;functionProgram.push(codeObject);}
 	var $popupHTML = $(makeDefinePopup(codeObject));
 	$('body').append($($popupHTML));
 	$($popupHTML).css('position','absolute');
@@ -2025,7 +2029,7 @@
             popupHTML += " style=\"background:" + colors[codeObject.contract.outputType] + "\" ";
         }
         if (codeObject.expr != undefined) {
-            popupHTML += "class=\"functionExpr noborder droppable expr\" name=\"Expr\" id=" + codeObject.funcIDList[0] + ">";
+            popupHTML += "class=\"functionExpr noborder droppable expr\" name=\"Expr\" id=" + codeObject.funcIDList[0] + "colspan=\"" + tableWidth + "\">";
             popupHTML += createBlock(codeObject.expr, constants.concat(createNewConstants(codeObject)), functions.concat(userFunctions));
             popupHTML += "</th>";
         } else {
@@ -3104,6 +3108,7 @@
       |___/|_| \__,_\__, | \_____|  |___/|_| \___/ .__/
       |___/                        |_|
       =====================================================================================*/
+      var mouseCount=0
 
     //What is currently being carried. Type: DOM
     var carrying = undefined;
@@ -3149,6 +3154,7 @@
             appendTo: 'body',
             helper: 'clone',
             start: function (event, ui) {
+              mouseCount=1;
                 removeOutputs();
                 if (ui.item === null) {
                     throw new Error("sortable start: ui.item is undefined");
@@ -3216,7 +3222,7 @@
                             $(replacement).find('input').attr('readonly', false);
                             setLiWidth($("#List li"));
                             program.splice($("#List li").index(replacement), 0, programCarrying);
-                            //          $("#storage").html('Storage (' + storageProgram.length + ')');
+                            $("#storage").empty().text('Storage (' + storageProgram.length + ')');
                             addToHistory(tempProgram, tempStorageProgram);
                             programCarrying = null;
                             carrying = null;
@@ -3295,7 +3301,7 @@
         $("#storage").droppable({
             tolerance: 'pointer',
             drop: function (event, ui) {
-                if (!$(ui.draggable).is('.draggable')) {
+                if (!$(ui.draggable).is('.draggable') && mouseCount==0) {
                     typeCheckAll()
                     var replacement = "<li>" + carrying + "</li>";
                     addToHistory(tempProgram, cloneProgram(storage));
@@ -3308,7 +3314,7 @@
                     }
                     $(ui.draggable).remove();
                     setLiWidth($("#actualStorage li"));
-                    // $("#storage").html("Storage (" + storageProgram.length + ")");
+                    $("#storage").empty().text('Storage (' + storageProgram.length + ')');
                     carrying = null;
                     programCarrying = null;
                 }
@@ -4421,12 +4427,17 @@
         return idArr;
     }
 
+    window.ExprApp = ExprApp;
+    window.ExprCond = ExprCond;
+    window.ExprBoolAnswer = ExprBoolAnswer;
+    window.ExprDefineFunc = ExprDefineFunc;
+    window.ExprDefineConst = ExprDefineConst;
+
 
     window.sync = sync;
     window.changeType = changeType;
     window.deleteArg = deleteArg;
     window.removeFunctionFromDrawers = removeFunctionFromDrawers;
-
 
 
     //FOR TESTING PURPOSES
@@ -4456,5 +4467,8 @@
     window.userFunctions = function () {
         return userFunctions
     };
+    window.mouseCount = function(){
+      return mouseCount;
+    }
 
 }());
