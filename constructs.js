@@ -1044,12 +1044,13 @@
 		          if(typeInfered.typeErrors.length>0 || typeInfered.blankErrors.length>0){
 		          legal=false
 		}
+  }
     for(i=0;i<constantProgram.length;i++){
-              typeInfered=typeInfer(constantProgram[i])
-              if(typeInfered.typeErrors.length>0 || typeInfered.blankErrors.length>0){
-              legal=false
+        typeInfered=typeInfer(constantProgram[i])
+        if(typeInfered.typeErrors.length>0 || typeInfered.blankErrors.length>0){
+          legal=false
+        }
     }
-            }
     if(!legal){
 		  alert("There are type errors or blank spaces in your program.  Please fix them before continuing to run");
 		return;
