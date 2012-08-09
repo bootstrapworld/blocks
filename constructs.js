@@ -1001,12 +1001,12 @@
 		program=[];
 		functionProgram=[];
 		storageProgram=[];
-    userFunctions=[];
-    constants=[];
-    constants=JSON.parse(programString[4]);
-    userFunctions=JSON.parse(programString[1]);
-    buildFuncConstructs();
-    objectArrayToProgram(JSON.parse(programString[5]),constantProgram);
+		userFunctions=[];
+		constants=[];
+		constants=JSON.parse(programString[4]);
+		userFunctions=JSON.parse(programString[1]);
+		buildFuncConstructs();
+		objectArrayToProgram(JSON.parse(programString[5]),constantProgram);
 		objectArrayToProgram(JSON.parse(programString[2]),functionProgram);
     objectArrayToProgram(JSON.parse(programString[0]),program);
 		objectArrayToProgram(JSON.parse(programString[3]),storageProgram);
