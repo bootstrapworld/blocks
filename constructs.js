@@ -3657,14 +3657,7 @@
         });
     }
 
-    function setPairColor(DOMelem) {
-        var toColor = undefined;
-        for (color in colors) {
-            if (colors.hasOwnProperty(color)) {
 
-            }
-        }
-    }
 
     function removeTopLevelCondColor(obj, arrayofobj) {
         removeInferTypes($(document.getElementById(obj.id)), arrayofobj);
