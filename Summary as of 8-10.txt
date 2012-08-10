@@ -78,3 +78,5 @@ Open whatever file, click run.  Potentially hook tests to actual site, not local
 
 Testsuite.js  in blocks: open testsuite.html on a browser.  This is where all of teh functions need to be visible outside wrapper.
 Find way of making sure if tests pass or fail.
+
+Must include selenium/seleniumHelp.js to run selenium tests as a script in the gui.html
