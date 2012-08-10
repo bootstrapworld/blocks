@@ -15,7 +15,12 @@ Completed:
 	*Blocks dragged directly from drawer to storage will dissapear
 	*Blocks can be sorted within the program
 	*Blocks can be dragged into and out of other blocks
+	*Open spaces will correctly highlight when carrying a block
 	*Blocks can be dragged from either the upper level program or from within other blocks to storage
+	*Blocks are synchronized with their program object counterpart
+	*Num expressions and String expressions can be clicked to add a literal block
+	*Num expressions can be validated so that only valid Number(text) will be accepted (not NaN)
+	*Cond branches can be added and deleted
 	*Undo and redo will correctly re-render older or future versions of the program and storage
 	*Export will correctly alert the user with racket representation of the code
 	*Upon Saving a program, users are asked for a file name, alerted if the name already exists and saves the program,storage,functions and constants to local storage
@@ -25,6 +30,7 @@ Completed:
 		-contract name and definition name are linked
 		-names of functions cannot repeat and must be valid
 		-Contract types and arguments/expression types are linked
+		-Arguments can be added or deleted
 		-User defined Functions will appear in the drawers
 		-User defined functions can be deleted
 		-User defined functions can be modified
@@ -41,16 +47,36 @@ Completed:
 
 TODO:
 	*Hook up undo and redo to define functions and constants
+		-How will it affect the program/drawers if I undo an added argument etc.
 	*Potentially hook up export to the clipboard for easier copy and pasting
-	*Define Constants
+	*Define Constants synching with the program, storage program, drawers etc.
+		-When both name and expression are present, should appear in the drawers
+		-When name or expression is edited, should update drawers and all instances of the constant
 	*Hook saving and loading to wescheme along with a better dialogue box for file paths/name
 	*Double check program for all major browers and tablets
+	*Add bigbang and all it entails
+	*Add structs and all it entails
 
 KNOWN BUGS:
 	*When error result messages are clicked more than once, more than one message appears.  Only occurs on returnMessage, not returnDOMElement.  Clicking outside the result box will still close the message
 	*In define functions, arguments can be dragged out to the program.  This can be fixed by setting confinement.  However, this does not allow for the argument names to be trashed.
+	*Formvalidation stopped working.  Only needed for number expressions.  How big of a bug is this?
 
 
 KNOWN ISSUES:
-	*If the user tries to load a program with user defined functions and double clicks to edit that function, the styling can be a tiny bit off.
-	*Better user alerts when the contract is not completed
+	*If the header button bar is too thin, buttons overlap onto the next line
+	*Fix styling of empty spaces (place holder names)
+	*In a big block, some of teh spaces become elongated weirdly
+	*if a block has an error and is dragged out of something, the carried block is white (not a big deal)
+	*Sometimes, very rarely, over is not triggered and thus there is no highlighting.  Block can still be dropped.  Only matteres on overlapping defines
+
+
+NOTES:
+Make all functions within the overall strict visible (wrapper) in order to run tests (not selenium)
+All test cases for selenium are in blocks/selenium.  Reset the top line to correspond with the localhost
+Open whatever file, click run.  Potentially hook tests to actual site, not localhost.
+
+Testsuite.js  in blocks: open testsuite.html on a browser.  This is where all of teh functions need to be visible outside wrapper.
+Find way of making sure if tests pass or fail.
+
+Must include selenium/seleniumHelp.js to run selenium tests as a script in the gui.html
