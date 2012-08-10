@@ -2875,7 +2875,7 @@
 	    },
 
             drop: function (event, ui) {
-	        if (carrying != null && programCarrying != null && $(this).children().length === 0/* && $(this).hasClass('highlighted')*/) {
+	        if (carrying != null && programCarrying != null && $(this).children().length === 0/* && $(this).hasClass('highlighted')*/) {console.log('drop');
                     $(this).html(carrying);
                     defineCodeObject.expr = programCarrying;
 
@@ -3386,8 +3386,9 @@
             $(jQuerySelection).draggable({
                 containment: $("#" + functionCodeObject.id),
                 //connectToSortable: '#options',
-                appendTo: 'body',
-		zIndex: parseInt($(this).closest('.definePopup').css('z-index')) + 1,
+                appendTo: $("#" + functionCodeObject.id),
+		stack: '.ui-draggable',
+		//zIndex: parseInt($(this).closest('.definePopup').css('z-index')) + 1,
                 start: function (event, ui) {
 		        if (!errorVal) {
                         tempProgram = cloneProgram(program);
@@ -3403,9 +3404,13 @@
                     programCarrying = new ExprConst($(this).find('input').val());
                     programCarrying.outputType = $("#" + dropDownID).val();
                     carrying = createBlock(programCarrying, constants.concat(createNewConstants(functionCodeObject)), functions.concat(userFunctions));
-		    $(carrying).css('z-index',$("#" + functionCodeObject.id).css('z-index') + 1);
+		    //$(carrying).css('z-index',$("#" + functionCodeObject.id).css('z-index') + 1);
 		    return carrying;
-                }
+                }, 
+		stop: function (event, ui){
+		    console.log('stop');
+		    typeCheckAll();
+		}
             });
         } else {
             throw new Error("addDraggableToArgument: jQuerySelection is null");
