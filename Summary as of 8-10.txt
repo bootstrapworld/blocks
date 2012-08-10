@@ -69,3 +69,12 @@ KNOWN ISSUES:
 	*In a big block, some of teh spaces become elongated weirdly
 	*if a block has an error and is dragged out of something, the carried block is white (not a big deal)
 	*Sometimes, very rarely, over is not triggered and thus there is no highlighting.  Block can still be dropped.  Only matteres on overlapping defines
+
+
+NOTES:
+Make all functions within the overall strict visible (wrapper) in order to run tests (not selenium)
+All test cases for selenium are in blocks/selenium.  Reset the top line to correspond with the localhost
+Open whatever file, click run.  Potentially hook tests to actual site, not localhost.
+
+Testsuite.js  in blocks: open testsuite.html on a browser.  This is where all of teh functions need to be visible outside wrapper.
+Find way of making sure if tests pass or fail.
