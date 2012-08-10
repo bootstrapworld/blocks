@@ -2045,6 +2045,11 @@ function createConstantPopup(codeObject){
 
     //adds droppable to expression
     addDroppableToDefineConstExpr($popupHTML.find('.defineExpr'));
+    if(alreadyMade){
+        $popupHTML.find('table').each(function(){
+            addDraggableToConstExpr($(this))
+        })
+    }
 
 
         $popupHTML.find(".closeConstantButton").bind('click', function() {
@@ -2129,19 +2134,20 @@ function createConstantPopup(codeObject){
 	        if (carrying != null && programCarrying != null && $(this).children().length === 0) {
                     $(this).html(carrying);
                     defineCodeObject.expr = programCarrying;
+                    defineCodeObject.outputType=programCarrying.outputType
 
                     //make things within droppable
                     $(this).find('.droppable').each(function () {
-			console.log("add droppable to", $(this));
+			             console.log("add droppable to", $(this));
                         addDroppableWithinConst($(this));
                     });
 
                     //make things within draggable
                     $(this).find('table').each(function () {
-                      //  addDraggableToDefineExpr($(this));
+                      addDraggableToConstExpr($(this))
                     });
 		    if (draggedClone != undefined){
-			eliminateBorder(draggedClone.closest('th'));
+			 eliminateBorder(draggedClone.closest('th'));
 		    }
 		    draggedClone = undefined;
                     typeCheckAll();
@@ -3176,6 +3182,37 @@ function addDroppableWithinConst(jQuerySelection){
         }
     }
 
+        //adds draggable within define expressions
+    function addDraggableToConstExpr($table) {
+         if (!$table.hasClass('noDrag')) {
+        $table.draggable({
+            helper: 'clone',
+            appendTo: 'body',
+            connectToSortable: '#List, .droppable',
+            start: function (event, ui) {
+                draggedClone = $(this);
+                programCarrying = searchForIndex($(this).attr("id"), constantProgram);
+                carrying = getHTML($(this));
+                ui.helper.addClass("wired");
+        console.log($(this).closest($("th")).closest($("table")).attr('id'), $(this).attr('id'));
+                setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined, constantProgram);
+            },
+            stop: function (event, ui) {
+                if (programCarrying != null && carrying != null) {
+                    console.log('here');
+
+                    setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).closest('th').attr("id"), programCarrying, constantProgram);
+                    programCarrying = null;
+                    carrying = null;
+                }
+                renderFunctions();
+                typeCheckAll();
+            }
+        });
+        }
+    }
+
+
     function onTop($hovered){
 	var hoveredZArray = [];
 	$(".hovered").each(function(){
@@ -3305,6 +3342,52 @@ function addDroppableWithinConst(jQuerySelection){
             }
         });
     }
+
+    //adds droppable to things within define expressions
+    function addDroppableWithinDefineConstantExpr(jQuerySelection) {
+        $(jQuerySelection).mousedown(function (e) {
+            if (e.which === 1) {
+                addClickableLiteralBox($(this), $(this).closest($("table")).attr("id"), $(this).attr("id"), constantProgram);
+            }
+        });
+
+        $(jQuerySelection).droppable({
+            tolerance: 'pointer',
+            greedy: true,
+                            over: function (event, ui) {
+                    if (programCarrying != undefined && carrying != undefined && $(this).children().length === 0) {
+                        if (flattenAllFuncIDLists(programCarrying).indexOf($(this).attr("id")) === -1) {
+                            $(this).addClass("highlighted")
+                        }
+                    }
+                },
+                out: function (event, ui) {
+                    $(this).removeClass("highlighted");
+                },
+            drop: function (event, ui) {
+                if (carrying != null && programCarrying != null && $(this).children().length === 0) {
+                    $(this).html(carrying);
+                    setChildInProgram($(this).closest($("table")).attr("id"), $(this).attr("id"), programCarrying, constantProgram);
+                    $(this).css('border', 'none');
+                    $(this).find('.droppable').each(function () {
+                        addDroppableWithinDefineExpr($(this));
+                    });
+                    $(this).find('table').each(function () {
+                        addDraggableToDefineExpr($(this));
+                    });
+                    if (ui.draggable.parentsUntil('.constantPopup').parent().first().hasClass('constantPopup')) {
+
+                        eliminateBorder($(ui.draggable).closest('th'));
+                    }
+                    programCarrying = null;
+                    carrying = null;
+                    typeCheckAll();
+                }
+            }
+        });
+    }
+
+
 
 
     /*
@@ -4812,6 +4895,9 @@ function addDroppableWithinConst(jQuerySelection){
     };
     window.functionProgram = function () {
         return functionProgram
+    };
+        window.constantProgram = function () {
+        return constantProgram
     };
     window.historyarr = function () {
         return historyarr
