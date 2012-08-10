@@ -1,0 +1,586 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="http://seleniumhq.org/" />
+<title>typeInfer</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">typeInfer</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>http://localhost:1601/gui.html</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=.Expressions</td>
+	<td></td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;cond&quot;)</td>
+	<td>css=#List</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;cond&quot;)</td>
+	<td>css=#List</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;cond&quot;)</td>
+	<td>css=#List</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;cond&quot;)</td>
+	<td>css=#List</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=button.addCond</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=.Numbers</td>
+	<td></td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;expt&quot;)</td>
+	<td>css=#List li:nth-child(1) tr:nth-child(2)</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;expt&quot;)</td>
+	<td>css=#List li:nth-child(1) tr:nth-child(2) th:nth-child(2)</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;expt&quot;)</td>
+	<td>css=#List li:nth-child(1) tr:nth-child(3)</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=.Images</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=button.addCond</td>
+	<td></td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;place-image&quot;)</td>
+	<td>css=#List li:nth-child(1) tr:nth-child(4)</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;expt&quot;)</td>
+	<td>css=#List li:nth-child(2) tr:nth-child(2)</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=button.addCond</td>
+	<td></td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;cond&quot;)</td>
+	<td>css=#List li:nth-child(1) tr:nth-child(5)</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=button.addCond</td>
+	<td></td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;place-image&quot;)</td>
+	<td>css=#List li:nth-child(1) tr:nth-child(5) th:nth-child(3)</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,1], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,0], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [1,1], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [2,1], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [1,0], &quot;Booleans&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [3,1], &quot;Cond&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [3,1], &quot;Numbers&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [3,1], &quot;Images&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;cond&quot;)</td>
+	<td>id=413</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;scale&quot;)</td>
+	<td>id=607</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;Number&quot;)</td>
+	<td>id=532</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;Number&quot;)</td>
+	<td>id=103</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//table[@id='414']/tbody/tr[4]/th[2]/button</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=button.addCond</td>
+	<td></td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;Text&quot;)</td>
+	<td>id=102</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,1,0], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,1,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [3,1,0,1,0,1], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [3,1,0,1,1,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [3,1,1,1], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [3,1,2,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[2], [], &quot;Numbers&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [0,0])</td>
+	<td>This spot should have a block of type &quot;Booleans&quot; but found a block of type &quot;Numbers&quot;</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [0,1,0])</td>
+	<td>This spot should have a block of type &quot;Numbers&quot; but found a block of type &quot;Strings&quot;</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [0,1])</td>
+	<td>The output type of this cond is not consistent, there are answers that return different types.</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [1,1])</td>
+	<td>The output type of this cond is not consistent, there are answers that return different types.</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [2,1])</td>
+	<td>The output type of this cond is not consistent, there are answers that return different types.</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [3,1,0,1,0,1])</td>
+	<td>The output type of this cond is not consistent, there are answers that return different types.</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [3,1,1,1])</td>
+	<td>The output type of this cond is not consistent, there are answers that return different types.</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#List li:nth-child(1) table</td>
+	<td>css=#List li:nth-child(2) table tr:nth-child(2) th:nth-child(1)</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>id=6</td>
+	<td>id=534</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,0,1], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,0,0], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,0,1,0], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,0,0], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,1,1], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,3,1,1,1], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,2,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,3,1,0,1,0,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,2,1], &quot;Images&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,2,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,3,1,0,1,1,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,3,1,0,1,1,1], &quot;Images&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0], &quot;Images&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,3,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,3,1], &quot;Images&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,3,1,0,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,3,1,0,1], &quot;Images&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,3,1,2,1], &quot;Images&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,3,1,2,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,0], &quot;noDrag&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,1], &quot;noDrag&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,2], &quot;noDrag&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,3], &quot;noDrag&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,3,1,0], &quot;noDrag&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,3,1,1], &quot;noDrag&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [0,0,0])</td>
+	<td>This spot should have a block of type &quot;Booleans&quot; but found a block of type &quot;Numbers&quot;</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [0,0,1])</td>
+	<td>The cond block containing this answer was expected to return type &quot;Images&quot; but this block has type &quot;Numbers&quot;</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,0,1,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [0,0,1,0])</td>
+	<td>This spot should have a block of type &quot;Numbers&quot; but found a block of type &quot;Strings&quot;</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [0,3,1,1,1])</td>
+	<td>The cond block containing this answer was expected to return type &quot;Images&quot; but this block has type &quot;Numbers&quot;</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=h1.toggleHeader.Strings</td>
+	<td></td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;string-append&quot;)</td>
+	<td>css=#List</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>id=1353</td>
+	<td>id=533</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;string=?&quot;)</td>
+	<td>id=1354</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [0])</td>
+	<td>This spot should have a block of type &quot;Strings&quot; but found a block of type &quot;Booleans&quot;</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;Number&quot;)</td>
+	<td>id=1355</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [1], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [1])</td>
+	<td>This spot should have a block of type &quot;Strings&quot; but found a block of type &quot;Numbers&quot;</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;remainder&quot;)</td>
+	<td>id=1536</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,0], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [1])</td>
+	<td>This spot should have a block of type &quot;Strings&quot; but found a block of type &quot;Numbers&quot;</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;triangle&quot;)</td>
+	<td>id=1537</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,1], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [0,1])</td>
+	<td>This spot should have a block of type &quot;Strings&quot; but found a block of type &quot;Images&quot;</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>css=#options span:contains(&quot;Text&quot;)</td>
+	<td>id=1823</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[0], [0,1,0], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[0], [0,1,0])</td>
+	<td>This spot should have a block of type &quot;Numbers&quot; but found a block of type &quot;Strings&quot;</td>
+</tr>
+<tr>
+	<td>dragAndDropToObject</td>
+	<td>id=6</td>
+	<td>id=535</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[1], [1], &quot;Numbers&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[1], [1,0,0], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[1], [1,0,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[1], [1,0,1,0], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[1], [1,0,1,0])</td>
+	<td>This spot should have a block of type &quot;Numbers&quot; but found a block of type &quot;Strings&quot;</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[1], [1,1,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[1], [1,2,1], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[1], [1,3,1], &quot;Numbers&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.getTitle(window.program()[1], [1,3,1,0,1,0,1])</td>
+	<td>The cond block containing this answer was expected to return type &quot;Numbers&quot; but this block has type &quot;Images&quot;</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[1], [1,3,1,0,1,0,1], &quot;ERROR&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[1], [1,3,1,1,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[1], [1,3,1,1,1], &quot;Numbers&quot;)</td>
+	<td>true</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[1], [1,3,1,2,1], &quot;ERROR&quot;)</td>
+	<td>false</td>
+</tr>
+<tr>
+	<td>assertEval</td>
+	<td>window.assertType(window.program()[1], [1,3,1,2,1], &quot;Numbers&quot;)</td>
+	<td>true</td>
+</tr>
+</tbody></table>
+</body>
+</html>

@@ -45,14 +45,17 @@
       =====================================================================================*/
 
 
-    // Returns a string representing an ID used for an HTML element and its corresp. code object
+    /*
+    *makeID - generates a new unique ID
+    */
     function makeID() {
         return String(ID++);
     }
 
-    /* 
-       Returns an array of strings representing IDs. Used for functions such that every argument
-       can have an ID
+    /*
+    * makeIDList - returns an array of unique id's
+    * @param num - the number of id's to be created
+    * @return - the array of id's of length num
     */
     function makeIDList(num) {
         var toReturn = [];
@@ -73,9 +76,10 @@
         return tempArr;
     };
 
-    /**
-     *flatten : object -> array
-     *turns a ExprBoolAnswer into a single level array
+    /*
+     *flatten - turns a ExprBoolAnswer into a single level array of objects
+     *@param obj - an ExprBoolAnswer
+     *@return - a single level array of objects
      */
     function flatten(obj) {
         var toReturn = [];
@@ -88,11 +92,11 @@
         return toReturn;
     }
 
-    /*
-      searchForIndex takes in an a string (id) and and array filled within code Objects (one of which should
-      contain an object with the id). 
-
-      @return: The object with the corresponding id.
+    /**
+    *searchForIndex -finds the object with the given id in the given array of codeObjects
+    *@param id - the id being searched for
+    *@param array- the array of objects being searched
+    *@return: The object with the corresponding id.
     */
     function searchForIndex(id, array) {
 
@@ -118,10 +122,12 @@
         return undefined;
     }
 
-    /*
-      addProgram adds a code object (obj) to the program array given the id of the parent (parentId)
-      and the id of the child (childId).
-      MAYBE: childID won't work and we'll need array position
+    /**
+      *setChildInProgram adds or removes an embedded(not top level) obj from the given array of objects
+      * @param parentId - the id of the parent containing the child to be removed or space to be added to
+      * @param childId - the id of the object to be removed or the space to be filled
+      * @param obj - the obj being added (or undefined if removing)
+      * @param prog - an array of objects in which the the child is being added or removed
     */
     function setChildInProgram(parentId, childId, obj, prog) {
         var parent = searchForIndex(parentId, prog);
@@ -129,7 +135,7 @@
         if (parent === undefined) {
             throw new Error("setChildInProgram failure: parentId not found.");
         }
-        if (isLiteral(parent)) {
+        if (isLiteral(parent) || parent instanceof ExprConst) {
             throw new Error("setChildInProgram failure: parent was a literal, and cannot be added to");
         }
         if (parent.hasOwnProperty("funcIDList")) {
@@ -161,6 +167,13 @@
         }
     }
 
+    /*
+    *getRemoveIndex - given a parent and an id, finds the index in the array of subexpressions of the parent at which to remove the child
+    *@param parent - the parent from which the child is being removed
+    *@param childID - the id of the child to be removed
+    *@return - an integer representing the index in the array of subexpressions of the parent at which to remove the child (0 if the expr of a definition)
+    *@return if not found -1
+    */
     function getRemoveIndex(parent, childID) {
         var i;
         var toReturn = -1;
@@ -186,8 +199,13 @@
         }
         return toReturn;
     }
-
-    function getAddIndex(parent, childID) {
+    /*
+    *getAddIndex - given a parent and an id, finds the index in the array of subexpressions of the parent at which to add the child
+    *@param parent - the parent to which the child is being added
+    *@param childID - the id of the space at which the child is to be added
+    *@return - an integer representing the index in the array of subexpressions of the parent at which to add the child (0 if the expr of a definition) 
+    *@return if not found -1
+    */    function getAddIndex(parent, childID) {
         for (var i = 0; i < parent.funcIDList.length; i++) {
             if (parent.funcIDList[i] === childID) {
                 return i;
@@ -198,16 +216,24 @@
 
 
     /*
-      Constucts the define function block given a contract, a list of arguments (a list of variables), 
-      and an expression which is an expression object
+    *The following are the data definitons for the objects used to represent the DrRacket Code
+    *selfType is the name of the data type, used for reconstruction after saving, since JSON stringify doesn't save the actual object type
+    *id - a unique id representing the element
+    */
 
-      (define (add2 x) (+ x 2)) =>
-      makeDefineFunc(contract1, ["x"], makeApp("+", [makeVariable("x"), 2]))
 
-      contract1 = makeContract("add2", ["Numbers"], "Numbers")
-
-      expr = the expr, not a list, an object
-      funcIDList: first id refers to the expr block, all others refer to aruguments in order
+    /*
+    * ExprDefineFunc
+    *Constucts the define function block
+    *contract - the contract of the define
+    *arguementNames - intialized to one empty argument name
+    *expr - intialized to undefined, holds the subexpression of the define
+    *funcIDList - an array of unique id's that point to empty spaces in the define. First position points to the expression, all others to the arguments
+    * EXAMPLE:
+    *(define (add2 x) (+ x 2)) =>
+    * ExprDefineFunc(contract1, ["x"], ExprApp("+", [ExprConst("x"), 2]))
+    * contract1 = ExprContract("add2", ["Numbers"], "Numbers")
+    * 
     */
     var ExprDefineFunc = function () {
 
@@ -229,7 +255,15 @@
             return temp;
         };
     };
-
+    /*
+    *ExprContract
+    * constructs the contract for a definition
+    * funcName - the name of the function
+    * argumentTypes - an array of types for each argument (since there must be at least one argument, the array is intialized to length 1 of undefined, which represents an unselected type)
+    * outputType - the output type of the definition, initialized to undefined
+    * funcIDList - id of output type followed by id's of arguments (need id's for drop down box to select type)
+    * purpose - a string representing the purpose of the funcion, initialized to an empty string
+    */
     var ExprContract = function () {
         this.funcName = "";
         this.selfType = "ExprContract"
@@ -251,14 +285,16 @@
     };
 
     /*
-      Constucts the define variable block given a name (string), an expression which is an expression 
-      object, and an output type
-
-      (define x 3) =>
-      ExprDefineConst("x", ExprNumber(3), "Numbers")
-
-      (define y (+ 2 x)) =>
-      ExprDefineConst("y", (ExprApp("+", [ExprNumber("2"), ExprConst("x")))
+    * ExprDefineConst
+    * constructs the definition block for a constant
+    * constName - the name of the constant
+    * expr - the subexpression of the define block
+    * funcIDList - always has length one, only id points to the expression space, used for consistency
+    *EXAMPLE:
+    * (define x 3) =>
+    * ExprDefineConst("x", ExprNumber(3), "Numbers")
+    * (define y (+ 2 x)) =>
+    * ExprDefineConst("y", (ExprApp("+", [ExprNumber("2"), ExprConst("x")))
     */
     var ExprDefineConst = function () {
 
@@ -282,15 +318,19 @@
     };
 
     /*
-      Returns true if the object is a literal or constant, false otherwise.
+    * isLiteral - returns if the object is a literal or not
+    * @param obj - the object in question
+    * @return true if the obj is a literal, false otherwise
     */
     function isLiteral(obj) {
         return (
-        obj instanceof ExprString || obj instanceof ExprNumber || obj instanceof ExprBoolean || obj instanceof ExprConst);
+        obj instanceof ExprString || obj instanceof ExprNumber || obj instanceof ExprBoolean);
     }
 
     /*
-      Returns true if the object is a definition, false otherwise
+    * isDefine - return if the object is a define function or define constant
+    * @param obj - the object in question
+    * @return true if the object is a definition
     */
     function isDefine(obj) {
         return (obj instanceof ExprDefineConst || obj instanceof ExprDefineFunc);
@@ -299,9 +339,13 @@
 
 
     /*
-      Constructs an application of an operator given the name, arguments, and output type. The arguments 
-      is an array of expressions. Value is initially initialized to null.
-      args is a list of objects (one for each argument)
+    * ExprApp
+    * Constructs an application of an operator 
+    * funcName - the name of the function being applied
+    * funcIDList - a list of ID's with length equal to the number of arguments of the function, each id pointing to an empty argument space
+    *            - if the argument space is filled, the id remains, just covered up
+    * args - an array of objects representing the arguments
+    * outputType - the output type of the function
     */
     var ExprApp = function (funcName) {
         this.funcName = funcName;
@@ -328,8 +372,10 @@
     };
 
     /*
-      Constructs a string given the contents of the string (str).
-      The value of the string is initialized as an empty string "". 
+    * ExprString
+    * Constructs a string literal
+    * value - the actual string, initialized to "insert string here" to help the kids out
+    * outputType - "Strings"
     */
     var ExprString = function () {
         this.value = "insert string here";
@@ -346,7 +392,10 @@
     };
 
     /*
-      Constructs a number given a number num.
+    * ExprNumber
+    * Constructs a number literal
+    * value - the actual number, initialized to 20
+    * outputType - "Numbers"
     */
     var ExprNumber = function () {
         this.value = 20;
@@ -363,8 +412,10 @@
     };
 
     /*
-      NOTE: Not sure if necessary
-      Constructs a variable object given a name of type string.
+    * ExprConst
+    * Constructs a constant or variable
+    * constName - the name of the constant or variable
+    * outputType - initialized to undefined, set by the contract (if in a define) or by the constant definition
     */
     var ExprConst = function (constName) {
         this.constName = constName;
@@ -381,7 +432,10 @@
     };
 
     /*
-      Constructs a boolean true or false (else == true)
+    * ExprBoolean
+    * Constructs a boolean literal
+    * value - the actual boolean, initialized to the input value (either true or false)
+    * outputType - "Booleans"
     */
     var ExprBoolean = function (value) {
         this.value = value;
@@ -397,7 +451,11 @@
     };
 
     /*
-      Constructs a tuple of boolean and answer to use in a cond expression
+    * ExprBoolAnswer
+    * Constructs a boolean answer pair of a cond
+    * bool - represents the boolean subexpression
+    * answer - represents the return subexpression
+    * outputType - I don't think this ever gets used, but its the last and we're cramming, so we aren't going to remove it now
     */
     var ExprBoolAnswer = function () {
         this.bool = undefined;
@@ -423,15 +481,16 @@
 
 
     /*
-      Constructs a conditional statement given a list of tuples, formatted: (expr, expr)
-      The first expression has to be a boolean
-
-      (cond
-      [(true) 2]
-      [(false) 1]
-      ) =>
-      ExprCond(list1)
-      list1 = [ExprBoolAnswer(ExprBoolean(true),ExprNumber(2)).ExprBoolAnswer(ExprBoolean(False),ExprNumber(1))]
+    * ExprCond
+    * Constructs a cond block
+    * listOfBooleanAnswer - an array of ExprBoolAnswer's
+    * outputType - the output type of the cond, only becomes defined if there are no errors in the cond, I don't think this is ever actually used either, but it is updated
+    * EXAMPLE:
+    * (cond
+    * [(true) 2]
+    * [(false) 1]) =>
+    * ExprCond(list1)
+    * list1 = [ExprBoolAnswer(ExprBoolean(true),ExprNumber(2)).ExprBoolAnswer(ExprBoolean(false),ExprNumber(1))]
     */
     var ExprCond = function () {
         this.listOfBooleanAnswer = [new ExprBoolAnswer()];
@@ -449,13 +508,21 @@
         };
     };
 
-
+    /*
+    * objectArrayToProgram - turns an array of JSON objects (which is what our saved program is) back into DrBlocket data types
+    * @param JSONArrayObject - an array of JSON objects to turn back into DrBlocket data types
+    * @param arrayToPush - the array that stores the correctly formatted objects (the reason this is here is so you can load into program, userFunctions, etc. and have the whole program build)
+    */
     function objectArrayToProgram(JSONArrayObject, arrayToPush) {
         for (var i = 0; i < JSONArrayObject.length; i++) {
             arrayToPush.push(objectToCodeObject(JSONArrayObject[i]));
         }
     }
-
+    /*
+    * objectToCodeObject - turns the given JSON object into a DrBlocket object
+    * @param JSONObject - the object to be converted
+    * @return the DrBlocket version of the given object
+    */
     function objectToCodeObject(JSONObject) {
         if (JSONObject == undefined) {
             return undefined;
@@ -513,7 +580,14 @@
     };
 
 
-    //Functions is an array of objects containing a name, tuples of type and name corresponding to their inputs and an output type
+    /*
+    *functions - an array of all pre-defined functions
+    * name - the function name
+    * input - an array of tuples of input type and input name
+    *       - type - the type of the input, used in type inference and coloring
+            - name - the name of the argument, used to help kids know what to put in that argument place
+    * output - the output type of the function
+    */
     var functions = [];
     functions[0] = {};
     functions[0].name = "+";
@@ -549,10 +623,10 @@
     functions[3].name = "/";
     functions[3].input = [{
         type: "Numbers",
-        name: "Number"
+        name: "Dividend"
     }, {
         type: "Numbers",
-        name: "Number"
+        name: "Divisor"
     }];
     functions[3].output = "Numbers";
     functions[4] = {};
@@ -815,21 +889,19 @@
     }];
     functions[28].output = "Images";
 
-    var initFunctions = functions.length;
-    //constants is an array of user defined variables containing their name and type
+    //constants - an array of user defined variables containing their name and type
     var constants = [];
-    /*
-      functionProgram   is an array of user defined functions in the form of ExprDefineConst and xprDefineFunc
-    */
+    //functionProgram - an array of user defined functions in object form (so the actual definiton object, not formatted like functions)
     var functionProgram = [];
+    //constantProgram - an array of user defined constants in object form
     var constantProgram =[];
-    var initConstants = constants.length;
+    //userFunctions - an array of user defined function in name, input, output form
     var userFunctions = [];
 
     //restricted contains a list of key words in racket that we aren't allowing the user to redefine
     var restricted = ["lambda", "define", "list", "if", "else", "cond", "foldr", "foldl", "map", "let", "local"];
 
-    //pre-defined and user-defined types
+    //pre-defined types (can be added to by user defined structs if they are ever implemented)
     var types = ["Numbers", "Strings", "Booleans", "Images"];
 
     //Colors is an object containing kv pairs of type to color
@@ -843,18 +915,15 @@
     colors.Constants = "#FFFFFF";
 
     /*
-      historyarr stores the program/storage state. Updated when the user changes something about the program (i.e.
-      adds a block, moves a block, moves something to storage, etc.)
-
-      historyarr is an array of objects in which the first element of the object is the program state and the second
-      is the storage state
+    *historyarr - an array of tuples of program and storage (and eventually other things, but not currently)
+    * - updated every time a block is moved in the program or storage
+    * - used for undo, simply takes one step back and renders the program and storage
     */
     var historyarr = [];
-
-
     /*
-      addToHistory takes in a program state and adds it to history while setting the future array 
-      (connected to the redo button) to an empty array
+    * addToHistory - adds a tuple to the historyarr
+    * @param programState - the current program
+    * @param storageState- the current storage
     */
     var addToHistory = function (programState, storageState) {
         historyarr.push({
@@ -865,25 +934,12 @@
         future = [];
     };
 
-
-    /*
-      future is an array of the program states and storage states. Updated when the user undos something.
-    */
+    //future -  an array like historyarr, but only created by pressing undo
     var future = [];
-
-    /*
-      program is an array of makeDefineFunc/makeDefineVar/Expressions that make up the user's program
-      on the screen.
-    */
+    //program - an array of expressions (no definitions) that appear in the central coding area
     var program = [];
-
-
-    /*
-      storageProgram stores the state of the stroage div
-    */
+    //storageProgram - stores every object that is dropped into storage
     var storageProgram = [];
-
-    var constantProgram=[];
 
 
 
@@ -901,21 +957,23 @@
     // These variables store what the height and width of the code div should be
     var contentHeight;
     var contentWidth;
-    // Which Drawer type is currently being displayed
+    //activated - which drawer types are currently being displayed
     var activated = [];
-    // which text block in the #code div is currently being focused
+    // focused - which text block in the #code div is currently being focused
     var focused = null;
+    //initvalue -the intial value of the focused
     var initvalue = null;
-    // ID that matches together a code object and an HTML element
+    //ID that matches together a code object and an HTML element
     var ID = 0;
+    //adding - boolean of whether addind a message to an error report or output report
     var adding = false;
-
-    var numberofvalidations = 0;
+    //errorVal - used for form validation when an invalid input is in a number literal
     var errorVal = false;
+    //timeout - delays syncing for function name
     var timeout;
 
 
-    //resizes code div when the window is resized
+    //onResize - resizes code div when the window is resized
     function onResize() {
         contentHeight = $(window).height() - $("#header").height();
         contentWidth = $(window).width();
@@ -928,115 +986,64 @@
         $("#List").height(contentHeight - 30);
         $("#List").width($("#code").width() - 55);
         $("#options").height(contentHeight - $("#storage").height());
-        //    resizeStorage();
-        //     resizeCode()
     }
-
-    var resizeStorage = function () {
-        $("#storagePopup").width($("#code").width() - $("#Drawers").width() - 300);
-        $("#storagePopup").height($("#code").height() - 100);
-    };
-
-    var resizeCode = function () {
-        $("#codePopup").width($("#code").width() - $("#Drawers").width() - 300);
-        $("#codePopup").height($("#code").height() - 100);
-    };
-
-   /*
-
-       $(document).ready(function(){
-       
-       // //HOOKING UP TO WESCHEME EVALUATOR
-       // var evaluator = new Evaluator({
-       //            write: function(thing) {
-       //                console.log(thing);
-       //                $("#actualCode").append(thing);
-       //            }
-       //        });
-       // var xhr = new easyXDM.Rpc(
-       //            { remote: "http://wescheme-compiler.hashcollision.org/index.html",
-       //              // This lazy flag must be set to avoid a very ugly
-       //              // issue with Firefox 3.5.
-       //              lazy: true
-       //            },
-       //            { remote: { compileProgram: {} }});
-
-       // evaluator.setCompileProgram(function(name, program, success, fail) {
-       //            xhr.compileProgram(name, program, success, fail);
-       //        });*/
-
+    //evaluator and xhr - used for sending things to the racket interpreter
     var evaluator;
     var xhr;
 
+    /*
+    *called when window is loaded to initialize things
+    */
     $(document).ready(function () {
-
-
         //When the window is resized, the height of the width of the code div changes
         $(window).resize(onResize);
-
-
-        //draws drawers when the page is loaded
         makeDrawers(functions, constants);
         onResize();
-
-        /*
-    adds a stylesheet to <head> such that blocks can be colored according to their type
-  */
         renderTypeColors();
-
         addUItoStorage();
-
-
+        //makes storage closeable
         $("#closestorage").click(function () {
             $("#storagePopup").css('visibility', 'hidden');
         });
-
-        $("#closecode").click(function () {
-            $("#codePopup").css('visibility', 'hidden');
-            evaluator.requestBreak();
-        });
-
+        //allows escape to close storage
         $(document).keyup(function (e) {
             if (e.keyCode == 27) {
                 $("#storagePopup").css('visibility', 'hidden');
-                $("#codePopup").css('visibility', 'hidden');
                 evaluator.requestBreak();
-            } // esc
+            }
         });
 
         $(document).click(function (e) {
+        
+            //allows click popup for errors thrown during type inference (click again for remove popup) (click is for iPad)
             $(document).find(".ErrorMessage").each(
-
             function () {
                 if (Modernizr.touch && !adding) {
-                    console.log("Correctly removing");
                     $(this).remove();
                 }
             })
+        
+            //allows click popup for errors thrown during evaluation (click again for remove popup)
             $(document).find(".errorOutput").each(
-
             function () {
                 if (!adding) {
-                    console.log("Correctly removing");
                     $(this).remove();
                 }
 
             });
+        
+            //allows click popup for output of each block in the program (clikc again for remove popup)
             $(document).find(".output").each(
-
             function () {
                 if (!adding) {
                     console.log("Correctly removing");
                     $(this).remove();
                 }
-
             });
             adding = false
         })
-
-        /*
-    sets focus equal to the input that is focused. 
-  */
+        
+        //sets the global variable focused to what the focus is on
         $(document).on('focus', "#List input", function (e) {
             var toContinue = formValidation(e);
             focused = $(this);
@@ -1044,24 +1051,24 @@
             tempProgram = cloneProgram(program);
             return toContinue;
         });
-
+        
+        //mouseup and mousedown listeners used to maintain when the mouse is released
+        //(there were weird issues with dragging and dropping where it would randomly think the dragged object was released)
         $(document).on('mouseup', function (e) {
-          mouseCount--;
+          mouseCount = 0;
         });
 
         $(document).on('mousedown', function (e) {
-          mouseCount++
+          mouseCount = 1;
             return formValidation(e);
         });
-
+        
         //Sets undo and redo buttons to disabled on startup
         $("#undoButton").attr('disabled', 'disabled');
         $("#redoButton").attr('disabled', 'disabled');
         $("#stopButton").attr("disabled", "disabled");
-
-        /*
-    Binds undo functionality with undo button
-  */
+        
+        //Binds undo functionality with undo button
         $("#undoButton").bind('click', function () {
             if (historyarr.length !== 0) {
                 future.unshift({
@@ -1079,10 +1086,7 @@
             }
         });
 
-
-        /*
-    Binds redo functionality with redo button
-  */
+        //Binds redo functionality with redo button
         $("#redoButton").bind('click', function () {
             if (future.length !== 0) {
                 historyarr.push({
@@ -1100,6 +1104,7 @@
             $("#undoButton").removeAttr('disabled');
         });
 
+        //binds save button
         $("#saveButton").bind('click', function () {
             if (typeof (Storage) !== "undefined") {
                 var valid = true;
@@ -1137,7 +1142,7 @@
                 alert("I am sorry but your browser does not support storage.");
             }
         });
-
+        //binds load button
         $("#loadButton").bind('click', function () {
             var loadName = prompt("Please enter the name of the file you wish to load.  Your current program will be removed from screen.");
             if (loadName == undefined) {
@@ -1160,7 +1165,7 @@
                 objectArrayToProgram(JSON.parse(programString[2]), functionProgram);
                 objectArrayToProgram(JSON.parse(programString[0]), program);
                 objectArrayToProgram(JSON.parse(programString[3]), storageProgram);
-                //do I change the history and trash? overwrite it?
+                //overwrite history, could save and load it if desired
                 historyarr = [];
                 future = [];
                 console.log(functionProgram)
@@ -1177,12 +1182,13 @@
                 $("#graybox").css("visibility","hidden");
             }
         });
-
+        
+        //binds export button
         $("#exportButton").bind('click', function () {
             alert("Here is the racket representation of the current program:\n\n" + parseProgram());
         });
 
-
+        //allows extra ExprBoolAnswer's to be added
         $(document).on('click', ".addCond", function () {
             addToHistory(cloneProgram(program), cloneProgram(storageProgram));
             if (searchForIndex($(this).closest('table').attr('id'), program) != undefined) {
@@ -1195,7 +1201,7 @@
             renderProgram(createProgramHTML())
             renderFunctions();
         });
-
+        //binds run button
         $("#runButton").click(function () {
             var legal = true;
             var typeInfered;
@@ -1232,22 +1238,8 @@
                 console.log(definitionString)
                 evaluateBlock(0, definitionString);
             }
-
-
-            //var programString = parseProgram();
-            //console.log(programString, typeof(programString));
-            // $("#actualCode").empty().css("white-space", "pre")
-            //     .text("Racket:\n" + programString +"\n\nResult:\n");
-            // $("#codePopup").css('visibility','visible');
-            // evaluator.executeProgram("",
-            //       programString,
-            //       function() {
-            //       },
-            //       function(err) {
-            //           $("#actualCode").text("\nError:\n"+evaluator.getMessageFromExn(err)+"");
-            //       })
         });
-
+        //binds removeCond button to remove ExprBoolAnswer
         $(document).on('click', ".removeCond", function () {
             var listOfTuples
             if (searchForIndex($(this).closest('.Cond').attr('id'), program) != undefined) {
@@ -1269,10 +1261,8 @@
             }
         });
     });
-
-    /*
-      allows user to add argument to contract in define block
-    */
+    
+    //binds the add argument button in define's
     $(document).on('click', ".addArgument", function () {
         addToHistory(cloneProgram(program), cloneProgram(storageProgram));
         var defineExpr = searchForIndex($(this).closest('table').attr('id'), functionProgram)
@@ -1308,26 +1298,35 @@
  	//toggleFunctionInDrawer(defineExpr);
 
     });
-
+    /*evaluateBlock - calls the racket interpreter on one block of the program and all the definitions
+    * @param i - the index of the block to be evaluated
+    * @param definitionString - the interpreted definitions blocks
+    */
     function evaluateBlock(i, definitionString) {
         var blockString = definitionString + interpreter(program[i]);
         var id = program[i].id
         console.log(blockString, id)
-        var myEval = makeEvaluator(id, blockString);
+
+        var doAfterEvaluation = function() {
+            if (i+1 < program.length) {
+                evaluateBlock(i+1, definitionString);
+            } else {
+                $("#stopButton").attr("disabled", "disabled");
+            }
+        };
+
+        var myEval = makeEvaluator(id, blockString, doAfterEvaluation);
         $("#stopButton").removeAttr('disabled');
         $("#stopButton").click(function () {
             myEval.requestBreak();
         });
-        i++;
-        console.log("added");
-        if (i < program.length) {
-            evaluateBlock(i, definitionString);
-        } else {
-            $("#stopButton").attr("disabled", "disabled");
-        }
     }
-
-    function makeEvaluator(id, blockString) {
+    /*makeEvaluator - get the racket return of an evaluated expression and sets the answer to the block it came from
+    * id - the id of the block to attach the return to
+    * blockString - the racket code of the block to be interpreted and define blocks
+    * doAfterEvaluation - the function call to the next block to evaluate (so that if a block gets stuck in an infinite loop, the next block isn't called until the current one breaks)
+    */
+    function makeEvaluator(id, blockString, doAfterEvaluation) {
         var evaluator = new Evaluator({
             write: function (thing) {
                 console.log($(document.getElementById(id)));
@@ -1356,7 +1355,9 @@
         });
         evaluator.executeProgram("", blockString,
 
-        function () {},
+        function () {
+            doAfterEvaluation();
+        },
 
         function (err) {
             console.log(evaluator.getMessageFromExn(err))
@@ -1364,10 +1365,12 @@
             $($($(document.getElementById(id)).children("tbody").children("tr")[0]).find(".outputMessage")[0]).click(
             returnMessage("errorOutput", encode(evaluator.getMessageFromExn(err))));
             //$("#actualCode").text("\nError:\n"+evaluator.getMessageFromExn(err)+"");
+            doAfterEvaluation();
         });
         return evaluator;
     }
 
+    //removeOutputs - removes the outputs and error messages from evaluation from each block
     function removeOutputs() {
         $(".outputMessage").remove();
         $(".output").remove();
@@ -1375,13 +1378,12 @@
     }
 
     /*
-      toggleDeleteButtons changes the contract of a define block such that delete buttons are visible and invisible
-      when appropriate
-
-      @param funcIDList is the funcIDList that corresponds with the define block you are dealing with
-      @param defineExprID is the string of the id refering to the define block which you are working with
-      @param latestArg a jQuery selector representing the latest argument you've added. latestArg is only defined
-      if it toggleDeleteButtons is called after adding an argument
+    *  toggleDeleteButtons changes the contract of a define block such that delete buttons are visible and invisible
+    * when appropriate
+    * @param funcIDList is the funcIDList that corresponds with the define block you are dealing with
+    * @param defineExprID is the string of the id refering to the define block which you are working with
+    * @param latestArg a jQuery selector representing the latest argument you've added. latestArg is only defined
+    *           if it toggleDeleteButtons is called after adding an argument
     */
     function toggleDeleteButtons(funcIDList, defineExprID, latestArg) {
         var closebutton = $("<button class=\"deleteArg\" onclick=\"deleteArg($(this).closest('th').prev().find('select').attr('id')," + defineExprID + ")\">x</button>");
@@ -1397,10 +1399,13 @@
         }
     }
 
-
+    /*
+    * formValidation - determines whether a number block actually contains a number and pops up an alert if it doesn't
+    * @param e - the event triggering formValidation
+    * @return whether or not the form is validated
+    */
     function formValidation(e) {
         var toContinue = true;
-        numberofvalidations++;
         errorVal = false;
         if (focused !== null && ($(e.target) !== focused)) {
             var inputtext = focused.val();
@@ -1419,47 +1424,13 @@
                 changeValue(inputtext)
                 codeObject.value = inputtext;
             }
-            //STRINGS
-            else if (focused.closest($("table")).hasClass("Strings")) {
-                changeValue(inputtext);
-            }
-            //DEFINING CONSTANTS
-            else if (focused.closest($("table")).hasClass("DefineVar")) {
-                if ((initvalue != undefined && initvalue != "") && inputtext !== "") {
-                    var prevIndex = containsName(prevName, constants);
-                    if (prevIndex != -1) {
-                        constants[prevIndex].name = inputtext;
-                    }
-                    addToHistory(tempProgram, cloneProgram(storageProgram));
-                    initvalue = null
-                    tempProgram = null;
-                } else if ((initvalue != undefined && initvalue != "") && inputtext === "") {
-                    constants.splice(containsName(prevName, 1));
-                    addToHistory(tempProgram, cloneProgram(storageProgram));
-                    initvalue = null;
-                    tempProgram = null;
-                } else if ((initvalue == undefined || prevName == "") && inputtext !== "") {
-                    addToHistory(tempProgram, cloneProgram(storageProgram));
-                    initvalue = null;
-                    tempProgram = null;
-                }
-                var scrollValue = $("#options").scrollTop();
-                makeDrawers(functions.concat(userFunctions), constants);
-                setActivatedVisible(scrollValue);
-                focused.attr('value', inputtext);
-                focused = null;
-            } else if (focused.closest($("table")).hasClass("DefineFun")) {
-                if (initvalue != inputtext) {
-                    addToHistory(tempProgram, cloneProgram(storageProgram));
-                    initvalue = null;
-                    tempProgram = null;
-                }
-                focused = null;
-            }
         }
         return toContinue;
     };
-
+    /*
+    * changeValue - changes the input text of a form to the input text
+    * @param inputtext - the text input into the popup called by form validation
+    */
     function changeValue(inputtext) {
         if (initvalue != inputtext) {
             addToHistory(tempProgram, cloneProgram(storageProgram));
@@ -1471,7 +1442,8 @@
     }
 
     /*
-      adds a stylesheet to <head> such that blocks can be colored according to their type
+    * renderTypeColors 
+    * adds a stylesheet to <head> such that blocks can be colored according to their type
     */
     function renderTypeColors() {
         var styleCSS = "<style type='text/css'>";
@@ -1483,8 +1455,12 @@
         styleCSS += "</style>";
         $(styleCSS).appendTo("head");
     }
-
-    //containsName takes in an array of objects and a string and returns the index at which that string is the name property of any of the objects
+    /*
+    * containtsName - finds the index at which the given string is the name of an obj in the given array
+    * @param array_of_obj - the array of objects to search through
+    * @param stringElement - the name being searched for
+    * @return the index in the array at which the name is found
+    */
     function containsName(array_of_obj, stringElement) {
         var contain = -1;
         for (var i = 0; i < array_of_obj.length; i++) {
@@ -1498,13 +1474,11 @@
 
 
     /*
-      functionNameRepeated checks to see if a function's name already exists
-
-      @param defineName = a string representing the name of a ExprDefineFunc that you
-      want to remove
-
-      @return bool. true if the ExprDefineFunc represented by defineName already exists 
-      in functionProgram  , false otherwise
+    *functionNameRepeated checks to see if a function's name already exists
+    * @param defineName = a string representing the name of a ExprDefineFunc that you
+    *           want to remove
+    * @return bool. true if the ExprDefineFunc represented by defineName already exists 
+    *           in functionProgram  , false otherwise
     */
     function functionNameRepeated(defineName) {
         var timesFound = 0;
@@ -1521,27 +1495,21 @@
     }
 
     /*
-      removeFunctionFromArray removes codeObject from functionProgram  
-
-      @param defineID - a string representing the ID of a ExprDefineFunc that
-      you want to remove
+    *removeFunctionFromArray removes codeObject from functionProgram  
+    * @param defineID - a string representing the ID of a ExprDefineFunc that
+    *           you want to remove
     */
     function removeFunctionFromArray(defineID) {
-
-	var foundName = false;
-	for (var i = 0; i < functionProgram.length && !foundName; i++){
-	    if (functionProgram[i].id === defineID) {
-		functionProgram.splice(i, 1);
-		foundName = true;
-	    }
-	}
-/*
-        if (define === "") {
-            foundName = true;
-        }*/
-	if (foundName === false) {
-	    throw new Error('removeFunctionFromArray: could not find defineName');
-	}
+    	var foundName = false;
+    	for (var i = 0; i < functionProgram.length && !foundName; i++){
+    	    if (functionProgram[i].id === defineID) {
+    		  functionProgram.splice(i, 1);
+    		  foundName = true;
+    	    }
+    	}
+        if (foundName === false) {
+            throw new Error('removeFunctionFromArray: could not find defineName');
+        }
     }
 
 
@@ -1572,9 +1540,7 @@
       
       =====================================================================================*/
 
-    /*
-      drawerToggle allows the drawer to slide toggle
-    */
+    //drawerToggle allows the drawer to slide toggle
     function drawerToggle() {
 
         $("#options .toggleHeader").click(function () {
@@ -1591,10 +1557,10 @@
     }
 
     /*
-      addNonRepeatedEltToArray takes in an array of strings (arr) and a string (toAdd) and
-      pushes toAdd to arr if it is not already within arr
+    * addNonRepeatedEltToArray - takes in an array of strings and a string and pushes the string to the array if it is not already within the array
+    * @param arr - the array to be added to
+    * @param toAdd - the element to add
     */
-
     var addNonRepeatedEltToArray = function (arr, toAdd) {
         var i;
         if (arr.length === 0) {
@@ -1612,8 +1578,9 @@
     };
 
     /*
-      removeEltFromArray takes in an array of strings (arr) and a string(toDelete) and removes 
-      toDelte from arr by splicing it out
+    *removeEltFromArray takes in an array of strings and a string and removes the string from the array by splicing it out
+    *@param arr - the array to be removed from
+    *@param toDelete - the item to be deleted
     */
     var removeEltFromArray = function (arr, toDelete) {
         var i;
@@ -1628,8 +1595,14 @@
             throw new Error("removeEltFromArray: couldn't find toDelete");
         }
     };
-
-    //makeTypesArray will construct an object of kv pairs such that each type's value is an array of all indices to which that type is the output or the exclusive input
+    /*
+    * makeTypesArray - creates an object mapping all functions and constants to their type, to create the drawers
+    * @param allFunctions - all defined functions
+    * @param allConstants - all defined constants
+    * @return an object types that represents a mapping all functions and constants to their type
+    * (mapping is determined by output and if a function takes only one type as its input)
+    * so string-length is in Strings and Numbers but place-image is only in Images
+    */
     function makeTypesArray(allFunctions, allConstants) {
         var types = {};
         types.Booleans = ["true", "false"];
@@ -1664,9 +1637,11 @@
 
         return types;
     }
-
-    //unique takes as input an array and outputs if there is only one type in the whole array
-    // (arrayof input-tuple) -> boolean
+    /*
+    * unique - determines if an array of inputs and determines if there is only one input type
+    * @param array_inputs - the array of inputs
+    * @return a boolean true if there is only one type of input
+    */
     function unique(array_inputs) {
         if (array_inputs.length > 0) {
             var first = array_inputs[0].type;
@@ -1679,10 +1654,8 @@
         return true;
     }
 
-    /*
-      setActivatedVisible sets the activated drawers to visible
-    */
 
+    //setActivatedVisible sets the activated drawers to visible
     var setActivatedVisible = function (scrollValue) {
         for (var i = 0; i < activated.length; i++) {
             $("#options #" + activated[i]).css("display", "block");
@@ -3558,6 +3531,9 @@ function addDroppableWithinConst(jQuerySelection){
                 toReturn.push(" ", obj.contract.argumentTypes[i]);
             }
             toReturn.push(" -> ", obj.contract.outputType, "\n");
+            if(obj.contract.purpose !== undefined && obj.contract.purpose !== ""){
+                toReturn.push(";; " + obj.contract.purpose + "\n");
+            }
             toReturn.push("(define (", obj.contract.funcName);
             for (i = 0; i < obj.argumentNames.length; i++) {
                 toReturn.push(" ", obj.argumentNames[i]);
@@ -4738,12 +4714,14 @@ function addDroppableWithinConst(jQuerySelection){
                 var boolError = false;
                 if (curr.id === array[i].id) {
                     //this might happen, say if you did (+ (cond [true "a"]) 3)
+                    //but we tested it, so it doesn't
+                    //I'll leave this in for future
                     console.log("Cond failure");
                 }
                 for (k = 0; k < curr.listOfBooleanAnswer.length; k++) {
                     if (curr.listOfBooleanAnswer[k].bool !== undefined && (curr.listOfBooleanAnswer[k].funcIDList[0] === array[i].id || curr.listOfBooleanAnswer[k].bool.id === array[i].id)) {
                         if (curr.listOfBooleanAnswer[k].bool.outputType !== undefined) {
-                            helpfulErrors.push(new errorMatch([curr.listOfBooleanAnswer[k].bool.id], "This spot should have a block of type \"Booleans\" but found something of type \"" + curr.listOfBooleanAnswer[k].bool.outputType + "\""));
+                            helpfulErrors.push(new errorMatch([curr.listOfBooleanAnswer[k].bool.id], "This spot should have a block of type \"Booleans\" but found a block of type \"" + curr.listOfBooleanAnswer[k].bool.outputType + "\""));
                         } else {
                             console.log("did not find argument output type in Cond bool");
                             helpfulErrors.push(new errorMatch([curr.listOfBooleanAnswer[k].bool.id], "This spot should have a block of type \"Booleans\" but found a block with a different type"));
