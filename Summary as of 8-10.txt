@@ -5,6 +5,7 @@ bugs refers to things that break DrBlocket or greatly inhibit DrBlocket
 issues refers to things such as styling that while should be fixed, hold a lower priority and does not affect useability of DrBlocket
 TODO refers to things just not implemented
 Please note that this is not a necessarily exhaustive list of issues
+If coloring dissapears, type typeCheckAll() into the console... if color returns, a typeCheckAll is missing in the code
 
 
 Completed:
@@ -23,7 +24,18 @@ Completed:
 		-blocks can not be dragged into the expression until the contract is completed
 		-contract name and definition name are linked
 		-names of functions cannot repeat and must be valid
-		-
+		-Contract types and arguments/expression types are linked
+		-User defined Functions will appear in the drawers
+		-User defined functions can be deleted
+		-User defined functions can be modified
+		-User defined functions will update within the program,storage program, function program etc. when updated or deleted
+		-Users will be alerted when they try to close a function when things are blank
+	*TypeChecking will occur at necessary points to color blocks correctly
+	*If there is a typeChecking Error, blocks turn red and users can click (tablet) or mouseover for a message
+	*Running a program can only happen when there are no errors in the code
+	*Result messages will appear next to each block and can be clicked to display the result of teh block
+	*If there was an error that was not type related (colors, style etc.) the error message can be displayed in the same manner as a result
+	*In the event of an infinite loop, users can stop the evaluator and the evaluator will continue onto the other blocks
 
 
 
