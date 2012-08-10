@@ -1545,6 +1545,25 @@
     }
 
 
+        function removeConstantFromArray(defineID) {
+
+    var foundName = false;
+    for (var i = 0; i < constantProgram.length && !foundName; i++){
+        if (constantProgram[i].id === defineID) {
+        functionProgram.splice(i, 1);
+        foundName = true;
+        }
+    }
+/*
+        if (define === "") {
+            foundName = true;
+        }*/
+    if (foundName === false) {
+        throw new Error('removeFunctionFromArray: could not find defineName');
+    }
+    }
+
+
     /*====================================================================================
       ___                            ___             _   _             
       |   \ _ _ __ ___ __ _____ _ _  | __|  _ _ _  __| |_(_)___ _ _  ___
@@ -1948,6 +1967,7 @@ function makeConstantPopup(codeObject){
     var closeButton = $("<button>");
     var deleteButton = $("<button>");
     popup.addClass('definePopup');
+    popup.addClass('constantPopup');
     closeButton.addClass('closeConstantButton');
     closeButton.append('x');
     deleteButton.addClass('deleteConstantButton');
@@ -2009,7 +2029,7 @@ function createConstantPopup(codeObject){
                 }
             }
         }
-      else{codeObject = new ExprDefineConst;constantProgram.push(codeObject);}
+      else{var codeObject = new ExprDefineConst;constantProgram.push(codeObject);}
     var $popupHTML = $(makeConstantPopup(codeObject));
     $('body').append($($popupHTML));
     $($popupHTML).css('position','absolute');
@@ -2034,20 +2054,43 @@ function createConstantPopup(codeObject){
 
 
         $popupHTML.find(".closeConstantButton").bind('click', function() {
-        console.log('click');
-        console.log();
-        var codeObject = searchForIndex($(this).closest('.constantPopup').find('.DefineExpr').attr('id'), constantProgram);
-        console.log(codeObject);
+        var codeObject = searchForIndex($(this).closest('.constantPopup').find('.DefineConst').attr('id'), constantProgram);
         var closeButton = $(this);
         var confirmClose = true;
         if(codeObject !=undefined && functionNameRepeated(codeObject.constName)){
             confirmClose = false;
             alert('rename your function')
         }
+        if((codeObject.constName=="" || codeObject.constName==undefined) && codeObject.expr!=undefined){
+            var dialogDiv = $("<div>").attr('id', 'dialog');
+            //  dialogDiv.attr('title', 'Confirmation Required');
+            dialogDiv.append("The name is incomplete, and if you close this window, your work will not be saved. Are you sure you want to close this definition?");
+            $(dialogDiv).dialog({
+            title:'Confirmation Required',
+            modal:true,
+            buttons: {
+                "Yes": function() {
+                removeConstantFromArray(codeObject.id);
+                $(closeButton).closest('.constantPopup').detach();
+                $("#graybox").css('visibility','hidden');
+                $(this).dialog("close");
+                },
+                "Cancel" : function() {
+                    $(this).dialog("close");
+                }
+            }
+            });
+            $(dialogDiv).dialog("open");
+        }
         if (confirmClose) {
-            $(this).closest('.definePopup').css('visibility','hidden');
+            $(this).closest('.constantPopup').css('visibility','hidden');
+        }
+        if((codeObject.constName=="" || codeObject.constName==undefined) && codeObject.expr==undefined && confirmClose){
+            removeConstantFromArray(codeObject.id)
         }
     });
+
+
 /*
 	$popupHTML.find(".deleteFunctionButton").bind('click', function() {
 	    var name = $popupHTML.find('.definitionName').attr('prevName');
@@ -2176,10 +2219,9 @@ function addDroppableWithinConst(jQuerySelection){
                         addDroppableWithinConst($(this));
                     });
                     $(this).find('table').each(function () {
-//                        addDraggableToDefineExpr($(this));
+                        addDraggableToConstExpr($(this));
                     });
-                    if (ui.draggable.parentsUntil('.definePopup').parent().first().hasClass('definePopup') && !ui.draggable.hasClass('argument')) {
-			
+                    if (ui.draggable.parentsUntil('.constantPopup').parent().first().hasClass('constantPopup')) {
                         eliminateBorder($(ui.draggable).closest('th'));
                     }
                     programCarrying = null;
