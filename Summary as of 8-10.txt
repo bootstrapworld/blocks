@@ -65,5 +65,7 @@ KNOWN BUGS:
 
 KNOWN ISSUES:
 	*If the header button bar is too thin, buttons overlap onto the next line
-	*Fix styling of empty spaces
+	*Fix styling of empty spaces (place holder names)
 	*In a big block, some of teh spaces become elongated weirdly
+	*if a block has an error and is dragged out of something, the carried block is white (not a big deal)
+	*Sometimes, very rarely, over is not triggered and thus there is no highlighting.  Block can still be dropped.  Only matteres on overlapping defines
