@@ -1,0 +1,44 @@
+NOTES:
+code refers to OUR javascript code
+program refers to a user created set of blocks
+bugs refers to things that break DrBlocket or greatly inhibit DrBlocket
+issues refers to things such as styling that while should be fixed, hold a lower priority and does not affect useability of DrBlocket
+TODO refers to things just not implemented
+Please note that this is not a necessarily exhaustive list of issues
+
+
+Completed:
+	*Program renders with closed drawers, header and blank storage.
+	*Drawers can be opened and closed on click.
+	*Blocks can be dragged from drawers to program
+	*Blocks dragged directly from drawer to storage will dissapear
+	*Blocks can be sorted within the program
+	*Blocks can be dragged into and out of other blocks
+	*Blocks can be dragged from either the upper level program or from within other blocks to storage
+	*Undo and redo will correctly re-render older or future versions of the program and storage
+	*Export will correctly alert the user with racket representation of the code
+	*Upon Saving a program, users are asked for a file name, alerted if the name already exists and saves the program,storage,functions and constants to local storage
+	*Upon Loading a program, users are asked for a file name, alerted if it does not exist, and correctly loads the program,storage,functions and constants
+	*Upon clicking "Define function", a function popup will appear
+		-blocks can not be dragged into the expression until the contract is completed
+		-contract name and definition name are linked
+		-names of functions cannot repeat and must be valid
+		-
+
+
+
+TODO:
+	*Hook up undo and redo to define functions and constants
+	*Potentially hook up export to the clipboard for easier copy and pasting
+	*Define Constants
+	*Hook saving and loading to wescheme along with a better dialogue box for file paths/name
+	*Double check program for all major browers and tablets
+
+KNOWN BUGS:
+	*When error result messages are clicked more than once, more than one message appears.  Only occurs on returnMessage, not returnDOMElement.  Clicking outside the result box will still close the message
+	*In define functions, arguments can be dragged out to the program.  This can be fixed by setting confinement.  However, this does not allow for the argument names to be trashed.
+
+
+KNOWN ISSUES:
+	*If the user tries to load a program with user defined functions and double clicks to edit that function, the styling can be a tiny bit off.
+	*Better user alerts when the contract is not completed
