@@ -1,4 +1,4 @@
-//(function () {
+(function () {
 
     "use strict";
     // this function is strict...
@@ -3050,6 +3050,7 @@ function addDroppableWithinConst(jQuerySelection){
 
     //adds draggable within define expressions
     function addDraggableToDefineExpr($table) {
+         if (!$table.hasClass('noDrag')) {
         $table.draggable({
             helper: 'clone',
             appendTo: 'body',
@@ -3074,6 +3075,7 @@ function addDroppableWithinConst(jQuerySelection){
                 typeCheckAll();
             }
         });
+        }
     }
 
     function onTop($hovered){
@@ -4679,7 +4681,7 @@ function addDroppableWithinConst(jQuerySelection){
             }
         }
         return idArr;
-    }/*
+    }
 
     window.ExprApp = ExprApp;
     window.ExprCond = ExprCond;
@@ -4725,4 +4727,4 @@ function addDroppableWithinConst(jQuerySelection){
       return mouseCount;
     }
 
-}());*/
+}());
