@@ -1550,7 +1550,7 @@
     var foundName = false;
     for (var i = 0; i < constantProgram.length && !foundName; i++){
         if (constantProgram[i].id === defineID) {
-        functionProgram.splice(i, 1);
+        constantProgram.splice(i, 1);
         foundName = true;
         }
     }
@@ -2062,8 +2062,8 @@ function createConstantPopup(codeObject){
             alert('rename your function')
         }
         if((codeObject.constName=="" || codeObject.constName==undefined) && codeObject.expr!=undefined){
+            confirmClose=false
             var dialogDiv = $("<div>").attr('id', 'dialog');
-            //  dialogDiv.attr('title', 'Confirmation Required');
             dialogDiv.append("The name is incomplete, and if you close this window, your work will not be saved. Are you sure you want to close this definition?");
             $(dialogDiv).dialog({
             title:'Confirmation Required',
@@ -2077,6 +2077,8 @@ function createConstantPopup(codeObject){
                 },
                 "Cancel" : function() {
                     $(this).dialog("close");
+                    confirmClose=false;
+                    $(this).closest('.constantPopup').css('visibility','visible');
                 }
             }
             });
@@ -2085,7 +2087,7 @@ function createConstantPopup(codeObject){
         if (confirmClose) {
             $(this).closest('.constantPopup').css('visibility','hidden');
         }
-        if((codeObject.constName=="" || codeObject.constName==undefined) && codeObject.expr==undefined && confirmClose){
+        if((codeObject.constName=="" || codeObject.constName==undefined) && codeObject.expr==undefined){
             removeConstantFromArray(codeObject.id)
         }
     });
