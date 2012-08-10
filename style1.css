@@ -109,7 +109,7 @@ form{
      float:top;
      background-color:darkslateblue;
      z-index:100;
-     overflow-y: scroll;
+     overflow-y: auto;
 }
 
 #options span {
@@ -228,4 +228,20 @@ Dialog Box
 .ui-dialog {
 background-color:#fff;
 padding: 5px;
+}
+
+/****************************
+Defines
+****************************/
+#graybox{
+    background-color: gray;
+    opacity:1;
+    width:100%;
+    heigth:100%;
+    opacity:.6;
+    position:absolute;
+    top:0px;
+    left:0px;
+    visibility:hidden;
+    z-index:101;
 }
