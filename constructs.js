@@ -66,6 +66,7 @@
       cloneProgram takes in an array of code objects (arr) and outputs a clone of arr
     */
     var cloneProgram = function (arr) {
+	console.log(arr);
         var tempArr = [];
         for (var i = 0; i < arr.length; i++) {
             tempArr[i] = arr[i].clone();
@@ -942,21 +943,7 @@
         $("#codePopup").height($("#code").height() - 100);
     };
 
-    /*
-      removeFromStorageOnClick takes in a jquery selection (jQuerySelection) and adds a function to it
-      such that when it's double clicked, it gets removed from storagePopup div and gets added
-      to the end of the sortable #List
-    */
-    /* var removeFromStorageOnClick = function(jQuerySelection, html, codeObject){
-       $(jQuerySelection).dblclick(function() {
-       addToHistory(cloneProgram(program),cloneProgram(storageProgram))
-       var index = $("#actualStorage li").index(jQuerySelection);
-       $("#List").append("<li>" + html + "</li>");
-       program.push(codeObject);
-       addDroppableFeature($("#List li:last").find(('.droppable')));
-       storageProgram.splice(index, 1);
-       $(jQuerySelection).remove();
-       >});
+   /*
 
        $(document).ready(function(){
        
@@ -1000,33 +987,15 @@
 
         addUItoStorage();
 
-        // /*
-        //   storage pops up when clicked
-        // */
-        // $("#storage").on('click',function() {
-        //    if($("#storagePopup").css('visibility')==="visible"){
-        //      $("#storagePopup").css('visibility','hidden');
-        //    }
-        //    else{
-        //      $("#storagePopup").css('visibility','visible');
-        //    }
-
-        //  $("#graybox").css('visibility','visible').fadeIn('slow');;
-        //});
 
         $("#closestorage").click(function () {
             $("#storagePopup").css('visibility', 'hidden');
-            //  $("#graybox").css('visibility','hidden');
         });
 
         $("#closecode").click(function () {
             $("#codePopup").css('visibility', 'hidden');
             evaluator.requestBreak();
         });
-
-        //$("#codePopup").draggable();
-
-
 
         $(document).keyup(function (e) {
             if (e.keyCode == 27) {
@@ -1328,9 +1297,11 @@
         exprTH.attr('colspan', parseInt(exprTH.attr('colspan')) + 3);
 
         toggleDeleteButtons(defineExpr.funcIDList, defineExpr.id, contractdropdown);
-	removeFromUserFunctions(defineExpr.contract.funcName);
-	makeDrawers(functions.concat(userFunctions), constants);
-        //toggleFunctionInDrawer(defineExpr);
+	removeFromUserFunctions(defineExpr.id);
+ 	makeDrawers(functions.concat(userFunctions), constants);
+	$("#graybox").css('visibility', 'visible');
+	$("#graybox").css("z-index", $(this).closest('.definePopup').css('z-index') - 1);
+ 	//toggleFunctionInDrawer(defineExpr);
     });
 
     function evaluateBlock(i, definitionString) {
@@ -1799,16 +1770,22 @@
       if(codeObject === undefined){codeObject = new ExprDefineFunc;functionProgram.push(codeObject);}
 	var $popupHTML = $(makeDefinePopup(codeObject));
 	$('body').append($($popupHTML));
+	$("#graybox").css('visibility','visible');
 	$($popupHTML).css('position','absolute');
 	$($popupHTML).css('top','50px');
 	$($popupHTML).css('left','220px');
 	$($popupHTML).css('z-index', defineZIndex);
-	defineZIndex = defineZIndex + 1;
+	$("#graybox").css('z-index', defineZIndex - 1);
+	defineZIndex = defineZIndex + 2;
 	$($popupHTML).draggable({
 	    start:function(event, ui){
 		$(this).css('z-index', defineZIndex);
-		defineZIndex = defineZIndex + 1;
+		defineZIndex = defineZIndex + 2;
 	    }
+	});
+	$($popupHTML).click(function(){
+	    $(this).css('z-index', defineZIndex);
+	    defineZIndex = defineZIndex + 2;
 	});
 
 	//adds droppable to expression
@@ -1816,13 +1793,12 @@
 
 	//adds draggable to first argument
 	addDraggableToArgument($popupHTML.find('.argument'), codeObject, $popupHTML.find('select').eq(0).attr('id'));
+
 	/*
 	  closes the corresponding 'define' window
 	*/
 	$popupHTML.find(".closeFunctionButton").bind('click', function() {
-	    console.log('click');
-	    console.log();
-	    var codeObject = searchForIndex($(this).closest('.DefinePopup').find('.DefineFun').attr('id'), functionProgram);
+
 	    console.log(codeObject);
 	    var closeButton = $(this);
 	    var confirmClose = true;
@@ -1833,11 +1809,12 @@
 	    }
 	    if (confirmClose && contractCompleted(codeObject.contract)) {
 		$(this).closest('.definePopup').css('visibility','hidden');
+		$("#graybox").css('visibility','hidden');
 	    } else if (confirmClose && !contractCompleted(codeObject.contract)){
 		if (codeObject.expr === undefined) {
-		    console.log(codeObject.id, "a");
 		    removeFunctionFromArray(codeObject.id);
 		    $(this).closest('.definePopup').detach();
+		    $("#graybox").css('visibility','hidden');
 		} else {
 		    var dialogDiv = $("<div>").attr('id', 'dialog');
 		    //	dialogDiv.attr('title', 'Confirmation Required');
@@ -1849,6 +1826,7 @@
 			    "Yes": function() {
 				removeFunctionFromArray(codeObject.id);
 				$(closeButton).closest('.definePopup').detach();
+				$("#graybox").css('visibility','hidden');
 				$(this).dialog("close");
 			    },
 			    "Cancel" : function() {
@@ -1863,9 +1841,9 @@
 
 	$popupHTML.find(".deleteFunctionButton").bind('click', function() {
 	    var name = $popupHTML.find('.definitionName').attr('prevName');
-
+	    $("#graybox").css('visibility','hidden');
 	    //remove from userFunctions
-	    removeFromUserFunctions(name);
+	    removeFromUserFunctions(codeObject.id);
 
 	    //remove from functionProgram
 	    for (var i = 0; i < functionProgram.length; i++){
@@ -1897,9 +1875,9 @@
       @param name - (string) the name of the function which you are trying to remove
       @return void - removes a function from userFunctions
     */
-    function removeFromUserFunctions(name) {
+    function removeFromUserFunctions(id) {
         for (var i = 0; i < userFunctions.length; i++) {
-            if (userFunctions[i].name === name) {
+            if (userFunctions[i].id === id) {
                 userFunctions.splice(i, 1);
                 break;
             }
@@ -1997,11 +1975,11 @@ function createConstantPopup(codeObject){
     $($popupHTML).css('top','50px');
     $($popupHTML).css('left','220px');
     $($popupHTML).css('z-index', defineZIndex);
-    defineZIndex = defineZIndex + 1;
+    defineZIndex = defineZIndex + 2;
     $($popupHTML).draggable({
 	start:function(event, ui){
 	    $(this).css('z-index', defineZIndex);
-	    defineZIndex = defineZIndex + 1;
+	    defineZIndex = defineZIndex + 2;
 	}
     });
 
@@ -2458,10 +2436,12 @@ function addDroppableWithinConst(jQuerySelection){
 		timeout = setTimeout(function() {
 		    changeName(block, newInput);
 		    if (newInput === "" || !legalFunctionName(newInput)){ //not valid
+			$("#graybox").css('visibility','visible');
+			$("#graybox").css('z-index', $("#" + objectID).css('z-index') -1);
 			if (defInput.attr('prevName') !== newInput){
 			    defInput.css('background-color','red');
 			    contractInput.css('background-color','red');
-			    removeFromUserFunctions(defInput.attr('prevName'));
+			    removeFromUserFunctions(block.id);
 			    renderProgram();
 			    /*			       $(document).click(function(){
 						       var prevName = $input.attr('prevName');
@@ -2482,6 +2462,7 @@ function addDroppableWithinConst(jQuerySelection){
 			// add/remove from drawers
 			toggleFunctionInDrawer(block, $input.attr('prevName'));
 			if (contractCompleted(block.contract)){
+			    $("#graybox").css('visibility','hidden');
 			    defInput.attr('prevName', newInput);
 			    contractInput.attr('prevName', newInput);
 			}
@@ -2710,14 +2691,19 @@ function addDroppableWithinConst(jQuerySelection){
       @return boolean - true if the name is valid, false otherwise
     */
     function legalFunctionName(name) {
+	var i;
         //lambda, map, etc.
-        for (var i = 0; i < restricted.length; i++) {
+        for (i = 0; i < restricted.length; i++) {
             if (name === restricted[i]) return false;
         }
-        //already defined functions
-        var allFunctions = functions.concat(userFunctions);
-        for (var i = 0; i < allFunctions.length; i++) {
-            if (name === allFunctions[i].name) {
+        //already defined functions 
+        for (i = 0; i <functions.length; i++) {
+            if (name === functions[i].name) {
+                return false;
+            }
+        }
+	for (i = 0; i <userFunctions.length; i++) {
+            if (name === userFunctions[i].name) {
                 return false;
             }
         }
@@ -2851,7 +2837,11 @@ function addDroppableWithinConst(jQuerySelection){
   createFunctionBlock: number -> string
     */
     function createFunctionBlock(functionInfo, codeObject, constantEnvironment, functionEnvironment) {
-        var block = "<table class=\"expr " + functionInfo.output + "\"" + " id=\"" + codeObject.id + "\" border>";
+	console.log(functionInfo);
+        var block = "<table class=\"expr " + functionInfo.output + "\"" + " id=\"" + codeObject.id + "\" border";
+	if (functionInfo.id != undefined){
+	    block += " name=\"" + functionInfo.id + "\">";
+	}
         block += "<tr><th colspan=\"" + functionInfo.input.length + "\">" + encode(functionInfo.name) + "</th></tr><tr>";
         var i;
         for (i = 0; i < functionInfo.input.length; i++) {
@@ -2979,7 +2969,7 @@ function addDroppableWithinConst(jQuerySelection){
       @param curValue - (string) the type that was selected by the user within the contract
       @param selectID - (string)the ID of the code object representing the drop-down for selecting
       types within the contract
-      @param codeObjectID - (string) ID of the code object representing the define block
+      @param defineExprID - (string) ID of the code object representing the define block
     */
     function changeType(curValue, selectID, defineExprID) {
         selectID += "";
@@ -3029,16 +3019,20 @@ function addDroppableWithinConst(jQuerySelection){
         var defineName = $("#" + defineExpr.id).find('.definitionName');
         var contractName = $("#" + defineExpr.id).find('.contractName');
         var newName = defineName.attr('value');
-        if (legalFunctionName(defineExpr.contract.funcName) || $("#" + selectID + " option[value='Type']").attr('disabled') === "disabled") {
-
-            defineName.css('background-color', '');
+        if ((legalFunctionName(defineExpr.contract.funcName) || ($("#" + selectID + " option[value='Type']").attr('disabled') === 'disabled')) && defineName.css('background-color') === 'rgb(255, 255, 255)') {
+	    defineName.css('background-color', '');
             contractName.css('background-color', '');
+	    if (contractCompleted(defineExpr.contract)){
+		$("#graybox").css('visibility','hidden');
+	    }
             toggleFunctionInDrawer(defineExpr, $("#" + defineExprID).find('.definitionName').attr('prevName'));
             defineName.attr('prevName', newName);
             contractName.attr('prevName', newName);
         } else { //if the name already exists
+	    $("#graybox").css('visibility','visible');
+	    $("#graybox").css('z-index', $("#" + defineExprID).css('z-index') - 1);
             if (contractCompleted(defineExpr.contract)) {
-                console.log('here');
+		
                 defineName.css('background-color', 'red');
                 contractName.css('background-color', 'red');
             }
@@ -3282,8 +3276,10 @@ function addDroppableWithinConst(jQuerySelection){
                 }
             }
         }
-        console.log(codeObject);
-
+	var name = codeObject.contract.funcName;
+	/*if (contractCompleted(codeObject) && legalFunctionName(name)){
+	    $("#graybox
+	}*/
         toggleDeleteButtons(codeObject.funcIDList, codeObject.id, undefined);
         toggleFunctionInDrawer(codeObject, $("#" + codeObjectID).find('.definitionName').attr('prevName'), i - 1);
     }
@@ -3487,16 +3483,6 @@ function addDroppableWithinConst(jQuerySelection){
                 }
             }
         });
-
-        /*
-    var defineZIndex = 10;
-    $('.definePopup').draggable({
-    start:function(event, ui){
-    console.log($(this));
-    $(this).css('z-index', defineZIndex);
-    defineZIndex = defineZIndex + 1;
-    }
-    });*/
     });
 
     function addUItoStorage() {
