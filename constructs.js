@@ -2487,7 +2487,7 @@ function addDroppableWithinConst(jQuerySelection){
 
 		timeout = setTimeout(function() {
 		    changeName(block, newInput);
-		    if (newInput === "" || functionNameRepeated(newInput) || !noInvalidChar(newInput)){ //not valid
+		    if (newInput === "" || !legalFunctionName(newInput, objectID) || !noInvalidChar(newInput)){ //not valid
 			$("#graybox").css('visibility','visible');
 			$("#graybox").css('z-index', $("#" + objectID).css('z-index') -1);
 			if (defInput.attr('prevName') !== newInput){
@@ -2841,7 +2841,8 @@ function addDroppableWithinConst(jQuerySelection){
       @param name - (string) the name of your function
       @return boolean - true if the name is valid, false otherwise
     */
-    function legalFunctionName(name) {
+    function legalFunctionName(name, id) {
+	console.log(id);
 	var i;
         //lambda, map, etc.
         for (i = 0; i < restricted.length; i++) {
@@ -2854,7 +2855,7 @@ function addDroppableWithinConst(jQuerySelection){
             }
         }
 	for (i = 0; i <userFunctions.length; i++) {
-            if (name === userFunctions[i].name) {
+            if (name === userFunctions[i].name && (id != undefined && id != userFunctions[i].id)) {
                 return false;
             }
         }
