@@ -1,4 +1,4 @@
-//(function () {
+(function () {
 
     "use strict";
     // this function is strict...
@@ -1337,21 +1337,23 @@
         var blockString = definitionString + interpreter(program[i]);
         var id = program[i].id
         console.log(blockString, id)
-        var myEval = makeEvaluator(id, blockString);
+
+        var doAfterEvaluation = function() {
+            if (i+1 < program.length) {
+                evaluateBlock(i+1, definitionString);
+            } else {
+                $("#stopButton").attr("disabled", "disabled");
+            }
+        };
+
+        var myEval = makeEvaluator(id, blockString, doAfterEvaluation);
         $("#stopButton").removeAttr('disabled');
         $("#stopButton").click(function () {
             myEval.requestBreak();
         });
-        i++;
-        console.log("added");
-        if (i < program.length) {
-            evaluateBlock(i, definitionString);
-        } else {
-            $("#stopButton").attr("disabled", "disabled");
-        }
     }
 
-    function makeEvaluator(id, blockString) {
+    function makeEvaluator(id, blockString, doAfterEvaluation) {
         var evaluator = new Evaluator({
             write: function (thing) {
                 console.log($(document.getElementById(id)));
@@ -1380,7 +1382,9 @@
         });
         evaluator.executeProgram("", blockString,
 
-        function () {},
+        function () {
+            doAfterEvaluation();
+        },
 
         function (err) {
             console.log(evaluator.getMessageFromExn(err))
@@ -1388,6 +1392,7 @@
             $($($(document.getElementById(id)).children("tbody").children("tr")[0]).find(".outputMessage")[0]).click(
             returnMessage("errorOutput", encode(evaluator.getMessageFromExn(err))));
             //$("#actualCode").text("\nError:\n"+evaluator.getMessageFromExn(err)+"");
+            doAfterEvaluation();
         });
         return evaluator;
     }
@@ -4512,12 +4517,14 @@ function addDroppableWithinConst(jQuerySelection){
                 var boolError = false;
                 if (curr.id === array[i].id) {
                     //this might happen, say if you did (+ (cond [true "a"]) 3)
+                    //but we tested it, so it doesn't
+                    //I'll leave this in for future
                     console.log("Cond failure");
                 }
                 for (k = 0; k < curr.listOfBooleanAnswer.length; k++) {
                     if (curr.listOfBooleanAnswer[k].bool !== undefined && (curr.listOfBooleanAnswer[k].funcIDList[0] === array[i].id || curr.listOfBooleanAnswer[k].bool.id === array[i].id)) {
                         if (curr.listOfBooleanAnswer[k].bool.outputType !== undefined) {
-                            helpfulErrors.push(new errorMatch([curr.listOfBooleanAnswer[k].bool.id], "This spot should have a block of type \"Booleans\" but found something of type \"" + curr.listOfBooleanAnswer[k].bool.outputType + "\""));
+                            helpfulErrors.push(new errorMatch([curr.listOfBooleanAnswer[k].bool.id], "This spot should have a block of type \"Booleans\" but found a block of type \"" + curr.listOfBooleanAnswer[k].bool.outputType + "\""));
                         } else {
                             console.log("did not find argument output type in Cond bool");
                             helpfulErrors.push(new errorMatch([curr.listOfBooleanAnswer[k].bool.id], "This spot should have a block of type \"Booleans\" but found a block with a different type"));
@@ -4679,7 +4686,7 @@ function addDroppableWithinConst(jQuerySelection){
             }
         }
         return idArr;
-    }/*
+    }
 
     window.ExprApp = ExprApp;
     window.ExprCond = ExprCond;
@@ -4725,4 +4732,4 @@ function addDroppableWithinConst(jQuerySelection){
       return mouseCount;
     }
 
-}());*/
+}());
