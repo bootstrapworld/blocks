@@ -2280,7 +2280,7 @@ function addDroppableWithinConst(jQuerySelection){
         popupHTML += " /></th>";
         //DEFINE BLOCK ARGUMENTS
         for (i = 0; i < codeObject.argumentNames.length; i++) {
-            popupHTML += "<th width=\"10px\" class=\"expr argument";
+            popupHTML += "<th width=\"10px\" class=\"expr argument ";
             if (codeObject.contract.argumentTypes[i] != undefined) {
                 popupHTML += codeObject.contract.argumentTypes[i];
             }
@@ -2299,15 +2299,17 @@ function addDroppableWithinConst(jQuerySelection){
 
         //DEFINE EXPRESSION
         popupHTML += "<tr><th ";
-        if (codeObject.contract.outputType != undefined) {
-            popupHTML += " style=\"background:" + colors[codeObject.contract.outputType] + "\" ";
-        }
         if (codeObject.expr != undefined) {
-            popupHTML += "class=\"defineExpr noborder droppable expr\" name=\"Expr\" id=" + codeObject.funcIDList[0] + "colspan=\"" + tableWidth + "\">";
+            popupHTML += "class=\"defineExpr noborder droppable expr "
+            console.log(codeObject.contract.outputType)
+            if (codeObject.contract.outputType != undefined) {
+                popupHTML +=  codeObject.contract.outputType;
+            }
+            popupHTML+="\" name=\"Expr\" id=\"" + codeObject.funcIDList[0] + "\" colspan=\"" + tableWidth + "\">";
             popupHTML += createBlock(codeObject.expr, constants.concat(createNewConstants(codeObject)), functions.concat(userFunctions));
             popupHTML += "</th>";
         } else {
-            popupHTML += "name=\"Expr\" class=\"defineExpr droppable expr\" id=" + codeObject.funcIDList[0] + " colspan=\"" + tableWidth + "\">Expr</th>";
+            popupHTML += "name=\"Expr\" class=\"defineExpr droppable expr\" id=\"" + codeObject.funcIDList[0] + "\" colspan=\"" + tableWidth + "\">Expr</th>";
         }
 
 
