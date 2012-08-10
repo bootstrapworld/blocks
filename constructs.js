@@ -1174,6 +1174,7 @@
                 $(".definePopup").css("visibility","hidden")
                 $("#undoButton").attr('disabled', 'disabled');
                 $("#redoButton").attr('disabled', 'disabled');
+                $("#graybox").css("visibility","hidden");
             }
         });
 

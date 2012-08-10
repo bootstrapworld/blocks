@@ -16,6 +16,10 @@ Completed:
 	*Blocks can be sorted within the program
 	*Blocks can be dragged into and out of other blocks
 	*Blocks can be dragged from either the upper level program or from within other blocks to storage
+	*Blocks are synchronized with their program object counterpart
+	*Num expressions and String expressions can be clicked to add a literal block
+	*Num expressions can be validated so that only valid Number(text) will be accepted (not NaN)
+	*Cond branches can be added and deleted
 	*Undo and redo will correctly re-render older or future versions of the program and storage
 	*Export will correctly alert the user with racket representation of the code
 	*Upon Saving a program, users are asked for a file name, alerted if the name already exists and saves the program,storage,functions and constants to local storage
@@ -25,6 +29,7 @@ Completed:
 		-contract name and definition name are linked
 		-names of functions cannot repeat and must be valid
 		-Contract types and arguments/expression types are linked
+		-Arguments can be added or deleted
 		-User defined Functions will appear in the drawers
 		-User defined functions can be deleted
 		-User defined functions can be modified
@@ -54,3 +59,5 @@ KNOWN BUGS:
 KNOWN ISSUES:
 	*If the user tries to load a program with user defined functions and double clicks to edit that function, the styling can be a tiny bit off.
 	*Better user alerts when the contract is not completed
+	*If the header is too thin, buttons overlap onto the next line
+	*Formvalidation stopped working
