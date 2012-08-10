@@ -66,7 +66,6 @@
       cloneProgram takes in an array of code objects (arr) and outputs a clone of arr
     */
     var cloneProgram = function (arr) {
-	console.log(arr);
         var tempArr = [];
         for (var i = 0; i < arr.length; i++) {
             tempArr[i] = arr[i].clone();
@@ -1301,7 +1300,7 @@
 
         toggleDeleteButtons(defineExpr.funcIDList, defineExpr.id, contractdropdown);
 
-	removeFromUserFunctions(defineExpr.id);
+//	removeFromUserFunctions(defineExpr.id);
  	makeDrawers(functions.concat(userFunctions), constants);
 	$("#graybox").css('visibility', 'visible');
 	$("#graybox").css("z-index", $(this).closest('.definePopup').css('z-index') - 1);
@@ -1804,7 +1803,7 @@
         }
       else{codeObject = new ExprDefineFunc;functionProgram.push(codeObject);}
 	var $popupHTML = $(makeDefinePopup(codeObject));
-	$('body').append($($popupHTML));
+	$('#code').append($($popupHTML));
 	$("#graybox").css('visibility','visible');
 	$($popupHTML).css('position','absolute');
 	$($popupHTML).css('top','50px');
@@ -1869,10 +1868,26 @@
 			title:'Confirmation Required',
 			modal:true,
 			buttons: {
-			    "Yes": function() {
+			    "Yes": function() {/*
+				var name = $popupHTML.find('.definitionName').attr('prevName');
 				removeFunctionFromArray(codeObject.id);
+				removeFromUserFunctions(codeObject.id);
 				$(closeButton).closest('.definePopup').detach();
 				$("#graybox").css('visibility','hidden');
+				 //remove from storage
+				changeProgramFunctions(name, codeObject, storageProgram, true);
+				
+				//remove from program
+				changeProgramFunctions(name, codeObject, program, true);
+				
+				//remove from function
+				changeProgramFunctions(name, codeObject, functionProgram, true);
+				console.log(program);
+				buildFuncConstructs();
+				renderProgram();
+				renderFunctions();*/
+				deleteFunction($popupHTML.find('.definitionName').attr('prevName'), codeObject, $popupHTML);
+
 				$(this).dialog("close");
 			    },
 			    "Cancel" : function() {
@@ -1886,34 +1901,38 @@
 	});
 
 	$popupHTML.find(".deleteFunctionButton").bind('click', function() {
-	    var name = $popupHTML.find('.definitionName').attr('prevName');
-	    $("#graybox").css('visibility','hidden');
-	    //remove from userFunctions
-	    removeFromUserFunctions(codeObject.id);
-
-	    //remove from functionProgram
-	    for (var i = 0; i < functionProgram.length; i++){
-		if (codeObject.id === functionProgram[i].id){
-            console.log("Deleting correctly")
-		    functionProgram.splice(i, 1);
-		    break;
-		}
-	    }
-	    //remove from storage
-	    changeProgramFunctions(name, codeObject, storageProgram, true);
-
-	    //remove from program
-	    changeProgramFunctions(name, codeObject, program, true);
-
-	    //remove from function
-	    changeProgramFunctions(name, codeObject, functionProgram, true);
-	    
-	    //remove popup
-	    $popupHTML.detach();
-	    buildFuncConstructs();
-	    renderProgram();
-	    renderFunctions();
+	    deleteFunction($popupHTML.find('.definitionName').attr('prevName'), codeObject, $popupHTML);
 	});
+    }
+
+    function deleteFunction(name, codeObject, $popupHTML){
+	console.log(name);
+	$("#graybox").css('visibility','hidden');
+	//remove from userFunctions
+	removeFromUserFunctions(codeObject.id);
+	
+	//remove from functionProgram
+	for (var i = 0; i < functionProgram.length; i++){
+	    if (codeObject.id === functionProgram[i].id){
+		console.log("Deleting correctly")
+		functionProgram.splice(i, 1);
+		break;
+	    }
+	}
+	//remove from storage
+	changeProgramFunctions(name, codeObject, storageProgram, true);
+	
+	//remove from program
+	changeProgramFunctions(name, codeObject, program, true);
+	
+	//remove from function
+	changeProgramFunctions(name, codeObject, functionProgram, true);
+	
+	//remove popup
+	$popupHTML.detach();
+	buildFuncConstructs();
+	renderProgram();
+	renderFunctions();
     }
 
     /*
@@ -2091,37 +2110,6 @@ function createConstantPopup(codeObject){
             removeConstantFromArray(codeObject.id)
         }
     });
-
-
-/*
-	$popupHTML.find(".deleteFunctionButton").bind('click', function() {
-	    var name = $popupHTML.find('.definitionName').attr('prevName');
-
-	    //remove from userFunctions
-	    removeFromUserFunctions(name);
-
-	    //remove from functionProgram
-	    for (var i = 0; i < functionProgram.length; i++){
-		if (codeObject.id === functionProgram[i].id){
-		    functionProgram.splice(i, 1);
-		    break;
-		}
-	    }
-	    //remove from storage
-	    changeProgramFunctions(name, codeObject, storageProgram, true);
-
-	    //remove from program
-	    changeProgramFunctions(name, codeObject, program, true);
-
-	    //remove from function
-	    changeProgramFunctions(name, codeObject, functionProgram, true);
-	    
-	    //remove popup
-	    $popupHTML.detach();
-	    buildFuncConstructs();
-	    renderProgram();
-	    renderFunctions();
-	});*/
 }
 
 //adds droppable to define expressions
@@ -2395,6 +2383,7 @@ function addDroppableWithinConst(jQuerySelection){
       renderFunctions renders the functions expressions
     */
     function renderFunctions() {
+	console.log('render');
         for (var i = 0; i < functionProgram.length; i++) {
             var currFunc = $("#" + functionProgram[i].funcIDList[0]);
             if (functionProgram[i].expr === undefined) {
@@ -2497,13 +2486,13 @@ function addDroppableWithinConst(jQuerySelection){
 
 		timeout = setTimeout(function() {
 		    changeName(block, newInput);
-		    if (newInput === "" || !legalFunctionName(newInput)){ //not valid
+		    if (newInput === "" || functionNameRepeated(newInput) || !noInvalidChar(newInput)){ //not valid
 			$("#graybox").css('visibility','visible');
 			$("#graybox").css('z-index', $("#" + objectID).css('z-index') -1);
 			if (defInput.attr('prevName') !== newInput){
 			    defInput.css('background-color','red');
 			    contractInput.css('background-color','red');
-			    removeFromUserFunctions(block.id);
+//			    removeFromUserFunctions(block.id);
 			    renderProgram();
 			    /*			       $(document).click(function(){
 						       var prevName = $input.attr('prevName');
@@ -2640,12 +2629,15 @@ function addDroppableWithinConst(jQuerySelection){
       @param deleteIndex - (int) the integer at which you want to remove a expression within an ExprApp's arguments. 
       undefined if you don't want to remove an argument
     */
+/*
+	changeProgramFunctions(name, codeObject, program, true);
+*/
     function changeProgramFunctions(prevName, defineExpr, prog, removeDefine, deleteIndex) {
         var i;
         if (prog === functionProgram) {
             for (i = 0; i < prog.length; i++) {
                 //changes Expr of define block
-                if (removeDefine === true && prog[i].expr != undefined && prog[i].expr.funcName === defineExpr.contract.funcName) {
+                if (removeDefine === true && prog[i].expr != undefined && prog[i].expr.funcName === prevName) {
                     prog[i].expr = undefined;
                 } else if (prog[i].expr instanceof ExprApp) {
                     changeExprApp(prog[i].expr, prevName, defineExpr, removeDefine, deleteIndex);
@@ -2654,7 +2646,7 @@ function addDroppableWithinConst(jQuerySelection){
         } else {
             for (i = 0; i < prog.length; i++) {
                 if (prog[i] instanceof ExprApp) {
-                    if (removeDefine === true && prog[i].funcName === defineExpr.contract.funcName) {
+                    if (removeDefine === true && prog[i].funcName === prevName) {
                         prog.splice(i, 1);
                         i = i - 1;
                     } else {
@@ -2677,7 +2669,7 @@ function addDroppableWithinConst(jQuerySelection){
             for (var k = 0; k < appExpr.args.length; k++) {
                 if (appExpr.args[k] instanceof ExprApp) {
                     if (appExpr.args[k] != undefined) {
-                        if (appExpr.args[k].funcName === defineExpr.contract.funcName) { //args is expr you want to delete
+                        if (appExpr.args[k].funcName === prevName) { //args is expr you want to delete
                             appExpr.args[k] = undefined;
                         } else { //search deeper
                             changeExprApp(appExpr.args[k], prevName, defineExpr, true, deleteIndex);
@@ -2835,6 +2827,13 @@ function addDroppableWithinConst(jQuerySelection){
         return newConst;
     }
 
+
+    function noInvalidChar(name) {
+        if (name.indexOf(" ") !== -1 || name.indexOf("\"") !== -1 || name.indexOf("(") !== -1 || name.indexOf(")") !== -1 || name.indexOf("[") !== -1 || name.indexOf("]") !== -1 || name.indexOf("{") !== -1 || name.indexOf("}") !== -1 || name.indexOf(",") !== -1 || name.indexOf("'") !== -1 || name.indexOf("`") !== -1 || name.indexOf(";") !== -1 || name.indexOf("|") !== -1 || name.indexOf("\\") !== -1 || (!isNaN(name))) {
+            return false;
+        }
+	return true;
+    }
     /*
       legalFunctionName checks to see whether a name is a valid fucntion name
 
@@ -2859,10 +2858,8 @@ function addDroppableWithinConst(jQuerySelection){
             }
         }
         //illegal characters
-        if (name.indexOf(" ") !== -1 || name.indexOf("\"") !== -1 || name.indexOf("(") !== -1 || name.indexOf(")") !== -1 || name.indexOf("[") !== -1 || name.indexOf("]") !== -1 || name.indexOf("{") !== -1 || name.indexOf("}") !== -1 || name.indexOf(",") !== -1 || name.indexOf("'") !== -1 || name.indexOf("`") !== -1 || name.indexOf(";") !== -1 || name.indexOf("|") !== -1 || name.indexOf("\\") !== -1 || (!isNaN(name))) {
-            return false;
-        }
-        return true;
+
+        return (noInvalidChar && true);
     }
 
     /*
@@ -2988,7 +2985,6 @@ function addDroppableWithinConst(jQuerySelection){
   createFunctionBlock: number -> string
     */
     function createFunctionBlock(functionInfo, codeObject, constantEnvironment, functionEnvironment) {
-	console.log(functionInfo);
         var block = "<table class=\"expr " + functionInfo.output + "\"" + " id=\"" + codeObject.id + "\" border";
 	if (functionInfo.id != undefined){
 	    block += " name=\"" + functionInfo.id + "\">";
@@ -3170,7 +3166,11 @@ function addDroppableWithinConst(jQuerySelection){
         var defineName = $("#" + defineExpr.id).find('.definitionName');
         var contractName = $("#" + defineExpr.id).find('.contractName');
         var newName = defineName.attr('value');
-        if ((legalFunctionName(defineExpr.contract.funcName) || ($("#" + selectID + " option[value='Type']").attr('disabled') === 'disabled')) && defineName.css('background-color') === 'rgb(255, 255, 255)') {
+	var name = defineExpr.contract.funcName;
+	console.log(defineName.val());
+        if (noInvalidChar(name) &&  defineName.css('background-color') === 'rgb(255, 255, 255)' &&
+	    ((!functionNameRepeated(name) || defineName.val() === defineName.attr('prevName'))  
+	     || ($("#" + selectID + " option[value='Type']").attr('disabled') === 'disabled'))) {
 	    defineName.css('background-color', '');
             contractName.css('background-color', '');
 	    if (contractCompleted(defineExpr.contract)){
@@ -3307,7 +3307,7 @@ function addDroppableWithinConst(jQuerySelection){
 	    },
 
             drop: function (event, ui) {
-	        if (carrying != null && programCarrying != null && $(this).children().length === 0/* && $(this).hasClass('highlighted')*/) {console.log('drop');
+	        if (carrying != null && programCarrying != null && $(this).children().length === 0/* && $(this).hasClass('highlighted')*/) {
                     $(this).html(carrying);
                     defineCodeObject.expr = programCarrying;
 
@@ -3507,11 +3507,14 @@ function addDroppableWithinConst(jQuerySelection){
             }
         }
 	var name = codeObject.contract.funcName;
-	/*if (contractCompleted(codeObject) && legalFunctionName(name)){
+	/*if (contractCompleted(codeObject) && legalFunctionNae(name)){
 	    $("#graybox
 	}*/
         toggleDeleteButtons(codeObject.funcIDList, codeObject.id, undefined);
-        toggleFunctionInDrawer(codeObject, $("#" + codeObjectID).find('.definitionName').attr('prevName'), i - 1);
+	if (contractCompleted(codeObject.contract) && ($("#" + codeObjectID).find('.definitionName').css('background-color') === "rgb(255, 255, 255)")){
+	    $("#graybox").css('visibility','hidden');
+            toggleFunctionInDrawer(codeObject, $("#" + codeObjectID).find('.definitionName').attr('prevName'), i - 1);
+	}
     }
 
 
@@ -4913,6 +4916,7 @@ function addDroppableWithinConst(jQuerySelection){
     window.changeType = changeType;
     window.deleteArg = deleteArg;
     window.removeFunctionFromDrawers = removeFunctionFromDrawers;
+    window.deleteFunction = deleteFunction;
 
 
     //FOR TESTING PURPOSES
