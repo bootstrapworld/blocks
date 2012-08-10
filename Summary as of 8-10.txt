@@ -15,6 +15,7 @@ Completed:
 	*Blocks dragged directly from drawer to storage will dissapear
 	*Blocks can be sorted within the program
 	*Blocks can be dragged into and out of other blocks
+	*Open spaces will correctly highlight when carrying a block
 	*Blocks can be dragged from either the upper level program or from within other blocks to storage
 	*Blocks are synchronized with their program object counterpart
 	*Num expressions and String expressions can be clicked to add a literal block
@@ -46,18 +47,23 @@ Completed:
 
 TODO:
 	*Hook up undo and redo to define functions and constants
+		-How will it affect the program/drawers if I undo an added argument etc.
 	*Potentially hook up export to the clipboard for easier copy and pasting
-	*Define Constants
+	*Define Constants synching with the program, storage program, drawers etc.
+		-When both name and expression are present, should appear in the drawers
+		-When name or expression is edited, should update drawers and all instances of the constant
 	*Hook saving and loading to wescheme along with a better dialogue box for file paths/name
 	*Double check program for all major browers and tablets
+	*Add bigbang and all it entails
+	*Add structs and all it entails
 
 KNOWN BUGS:
 	*When error result messages are clicked more than once, more than one message appears.  Only occurs on returnMessage, not returnDOMElement.  Clicking outside the result box will still close the message
 	*In define functions, arguments can be dragged out to the program.  This can be fixed by setting confinement.  However, this does not allow for the argument names to be trashed.
+	*Formvalidation stopped working.  Only needed for number expressions.  How big of a bug is this?
 
 
 KNOWN ISSUES:
-	*If the user tries to load a program with user defined functions and double clicks to edit that function, the styling can be a tiny bit off.
-	*Better user alerts when the contract is not completed
-	*If the header is too thin, buttons overlap onto the next line
-	*Formvalidation stopped working
+	*If the header button bar is too thin, buttons overlap onto the next line
+	*Fix styling of empty spaces
+	*In a big block, some of teh spaces become elongated weirdly
