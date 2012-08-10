@@ -1763,6 +1763,8 @@
 	    console.log('here1');
 	    if ($(this).attr('name') != undefined){
 		console.log('here2');
+        console.log($(this).attr('name'))
+        console.log($("#" + $(this).attr('name')))
 		$("#" + $(this).attr('name')).closest('.definePopup').css('visibility','visible');
 	    }
 	});
@@ -1795,7 +1797,14 @@
 
     //renders the defineblock on screen
     function createDefinePopup(codeObject){
-	
+        if(codeObject !=undefined){
+            var alreadyMade=true;
+            for(var i=0;i<userFunctions.length;i++){
+                if(codeObject.contract.funcName===userFunctions[i].name){
+                    userFunctions[i].id=codeObject.id
+                }
+            }
+        }
       if(codeObject === undefined){codeObject = new ExprDefineFunc;functionProgram.push(codeObject);}
 	var $popupHTML = $(makeDefinePopup(codeObject));
 	$('body').append($($popupHTML));
@@ -1816,6 +1825,16 @@
 
 	//adds draggable to first argument
 	addDraggableToArgument($popupHTML.find('.argument'), codeObject, $popupHTML.find('select').eq(0).attr('id'));
+    if(alreadyMade){
+        $popupHTML.find('.defineExpr').find("table").each(function(){
+            addDraggableToDefineExpr($(this));
+            addDroppableWithinDefineExpr($(this));
+        });
+        $popupHTML.find('input').each(function(){
+            $(this).removeAttr("disabled");
+        });
+        $popupHTML.find('.definitionName').attr('prevName',codeObject.contract.funcName);
+    }
 	/*
 	  closes the corresponding 'define' window
 	*/
@@ -1870,6 +1889,7 @@
 	    //remove from functionProgram
 	    for (var i = 0; i < functionProgram.length; i++){
 		if (codeObject.id === functionProgram[i].id){
+            console.log("Deleting correctly")
 		    functionProgram.splice(i, 1);
 		    break;
 		}
