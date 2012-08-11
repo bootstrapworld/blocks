@@ -2956,9 +2956,13 @@
     }
 
 
-    /*  createFunctionBlock takes as input a functionIndex and will output an HTML element corresponding to 
-	that function with name, color, and spaces for input blocks
-	createFunctionBlock: number -> string
+    /*
+    * createFunctionBlock - builds the html for a function block
+	* @param functionInfo - the object representing the function in the functions array
+    * @param codeObject - the internal representation of the block
+    * @param constantEvironment - all the constants (I think)
+    * @param functionEnvironment - all the functions (I think) 
+	* @return - the HTML representation of the function
     */
     function createFunctionBlock(functionInfo, codeObject, constantEnvironment, functionEnvironment) {
         var block = "<table class=\"expr " + functionInfo.output + "\"" + " id=\"" + codeObject.id + "\" border";
@@ -2978,8 +2982,14 @@
 
         return block + "</tr></table>";
     }
+    /*
+    * createCondBlock - builds the html for a cond block
+    * @param codeObject - the internal representation of the block
+    * @param constantEvironment - all the constants (I think)
+    * @param functionEnvironment - all the functions (I think) 
+    * @return - the HTML representation of the cond
+    */
     function createCondBlock(codeObject, constantEnvironment, functionEnvironment) {
-
         var block = "<table class=\"Cond expr Expressions\" " + "id=\"" + codeObject.id + "\"><tr><th colspan=\"3\" style=\"float:left\">cond</th></tr>";
         for (var i = 0; i < codeObject.listOfBooleanAnswer.length; i++) {
             block += "<tr class=\"BoolAnswer\"><th><table class=\"noDrag\" id=\"" + codeObject.listOfBooleanAnswer[i].id + "\"></th>";
@@ -3004,43 +3014,57 @@
         block += "<tr><th></th><th><button class=\"addCond\">+</button></th></tr>";
         return block + "</table>";
     }
-
+    /*
+    * createConstantBlock - builds the html for a constant block
+    * @param codeObject - the internal representation of the block
+    * @param constantEvironment - all the constants (I think)
+    * @param functionEnvironment - all the functions (I think) 
+    * @return - the HTML representation of the constant
+    */
     function createConstantBlock(codeObject, constantEnvironment, functionEnvironment) {
         var block = "<table class=\"expr ConstBlock " + encode(codeObject.outputType) + "\" id=\"" + codeObject.id + "\"><tr><th>" + encode(codeObject.constName) + "</tr>";
         return block + "</table>";
     }
-
+    /*
+    * createBooleanBlock - builds the html for a boolean block
+    * @param codeObject - the internal representation of the block
+    * @param constantEvironment - all the constants (I think)
+    * @param functionEnvironment - all the functions (I think) 
+    * @return - the HTML representation of the boolean
+    */
     function createBooleanBlock(codeObject, constantEnvironment, functionEnvironment) {
         var block = "<table class=\"Booleans BoolBlock expr\" " + "id=\"" + codeObject.id + "\"><tr><th>" + codeObject.value + "</tr>";
         return block + "</table>";
     }
-
+    /*
+    * createNumBlock - builds the html for a number block
+    * @param codeObject - the internal representation of the block
+    * @param constantEvironment - all the constants (I think)
+    * @param functionEnvironment - all the functions (I think) 
+    * @return - the HTML representation of the number
+    */
     function createNumBlock(codeObject, constantEnvironment, functionEnvironment) {
         var block = "<table class=\"Numbers expr\" " + "id=\"" + codeObject.id + "\" width=\"10px\"><tr><th><input class=\"input Numbers\" onblur=\"sync(" + codeObject.id + ", $(this))\" style=\"width:50px;\"";
         block += " value=\"" + codeObject.value + "\">";
         return block + "</th></tr></table>";
     }
-
+    /*
+    * createStringBlock - builds the html for a string block
+    * @param codeObject - the internal representation of the block
+    * @param constantEvironment - all the constants (I think)
+    * @param functionEnvironment - all the functions (I think) 
+    * @return - the HTML representation of the string
+    */
     function createStringBlock(codeObject, constantEnvironment, functionEnvironment) {
         var block = "<table class=\"Strings expr\" " + "id=\"" + codeObject.id + "\"><tr><th>\"</th><th><input class=\"input Strings\" onblur=\"sync(" + codeObject.id + ", $(this))\" class=\"Strings\"";
         block += " value=\"" + encode(codeObject.value) + "\">";
         return block + "</th><th>\"</th></tr></table>";
     }
-
-    function stringToElement(string) {
-        var wrapper = document.createElement('div');
-        wrapper.innerHTML = string;
-        return wrapper.firstChild;
-    }
-
     /*
-      Creates a drop menu for use in the contract in order to select types.
-
-      @param newID is a string representing the id the funcIDList of a contract. 0 represents the output type.
-      Positive integers represent arguments
-      @param codeObject is the ExprDefineFunc we are working with
-
-      @return void. manipulates HTML DOM elements.
+    * generateTypeDrop - creates a drop down menu for selecting types in contracts
+    * @param newID is a string representing the id the funcIDList of a contract. 0 represents the output type, positive integers represent arguments
+    * @param codeObject is the ExprDefineFunc being created
+    * @return - the html for the drop down menu
     */
     function generateTypeDrop(newID, codeObject) {
 
@@ -3065,20 +3089,16 @@
     }
 
     /*
-      changeType links the contract with the arguments in the actual define block
-
-      @param curValue - (string) the type that was selected by the user within the contract
-      @param selectID - (string)the ID of the code object representing the drop-down for selecting
-      types within the contract
-      @param defineExprID - (string) ID of the code object representing the define block
+    * changeType - links the contract with the arguments in the actual define block
+    * @param curValue - (string) the type that was selected by the user within the contract
+    * @param selectID - (string)the ID of the code object representing the drop-down for selecting (the selectID += "" enforces the string invariant)
+    * @param defineExprID - (string) ID of the code object representing the define block
     */
     function changeType(curValue, selectID, defineExprID) {
         selectID += "";
         var defineExpr = searchForIndex(defineExprID + "", functionProgram);
-
         var funcIDIndex = getElmIndexInArray(selectID, defineExpr.contract.funcIDList);
         var argBlockID = defineExpr.funcIDList[funcIDIndex];
-
         //modifiedblock refers to the GUI element whose background color will change
         var modifiedblock = $("#" + argBlockID).closest('th');
 
@@ -3087,18 +3107,16 @@
             if (curValue !== "Type") {
                 modifiedblock.addClass(decode(curValue));
                 $("#" + selectID).css('background-color', '');
-                if (funcIDIndex !== 0) { //arg is typeable
+                if (funcIDIndex !== 0) {
                     $(modifiedblock).find('input').attr('disabled', false);
                 }
-            } else { //remove typeable from arg
+            } else {
                 $(modifiedblock).find('input').attr('disabled', true);
             }
 
         } else {
             throw new Error('changeType: modifiedblock is not defined')
         }
-
-        //modifying the contract (code object representation)n
         for (var i = 0; i < defineExpr.contract.funcIDList.length; i++) {
             addToHistory(cloneProgram(program), cloneProgram(storageProgram));
             if (selectID === defineExpr.contract.funcIDList[i] && i !== 0) {
@@ -3115,39 +3133,36 @@
                 }
             }
         }
-
-        //checking to see if it define name already exists
         var defineName = $("#" + defineExpr.id).find('.definitionName');
         var contractName = $("#" + defineExpr.id).find('.contractName');
         var newName = defineName.attr('value');
-	var name = defineExpr.contract.funcName;
-	console.log(defineName.val());
+	   var name = defineExpr.contract.funcName;
         if (noInvalidChar(name) &&  defineName.css('background-color') === 'rgb(255, 255, 255)' &&
 	    ((!functionNameRepeated(name) || defineName.val() === defineName.attr('prevName'))  
 	     || ($("#" + selectID + " option[value='Type']").attr('disabled') === 'disabled'))) {
-	    defineName.css('background-color', '');
+            defineName.css('background-color', '');
             contractName.css('background-color', '');
 	    if (contractCompleted(defineExpr.contract)){
-		$("#graybox").css('visibility','hidden');
+            $("#graybox").css('visibility','hidden');
 	    }
-            toggleFunctionInDrawer(defineExpr, $("#" + defineExprID).find('.definitionName').attr('prevName'));
-            defineName.attr('prevName', newName);
-            contractName.attr('prevName', newName);
-        } else { //if the name already exists
-	    $("#graybox").css('visibility','visible');
-	    $("#graybox").css('z-index', $("#" + defineExprID).css('z-index') - 1);
+        toggleFunctionInDrawer(defineExpr, $("#" + defineExprID).find('.definitionName').attr('prevName'));
+        defineName.attr('prevName', newName);
+        contractName.attr('prevName', newName);
+        } else {
+	        $("#graybox").css('visibility','visible');
+	        $("#graybox").css('z-index', $("#" + defineExprID).css('z-index') - 1);
             if (contractCompleted(defineExpr.contract)) {
-		
                 defineName.css('background-color', 'red');
                 contractName.css('background-color', 'red');
             }
         }
-
-        //disables option 'Type'
         $("#" + selectID + " option[value='Type']").attr('disabled', 'disabled');
     }
 
-    //adds draggable within define expressions
+    /*
+    * addDraggableToDefineExpr - makes all elements that should be draggable in a define function draggable
+    * @param $table - the selected define function (jQuery selector)
+    */
     function addDraggableToDefineExpr($table) {
         if (!$table.hasClass('noDrag')) {
             $table.draggable({
@@ -3164,8 +3179,6 @@
 		},
 		stop: function (event, ui) {
                     if (programCarrying != null && carrying != null) {
-			console.log('here');
-
 			setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).closest('th').attr("id"), programCarrying, functionProgram);
 			programCarrying = null;
 			carrying = null;
@@ -3176,8 +3189,10 @@
             });
         }
     }
-
-    //adds draggable within define expressions
+    /*
+    * addDraggableToConstExpr - makes all elements that should be draggable in a define constant draggable
+    * @param $table - the selected define constant (jQuery selector)
+    */
     function addDraggableToConstExpr($table) {
         if (!$table.hasClass('noDrag')) {
             $table.draggable({
@@ -3194,8 +3209,6 @@
 		},
 		stop: function (event, ui) {
                     if (programCarrying != null && carrying != null) {
-			console.log('here');
-
 			setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).closest('th').attr("id"), programCarrying, constantProgram);
 			programCarrying = null;
 			carrying = null;
@@ -3206,7 +3219,6 @@
             });
         }
     }
-
 
     function onTop($hovered){
 	var hoveredZArray = [];
@@ -3226,7 +3238,10 @@
 	return true;
     }
 
-    //adds droppable to define expressions
+    /*
+    * addDroppableToDefineExpr - adds the droppable feature to a given defineExpr
+    * @param defineExpr - the jQuery selector for the function definition
+    */
     function addDroppableToDefineExpr(defineExpr) {
 	var defineCodeObject = searchForIndex(defineExpr.closest('.DefineFun').attr('id'), functionProgram);
         $(defineExpr).droppable({
@@ -3235,7 +3250,6 @@
 		if (carrying != null && programCarrying != null && defineCodeObject.expr == undefined && $(carrying).hasClass('expr') && contractCompleted(defineCodeObject.contract)){
 		    return true;
 		} else if (!contractCompleted(defineCodeObject.contract)){
-		    //change color of incompleted contract parts to red
 		    return false;
 		} else {
 		    return false;
@@ -3243,7 +3257,6 @@
 	    },
             greedy: true,
 	    over:function(event, ui){
-		console.log("YOU ARE OVER NOWORFOEWRHODs");
 		$(this).addClass('hovered');
 		if (onTop($(this))){
                     if (programCarrying != undefined && carrying != undefined && $(this).children().length === 0) {
@@ -3259,9 +3272,8 @@
 		    $(this).removeClass('highlighted');
 		}
 	    },
-
             drop: function (event, ui) {
-	        if (carrying != null && programCarrying != null && $(this).children().length === 0/* && $(this).hasClass('highlighted')*/) {
+	        if (carrying != null && programCarrying != null && $(this).children().length === 0) {
                     $(this).html(carrying);
                     defineCodeObject.expr = programCarrying;
 
@@ -3294,7 +3306,10 @@
         });
     }
 
-    //adds droppable to things within define expressions
+   /*
+    * addDroppableWithinDefineExpr - adds the droppable feature within a given defineExpr
+    * @param defineExpr - the jQuery selector for the function definition
+    */
     function addDroppableWithinDefineExpr(jQuerySelection) {
         $(jQuerySelection).mousedown(function (e) {
             if (e.which === 1) {
@@ -3338,7 +3353,10 @@
         });
     }
 
-    //adds droppable to things within define expressions
+    /*
+    * addDroppableWithinDefineConstantExpr - adds the droppable feature to a given constant definition
+    * @param jQuerySelection - the jQuery selector for the constant definition
+    */
     function addDroppableWithinDefineConstantExpr(jQuerySelection) {
         $(jQuerySelection).mousedown(function (e) {
             if (e.which === 1) {
