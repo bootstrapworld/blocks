@@ -3220,6 +3220,12 @@
         }
     }
 
+    /*
+      onTop is used to resolve a previous issue in which a block hovered over 2 overlapping define-function expressions would cause both of the overlapping define-function expression to highlight. onTop checks to see if $hovered has the highest z-index so that only the define-function expression associated wtih the top-most define-functon block is highlighed
+
+      @param $hovered - (jQuery) the define-function expression that you are examining
+      @return bool. True if $hovered has the z-index among all define-functions with the class hovered (all define expressions that are hovered over have this class). False otherwise
+     */
     function onTop($hovered){
 	var hoveredZArray = [];
 	$(".hovered").each(function(){
