@@ -1,0 +1,82 @@
+NOTES:
+code refers to OUR javascript code
+program refers to a user created set of blocks
+bugs refers to things that break DrBlocket or greatly inhibit DrBlocket
+issues refers to things such as styling that while should be fixed, hold a lower priority and does not affect useability of DrBlocket
+TODO refers to things just not implemented
+Please note that this is not a necessarily exhaustive list of issues
+If coloring dissapears, type typeCheckAll() into the console... if color returns, a typeCheckAll is missing in the code
+
+
+Completed:
+	*Program renders with closed drawers, header and blank storage.
+	*Drawers can be opened and closed on click.
+	*Blocks can be dragged from drawers to program
+	*Blocks dragged directly from drawer to storage will dissapear
+	*Blocks can be sorted within the program
+	*Blocks can be dragged into and out of other blocks
+	*Open spaces will correctly highlight when carrying a block
+	*Blocks can be dragged from either the upper level program or from within other blocks to storage
+	*Blocks are synchronized with their program object counterpart
+	*Num expressions and String expressions can be clicked to add a literal block
+	*Num expressions can be validated so that only valid Number(text) will be accepted (not NaN)
+	*Cond branches can be added and deleted
+	*Undo and redo will correctly re-render older or future versions of the program and storage
+	*Export will correctly alert the user with racket representation of the code
+	*Upon Saving a program, users are asked for a file name, alerted if the name already exists and saves the program,storage,functions and constants to local storage
+	*Upon Loading a program, users are asked for a file name, alerted if it does not exist, and correctly loads the program,storage,functions and constants
+	*Upon clicking "Define function", a function popup will appear
+		-blocks can not be dragged into the expression until the contract is completed
+		-contract name and definition name are linked
+		-names of functions cannot repeat and must be valid
+		-Contract types and arguments/expression types are linked
+		-Arguments can be added or deleted
+		-User defined Functions will appear in the drawers
+		-User defined functions can be deleted
+		-User defined functions can be modified
+		-User defined functions will update within the program,storage program, function program etc. when updated or deleted
+		-Users will be alerted when they try to close a function when things are blank
+	*TypeChecking will occur at necessary points to color blocks correctly
+	*If there is a typeChecking Error, blocks turn red and users can click (tablet) or mouseover for a message
+	*Running a program can only happen when there are no errors in the code
+	*Result messages will appear next to each block and can be clicked to display the result of teh block
+	*If there was an error that was not type related (colors, style etc.) the error message can be displayed in the same manner as a result
+	*In the event of an infinite loop, users can stop the evaluator and the evaluator will continue onto the other blocks
+
+
+
+TODO:
+	*Hook up undo and redo to define functions and constants
+		-How will it affect the program/drawers if I undo an added argument etc.
+	*Potentially hook up export to the clipboard for easier copy and pasting
+	*Define Constants synching with the program, storage program, drawers etc.
+		-When both name and expression are present, should appear in the drawers
+		-When name or expression is edited, should update drawers and all instances of the constant
+	*Hook saving and loading to wescheme along with a better dialogue box for file paths/name
+	*Double check program for all major browers and tablets
+	*Add bigbang and all it entails
+	*Add structs and all it entails
+
+KNOWN BUGS:
+	*When error result messages are clicked more than once, more than one message appears.  Only occurs on returnMessage, not returnDOMElement.  Clicking outside the result box will still close the message
+	*In define functions, arguments can be dragged out to the program.  This can be fixed by setting confinement.  However, this does not allow for the argument names to be trashed.
+	*Formvalidation stopped working.  Only needed for number expressions.  How big of a bug is this?
+
+
+KNOWN ISSUES:
+	*If the header button bar is too thin, buttons overlap onto the next line
+	*Fix styling of empty spaces (place holder names)
+	*In a big block, some of teh spaces become elongated weirdly
+	*if a block has an error and is dragged out of something, the carried block is white (not a big deal)
+	*Sometimes, very rarely, over is not triggered and thus there is no highlighting.  Block can still be dropped.  Only matteres on overlapping defines
+
+
+NOTES:
+Make all functions within the overall strict visible (wrapper) in order to run tests (not selenium)
+All test cases for selenium are in blocks/selenium.  Reset the top line to correspond with the localhost
+Open whatever file, click run.  Potentially hook tests to actual site, not localhost.
+
+Testsuite.js  in blocks: open testsuite.html on a browser.  This is where all of teh functions need to be visible outside wrapper.
+Find way of making sure if tests pass or fail.
+
+Must include selenium/seleniumHelp.js to run selenium tests as a script in the gui.html
