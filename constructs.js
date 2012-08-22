@@ -131,7 +131,6 @@
     */
     function setChildInProgram(parentId, childId, obj, prog) {
         var parent = searchForIndex(parentId, prog);
-	console.log(parent);
         if (parent === undefined) {
             throw new Error("setChildInProgram failure: parentId not found.");
         }
@@ -419,7 +418,7 @@
     var ExprConst = function (constName) {
         this.constName = constName;
         this.selfType = "ExprConst"
-        this.outputType = undefined;
+        this.outputType = getOutput(constName);
         this.id = makeID();
         this.clone = function () {
             var temp = new ExprConst(this.constName);
@@ -1464,7 +1463,7 @@
         $(styleCSS).appendTo("head");
     }
     /*
-    * containtsName - finds the index at which the given string is the name of an obj in the given array
+    * containsName - finds the index at which the given string is the name of an obj in the given array
     * @param array_of_obj - the array of objects to search through
     * @param stringElement - the name being searched for
     * @return the index in the array at which the name is found
@@ -1478,6 +1477,17 @@
             }
         }
         return contain;
+    }
+
+    function containsConstName(array, string) {
+	var contain = -1;
+	for (var i = 0; i < array.length; i++) {
+	    if (array[i].constName === string) {
+		contain = i;
+		break;
+	    }
+	}
+	return contain;
     }
 
 
@@ -1639,8 +1649,15 @@
             }
         }
         types.Constants = [];
-        for (i = 0; i < allConstants.length; i++) {
-            types.Constants.push(i);
+        for (var i = 0; i < allConstants.length; i++) {
+//	    var curOutput = allConstants[i].output;
+//	    console.log(curOutput);
+//	    if (types[curOutput] !== undefined) {
+//		types[curOutput].push(i);
+//	    } else {
+//		types[curOutput] = [i];
+//	    }
+            types["Constants"].push(i);
         }
         types.Expressions = ["cond"];
 
@@ -1689,7 +1706,7 @@
 		Drawers += "<div id=\""+encode(Type)+"\">";
 		if(Type==="Constants"){
                     for(i=0;i<typeDrawers[Type].length;i++){
-			Drawers+=" <span class=\"draggable "+encode(Type)+"\">"+encode(allConstants[typeDrawers[Type][i]].name)+"</span>";
+			Drawers+=" <span class=\"draggable "+encode(Type)+"\" name=\"" + allConstants[typeDrawers[Type][i]].id + "\">"+encode(allConstants[typeDrawers[Type][i]].constName)+"</span>";
 		    }
 		}
 		
@@ -1740,11 +1757,7 @@
 
 	$("#Drawer").html(Drawers);
 	$("#options span").dblclick(function(){
-	    console.log('here1');
 	    if ($(this).attr('name') != undefined){
-		console.log('here2');
-		console.log($(this).attr('name'))
-		console.log($("#" + $(this).attr('name')))
 		$("#" + $(this).attr('name')).closest('.definePopup').css('visibility','visible');
 		$("#" + $(this).attr('name')).closest('.constantPopup').css('visibility','visible');
 	    }
@@ -1831,7 +1844,6 @@
 	*/
 	$popupHTML.find(".closeFunctionButton").bind('click', function() {
 
-	    console.log(codeObject);
 	    var closeButton = $(this);
 	    var confirmClose = true;
 	    var defineName = codeObject.contract.funcName;
@@ -1886,7 +1898,6 @@
 	//remove from functionProgram
 	for (var i = 0; i < functionProgram.length; i++){
 	    if (codeObject.id === functionProgram[i].id){
-		console.log("Deleting correctly")
 		functionProgram.splice(i, 1);
 		break;
 	    }
@@ -1974,7 +1985,8 @@
     	if (codeObject.constName != undefined){
     	    name = codeObject.constName;
     	}
-    	inputName.attr('value',name);
+    	inputName.attr('value', name);
+	inputName.attr('onkeyup',"sync(" + codeObject.id + ",$(this))");
     	inputName.val(name);
     	thName.append(inputName);
     	tr1.append(thName);
@@ -1996,9 +2008,9 @@
     	popup.append(table);
 
     	//add syncing to name
-    	$(".constantName").mouseup(function(){
-    	    syncConstantName(codeObject, $(this));
-    	});
+    //	popup.find(".constantName").keyup(function(){
+//	    syncConstantName(codeObject, $(this));
+	    //  	});
     	return popup;
 
     }
@@ -2018,11 +2030,14 @@
     	codeObject.constName = name;
 
     	//change HTML
-    	input.attr('value',input.val());
-    	if (noInvalidChar){//if the name is valid - no invalid character, doesn't exist
-    	    input.css('background-color','');
-    	    input.attr('prevName', name);
-    	}
+    	input.attr('value', input.val());
+    	if (!noInvalidChar(name) || functionNameRepeated(name)){//if the name is valid - no invalid character, doesn't exist
+    	    input.css('background-color','red');
+    	} else {
+	    input.css('background-color', '');
+	    input.attr('prevName', name);
+	    $('#graybox').css('visibility', 'hidden');
+	}
     }
 
     /*
@@ -2129,8 +2144,6 @@
     */
     function addDroppableToDefineConstExpr(defineExpr) {
 	var defineCodeObject = searchForIndex(defineExpr.closest('.Define').attr('id'), constantProgram);
-	console.log(defineExpr.closest('.Define').attr('id'), constantProgram);
-	console.log(defineCodeObject);
         $(defineExpr).droppable({
             tolerance: 'pointer',
 	    accept:function(d){
@@ -2161,13 +2174,13 @@
             drop: function (event, ui) {
 	        if (carrying != null && programCarrying != null && $(this).children().length === 0) {
                     $(this).html(carrying);
-                    defineCodeObject.expr = programCarrying;
-                    defineCodeObject.outputType=programCarrying.outputType
-
+		    defineCodeObject.expr = programCarrying;
+		    defineCodeObject.outputType = programCarrying.outputType;
+		    //toggleConstantInDrawer(defineCodeObject, defineCodeObject.constName);
+		    
                     //make things within droppable
                     $(this).find('.droppable').each(function () {
-			console.log("add droppable to", $(this));
-                        addDroppableWithinConst($(this));
+		        addDroppableWithinConst($(this));
                     });
 
                     //make things within draggable
@@ -2181,8 +2194,7 @@
                     typeCheckAll();
                     carrying = null;
                     programCarrying = null;
-
-
+		    
                 } 
 		if ($(this).hasClass('hovered')){
 		    $(this).removeClass('hovered');
@@ -2190,7 +2202,8 @@
 		if($(this).hasClass('highlighted')){
 		    $(this).removeClass('highlighted');
 		}
-            }
+		toggleConstantInDrawer(defineCodeObject, defineCodeObject.constName);
+	    }
         });
     }
 
@@ -2393,7 +2406,6 @@
     * renderFunctions renders the functions arguments
     */
     function renderFunctions() {
-	console.log('render');
         for (var i = 0; i < functionProgram.length; i++) {
             var currFunc = $("#" + functionProgram[i].funcIDList[0]);
             if (functionProgram[i].expr === undefined) {
@@ -2440,6 +2452,10 @@
         defineExpr.contract.funcName = newName;
     }
 
+    function changeConstName(defineExpr, newName) {
+	defineExpr.constName = newName;
+    }
+
 
     /*
     * changeArgName - changes the name of an argument in a define block
@@ -2476,8 +2492,11 @@
 	removeOutputs();
 	var block=searchForIndex(objectID+"",program);
 	if (block == undefined){
-	    block = searchForIndex(objectID+"", functionProgram  );
+	    block = searchForIndex(objectID+"", functionProgram);
 	} 
+	if (block == undefined){
+	    block = searchForIndex(objectID+"", constantProgram);
+	}
 	var DOMBlock=$("#" + objectID);
 	if(block instanceof ExprNumber || block instanceof ExprString){
 	    block.value=decode(DOMBlock.find(".input").attr('value'));
@@ -2542,24 +2561,25 @@
 	else if(block instanceof ExprDefineConst){
             window.clearTimeout(timeout);
             //updateGUI
-            var newInput = $input.attr('value') + "";
+	    var newInput = $input.attr('value') + "";
             var constInput = $("#" + objectID).find('.constantName').first();
             //CONTRACT/DEFINITION NAME
             timeout = setTimeout(function() {
-        		changeName(block, newInput);
-        		if (newInput === "" || !legalFunctionName(newInput)){
-        		    if (defInput.attr('prevName') !== newInput){
-            			defInput.css('background-color','red');
-            			contractInput.css('background-color','red');
+        		changeConstName(block, newInput);
+        	if (newInput === "" || !legalFunctionName(newInput, objectID)){
+        		    if (constInput.attr('prevName') !== newInput){
+            			constInput.css('background-color','red');
+            			constInput.css('background-color','red');
+				$('#graybox').css('visibility', 'visible');
             			removeFromConstants(constInput.attr('prevName'));
             			renderProgram();
         		    }
         		} else {
-        		    defInput.css('background-color','');
-        		    contractInput.css('background-color', '');
+        		    constInput.css('background-color','');
+			    $('#graybox').css('visibility', 'hidden');
         		    // add/remove from drawers
-        		    toggleConstantInDrawer(block, $input.attr('prevName'));
-        		    constInput.attr('prevName', newInput);
+			    toggleConstantInDrawer(block, $input.attr('prevName'));
+			    constInput.attr('prevName', newInput);
         		}
             }, 75);
         }
@@ -2591,16 +2611,16 @@
     }
 
     /*
-    * toggleConstantsInDrawer - removes, adds, and edits constants in drawers
+    * toggleConstantInDrawer - removes, adds, and edits constants in drawers
     * @param constExpr - (ExprDefineConst) the internal representation of the constant block
     * @param prevName - the name the expression had before editing began
     * @param deleteIndex - (int) the integer at which you want to remove an expression within an ExprDefineConst's arguments.
                             - (I don't think this is ever used, but it is nice for consistency)
     */
-    function toggleConstantsInDrawer(constExpr, prevName, deleteIndex){
-        changeProgramFunctions(prevName, constExpr, program, false, deleteIndex);
-        changeProgramFunctions(prevName, constExpr, storageProgram, false, deleteIndex);
-        changeProgramFunctions(prevName, constExpr, functionProgram, false, deleteIndex);
+    function toggleConstantInDrawer(constExpr, prevName){
+        changeProgramConstants(prevName, constExpr, program, false);
+        changeProgramConstants(prevName, constExpr, storageProgram, false);
+        changeProgramConstants(prevName, constExpr, constantProgram, false);
         addConstantToDrawers(constExpr);
     }
 
@@ -2637,6 +2657,34 @@
             }
         }
     }
+
+
+    function changeProgramConstants(prevName, constExpr, prog, removeConst) {
+	var i;
+	if (prog === constantProgram) {
+	    for (i = 0; i < prog.length; i++) {
+		if (removeConst === true && prog[i].expr != undefined && prog[i].expr.constName === prevName) {
+		    prog[i].expr = undefined;
+		} else if (prog[i].expr instanceof ExprConst) {
+		    changeExprConst(prog[i].expr, prevName, constExpr, removeConst);
+		}
+	    }
+	} else {
+	    for (i = 0; i < prog.length; i++) {
+		if (prog[i] instanceof ExprConst) {
+		    if (removeConst === true && prog[i].constName === prevName) {
+			prog.splice(i, 1);
+			i = i-1;
+		    } else {
+			changeExprConst(prog[i], prevName, constExpr, removeConst);
+		    }
+		} else if (prog[i] instanceof ExprApp) {
+		    changeExprConst(prog[i], prevName, constExpr, removeConst);
+		}
+	    }
+	}
+    }
+    
 
     /*
     * changeExprApp - changes the outputType and funcName attributes of appExpr
@@ -2679,6 +2727,25 @@
         }
     }
 
+    function changeExprConst(exprConst, prevName, constExpr, removeConst) {
+	if (removeConst === true) {}
+	else {
+	    if (exprConst instanceof ExprConst) {
+		if (exprConst.constName === constExpr.constName || exprConst.constName === prevName) {
+		    exprConst.constName = constExpr.constName;
+		    exprConst.outputType = constExpr.outputType;
+		}
+	    }
+	    if (exprConst instanceof ExprApp) {
+		for (var i = 0; i < exprConst.args.length; i++) {
+		    if (exprConst.args[i] != undefined) {
+			changeExprConst(exprConst.args[i], prevName, constExpr);
+		    }
+		}
+	    }
+	}
+    }
+
     /*
     * removeFunctionFromDrawers - removes the given function from the drawers and from the userFunctions array
     * @param defineExpr - the define block being deleted
@@ -2716,7 +2783,7 @@
     * @param constExpr - (ExprDefineConst) the internal representation of the define block of the constant being added
     */
     function addConstantToDrawers(constExpr) {
-        var constant = getConstant(constExpr.constName)
+        var constant = getConstant(constExpr.id)
         var isNew = false;
         if (constant === undefined) {
             isNew = true;
@@ -2749,9 +2816,9 @@
     * @param constantName - the name of the desired constant
     * @return the object representing the constant in the constants array
     */
-    function getConstant(constantName) {
+    function getConstant(constantID) {
         for (var i = 0; i < constants.length; i++) {
-            if (constants[i].name === constantName) {
+            if (constants[i].id === constantID) {
                 return constants[i];
             }
         }
@@ -2840,7 +2907,7 @@
                 return false;
             }
         }
-        return (noInvalidChar && true);
+        return (noInvalidChar(name) && true);
     }
 
     /*
@@ -2861,12 +2928,17 @@
     * @param funcname - the name of the function who's output type is desired
     * @return - the output of the function with the given name
     */
-    function getOutput(funcname) {
+    function getOutput(name) {
         var allFunctions = functions.concat(userFunctions);
-        var index = containsName(allFunctions, funcname);
+        var index = containsName(allFunctions, name);
         if (index !== -1) {
             return allFunctions[index].output;
         }
+	index = containsConstName(constants, name);
+	if (index !== -1) {
+	    return constants[index].output;
+	}
+
     }
 
     /*
@@ -2896,7 +2968,7 @@
                 }
             }
             for (i = 0; i < constants.length; i++) {
-                if (constants[i].name === optionsText) {
+                if (constants[i].constName === optionsText) {
                     return new ExprConst(optionsText);
                 }
             }
@@ -2917,8 +2989,8 @@
             return createCondBlock(codeObject, constantEnvironment, functionEnvironment);
         } else if (codeObject instanceof ExprConst) {
             for (i = 0; i < constantEnvironment.length; i++) {
-                if (encode(constantEnvironment[i].name) === encode(codeObject.constName)) {
-                    return createConstantBlock(codeObject, constantEnvironment, functionEnvironment);
+                if (encode(constantEnvironment[i].constName) === encode(codeObject.constName)) {
+		    return createConstantBlock(constantEnvironment[i], codeObject, constantEnvironment, functionEnvironment);
                 }
             }
             throw new Error("createBlock: internal error with constants", codeObject);
@@ -2948,8 +3020,8 @@
         var newConstants = [];
         for (var i = 0; i < codeObject.argumentNames.length; i++) {
             newConstants.push({
-                name: codeObject.argumentNames[i],
-                type: codeObject.contract.argumentTypes[i - 1]
+                constName: codeObject.argumentNames[i],
+                output: codeObject.contract.argumentTypes[i]
             });
         }
         return newConstants;
@@ -2967,9 +3039,9 @@
     function createFunctionBlock(functionInfo, codeObject, constantEnvironment, functionEnvironment) {
         var block = "<table class=\"expr " + functionInfo.output + "\"" + " id=\"" + codeObject.id + "\" border";
 	if (functionInfo.id != undefined){
-	    block += " name=\"" + functionInfo.id + "\">";
-	}
-        block += "<tr><th colspan=\"" + functionInfo.input.length + "\">" + encode(functionInfo.name) + "</th></tr><tr>";
+	    block += " name=\"" + functionInfo.id + "\"";
+	} 
+        block += "><tr><th colspan=\"" + functionInfo.input.length + "\">" + encode(functionInfo.name) + "</th></tr><tr>";
         var i;
         for (i = 0; i < functionInfo.input.length; i++) {
             if (codeObject.args[i] != undefined) {
@@ -3021,8 +3093,12 @@
     * @param functionEnvironment - all the functions (I think) 
     * @return - the HTML representation of the constant
     */
-    function createConstantBlock(codeObject, constantEnvironment, functionEnvironment) {
-        var block = "<table class=\"expr ConstBlock " + encode(codeObject.outputType) + "\" id=\"" + codeObject.id + "\"><tr><th>" + encode(codeObject.constName) + "</tr>";
+    function createConstantBlock(constantInfo, codeObject, constantEnvironment, functionEnvironment) {
+        var block = "<table class=\"expr " + constantInfo.output + " ConstBlock\" id=\"" + codeObject.id + "\"";
+	if(constantInfo.id !== undefined){
+	    block += " name=\"" + constantInfo.id + "\"";
+	}
+	block += "><tr><th>" + encode(codeObject.constName) + "</tr>";
         return block + "</table>";
     }
     /*
@@ -3160,7 +3236,7 @@
     }
 
     /*
-    * addDraggableToDefineExpr - makes all elements that should be draggable in a define function draggable
+    * addDraggableToDfineExpr - makes all elements that should be draggable in a define function draggable
     * @param $table - the selected define function (jQuery selector)
     */
     function addDraggableToDefineExpr($table) {
@@ -3174,7 +3250,6 @@
                     programCarrying = searchForIndex($(this).attr("id"), functionProgram);
                     carrying = getHTML($(this));
                     ui.helper.addClass("wired");
-		    console.log($(this).closest($("th")).closest($("table")).attr('id'), $(this).attr('id'));
                     setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined, functionProgram);
 		},
 		stop: function (event, ui) {
@@ -3201,10 +3276,10 @@
 		connectToSortable: '#List, .droppable',
 		start: function (event, ui) {
                     draggedClone = $(this);
+		    console.log(draggedClone);
                     programCarrying = searchForIndex($(this).attr("id"), constantProgram);
                     carrying = getHTML($(this));
                     ui.helper.addClass("wired");
-		    console.log($(this).closest($("th")).closest($("table")).attr('id'), $(this).attr('id'));
                     setChildInProgram($(this).closest($("th")).closest($("table")).attr("id"), $(this).attr("id"), undefined, constantProgram);
 		},
 		stop: function (event, ui) {
@@ -3796,8 +3871,8 @@
             },
             helper: function (event, ui) {
                 programCarrying = makeCodeFromOptions($(this).text());
-                carrying = createBlock(programCarrying, constants, functions.concat(userFunctions));
-                var carryingClass = $(createBlock(programCarrying, constants, functions.concat(userFunctions))).addClass("wired")
+		carrying = createBlock(programCarrying, constants, functions.concat(userFunctions));
+		var carryingClass = $(createBlock(programCarrying, constants, functions.concat(userFunctions))).addClass("wired")
                 return carryingClass;
             },
             connectToSortable: "#List",
@@ -3837,7 +3912,6 @@
 		    return carrying;
                 }, 
 		stop: function (event, ui){
-		    console.log('stop');
 		    typeCheckAll();
 		}
             });
@@ -4072,7 +4146,7 @@
     };
 
     /*
-      Makes the jQuerySelection into an HTMLDom element
+      Make the jQuerySelection into an HTMLDom element
 
       @param jQuerySelection - jQuery
       @return string - string of html corresponding to jQuerySelection
@@ -4922,6 +4996,9 @@
     };
     window.userFunctions = function () {
         return userFunctions
+    };
+    window.constants = function () {
+        return constants
     };
     window.mouseCount = function(){
 	return mouseCount;
