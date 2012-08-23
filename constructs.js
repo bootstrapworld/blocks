@@ -1891,7 +1891,6 @@
     * @param $popupHTML - the popup given when delete is clicked, so it can be removed
     */
     function deleteFunction(name, codeObject, $popupHTML){
-	console.log(name);
 	$("#graybox").css('visibility','hidden');
 	//remove from userFunctions
 	removeFromUserFunctions(codeObject.id);
@@ -1914,6 +1913,24 @@
 	renderProgram();
 	renderFunctions();
     }
+    
+    function deleteConstant(name, codeObject, $popupHTML) {
+	$('#graybox').css('visibility', 'hidden');
+	removeFromConstants(codeObject.id);
+	for (var i = 0; i < constantProgram.length; i++) {
+	    if (codeObject.id === constantProgram[i].id) {
+		constantProgram.splice(i, 1);
+		break;
+	    }
+	}
+	changeProgramConstants(name, codeObject, storageProgram, true);
+	changeProgramConstants(name, codeObject, program, true);
+	changeProgramConstants(name, codeObject, constantProgram, true);
+	$popupHTML.detach();
+	buildFuncConstructs();
+	renderProgram();
+	renderFunctions();
+    }
 
     /*
     *  removeFromUserFunctions - removes the function with the given name from the array userFunctions
@@ -1931,9 +1948,9 @@
     * removeFromConstants - removes the given name from the constants array
     * @param name - the string name to be removed from the constants array
     */
-    function removeFromConstants(name) {
+    function removeFromConstants(id) {
         for (var i = 0; i < constants.length; i++) {
-            if (constants[i].name === name) {
+            if (constants[i].id === id) {
                 constants.splice(i, 1);
                 break;
             }
@@ -2008,14 +2025,15 @@
     	popup.append(table);
 
     	//add syncing to name
-    //	popup.find(".constantName").keyup(function(){
-//	    syncConstantName(codeObject, $(this));
-	    //  	});
+	//popup.find(".constantName").keyup(function(){
+	//syncConstantName(codeObject, $(this));
+	//});
     	return popup;
 
     }
 
     /*
+    * PROBABLY NOT NEEDED - added constant name syncing functionality to the sync() function
     * syncConstantName - called when the user types in the textbox of a define-constant block. It updates the
     *                     name of the corresponding block in constantFunction, and if the name is valid, it will add the constant to the
     *                     constants array
@@ -2050,12 +2068,12 @@
     */
     function createConstantPopup(codeObject){
     	if(codeObject !=undefined){
-                var alreadyMade=true;
-                for(var i=0;i<userFunctions.length;i++){
+            var alreadyMade=true;
+            for(var i=0;i<userFunctions.length;i++){
     		if(codeObject.contract.funcName===userFunctions[i].name){
-                        userFunctions[i].id=codeObject.id
+                    userFunctions[i].id=codeObject.id
     		}
-                }
+            }
     	}
     	else{
     	    var codeObject = new ExprDefineConst;
@@ -2084,58 +2102,60 @@
     	//adds droppable to expression
     	addDroppableToDefineConstExpr($popupHTML.find('.defineExpr'));
     	if(alreadyMade){
-                $popupHTML.find('table').each(function(){
+            $popupHTML.find('table').each(function(){
     		addDraggableToConstExpr($(this))
-                })
-    		}
-
+            });
+	}	
 
     	$popupHTML.find(".closeConstantButton").bind('click', function() {
-
-                var closeButton = $(this);
-                var confirmClose = true;
+            var closeButton = $(this);
+            var confirmClose = true;
 
     	    //Dialog box asking for confirmation for close
-                var dialogDiv = $("<div>").attr('id', 'dialog');
+            var dialogDiv = $("<div>").attr('id', 'dialog');
     	    $(dialogDiv).dialog({
     		title:'Confirmation Required',
     		modal:true,
     		autoOpen:false,
     		buttons: {
-                        "Yes": function() {
+                    "Yes": function() {
     			removeConstantFromArray(codeObject.id);
     			$(closeButton).closest('.constantPopup').detach();
     			$("#graybox").css('visibility','hidden');
     			$(this).dialog("close");
-                        },
-                        "Cancel" : function() {
+                    },
+                    "Cancel" : function() {
     			$(this).dialog("close");
     			confirmClose=false;
     			$(this).closest('.constantPopup').css('visibility','visible');
-                        }
+                    }
     		}
     	    });
 
-
-                if((codeObject.constName=="" || codeObject.constName==undefined) && codeObject.expr==undefined){
+            if((codeObject.constName=="" || codeObject.constName==undefined) && codeObject.expr==undefined){
     		removeConstantFromArray(codeObject.id);
     		$("#graybox").css('visibility','hidden');
-                }
-                else if(functionNameRepeated(codeObject.constName)){
+            }
+            else if(functionNameRepeated(codeObject.constName)){
     		dialogDiv.append("Your constant name is invalid because it already exists within some other constant or cuntion. Click OK to delete your constant or cancel to rename it.");
     		$(dialogDiv).dialog("close");
     		confirmClose = false;
-                }
-                else if((codeObject.constName=="" || codeObject.constName==undefined) && codeObject.expr!=undefined){
+            }
+            else if((codeObject.constName=="" || codeObject.constName==undefined) && codeObject.expr!=undefined){
     		confirmClose=false
     		dialogDiv.empty();
     		dialogDiv.append("The name is incomplete, and if you close this window, your work will not be saved. Are you sure you want to close this definition?");
     		$(dialogDiv).dialog("open");
-                }
-                if (confirmClose) {
+            }
+            if (confirmClose) {
     		$(this).closest('.constantPopup').css('visibility','hidden');
-                }
+            }
     	});
+
+	$popupHTML.find(".deleteConstantButton").bind('click', function() {
+	    deleteConstant($popupHTML.find('.constantName').attr('prevName'), codeObject, $popupHTML);
+	});
+
     }
 
     /*
@@ -2176,8 +2196,7 @@
                     $(this).html(carrying);
 		    defineCodeObject.expr = programCarrying;
 		    defineCodeObject.outputType = programCarrying.outputType;
-		    //toggleConstantInDrawer(defineCodeObject, defineCodeObject.constName);
-		    
+		    		    
                     //make things within droppable
                     $(this).find('.droppable').each(function () {
 		        addDroppableWithinConst($(this));
@@ -2194,6 +2213,9 @@
                     typeCheckAll();
                     carrying = null;
                     programCarrying = null;
+		    setTimeout(function(){
+			toggleConstantInDrawer(defineCodeObject, defineCodeObject.constName);
+		    }, 100);
 		    
                 } 
 		if ($(this).hasClass('hovered')){
@@ -2202,7 +2224,6 @@
 		if($(this).hasClass('highlighted')){
 		    $(this).removeClass('highlighted');
 		}
-		toggleConstantInDrawer(defineCodeObject, defineCodeObject.constName);
 	    }
         });
     }
@@ -2728,7 +2749,17 @@
     }
 
     function changeExprConst(exprConst, prevName, constExpr, removeConst) {
-	if (removeConst === true) {}
+	if (removeConst === true) {
+	    for (var k = 0; k < exprConst.args.length; k++) {
+		if (exprConst.args[k] instanceof ExprConst && exprConst.args[k] != undefined) {
+		    if (exprConst.args[k].constName === prevName) {
+			exprConst.args[k] = undefined;
+		    } 
+		} else if (exprConst.args[k] instanceof ExprApp && exprConst.args[k] != undefined) {
+		    changeExprConst(exprConst.args[k], prevName, constExpr, true)
+		}
+	    }
+	}
 	else {
 	    if (exprConst instanceof ExprConst) {
 		if (exprConst.constName === constExpr.constName || exprConst.constName === prevName) {
