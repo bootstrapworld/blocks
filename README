@@ -1,0 +1,51 @@
+DrBlocket
+
+
+The following is a structured editor called "DrBlocket", developed
+during Summer 2012 at Brown University.
+
+Primary authors:
+
+   Miles Eldon
+   Katherine Ng
+   Jonah Stanley
+   Winnie Wang
+
+
+----------------------------------------------------------------------
+Usage:
+
+Open your web browser on "gui.html".
+
+
+----------------------------------------------------------------------
+
+Features:
+
+[fill me in]
+
+----------------------------------------------------------------------
+
+Running the test suite:
+
+We use Selenium to develop the gui test suite.
+
+[fill me in]
+
+----------------------------------------------------------------------
+
+Notes:
+
+[fill me in]
+
+----------------------------------------------------------------------
+
+Bugs:
+
+[fill me in]
+
+----------------------------------------------------------------------
+
+Improvements to make:
+
+[fill me in]
