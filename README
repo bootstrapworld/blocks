@@ -15,7 +15,23 @@ Primary authors:
 ----------------------------------------------------------------------
 Usage:
 
-Open your web browser on "gui.html".
+For local developmental testing, run the following:
+
+    $ racket browser-view.rkt gui.html 
+
+This creates a temporary web server that presents gui.html and
+automatically opens your web browser to the page.
+
+
+Why can't we just open gui.html directly?  Because the web server
+provides context necessary for cross-side communication to occur
+between DrBlocket and the WeScheme evaluator: using gui.html locally
+directly from a file://-based URL apparently does not allow the
+browser to communicate with external resources.
+
+
+For regular deployment, upload the contents of this directory onto a
+web server and point your web browser to gui.html.
 
 
 ----------------------------------------------------------------------
