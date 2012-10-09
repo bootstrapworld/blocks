@@ -1,7 +1,30 @@
 (function () {
-
     "use strict";
-    // this function is strict...
+
+
+
+    var evaluatorLibrariesLoaded = false;
+    var EVALUATOR_ROOT_URL="http://LoadBalancerEast-1672652775.us-east-1.elb.amazonaws.com/";
+    var loadEvaluatorLibraries = function(after) {
+	if (evaluatorLibrariesLoaded) {
+	    return after();
+	} else {
+	    jQuery.getScript(
+		EVALUATOR_ROOT_URL+"easyXDM.js",
+		function() {
+		    jQuery.getScript(
+			EVALUATOR_ROOT_URL+"evaluator.js",
+			function() {
+			    jQuery.getScript(EVALUATOR_ROOT_URL+"support.js",
+					     function() {
+						 evaluatorLibrariesLoaded = true;
+						 after();
+					     });
+			});
+		});
+	}
+    };
+
 
     // If there is no window.console, we'll make one up.
 
@@ -994,7 +1017,7 @@
     /*
     *called when window is loaded to initialize things
     */
-    $(document).ready(function () {
+    var init = function () {
         //When the window is resized, the height of the width of the code div changes
         $(window).resize(onResize);
         makeDrawers(functions, constants);
@@ -1266,7 +1289,11 @@
                 renderFunctions();
             }
         });
-    });
+    };
+
+    $(document).ready(function() { loadEvaluatorLibraries(function() {}) });
+
+    $(document).ready(init);
     
     //binds the add argument button in define's
     $(document).on('click', ".addArgument", function () {
@@ -1347,7 +1374,7 @@
             }
         });
         var xhr = new easyXDM.Rpc({
-            remote: "http://wescheme-compiler.hashcollision.org/index.html",
+            remote: EVALUATOR_ROOT_URL + "index.html",
             // This lazy flag must be set to avoid a very ugly
             // issue with Firefox 3.5.
             lazy: true
